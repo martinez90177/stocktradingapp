@@ -96,6 +96,60 @@ The lookup needs a connection — it is fetching live data. The saved morning
 report stays fully offline; the lookup box exists only in what the server hands
 out, never in the file itself.
 
+## Collapsing sections
+
+Every tall block — the watchlist board, prior session, charts, levels in play,
+full detail — is collapsible, on desktop and phone. **Collapse all** is in the
+toolbar next to the ticker arrows.
+
+Blocks collapse **by kind, not per symbol**: fold Charts once and it is folded
+on every ticker, because the decision is about what you care about rather than
+about one stock. The choice is saved in the browser and survives reloads, so the
+report opens the way you left it. With scripting off every block is simply open.
+
+Collapsed, the page is roughly a quarter of its full height — on a phone that is
+about 5,600 pixels of scrolling down to 1,500.
+
+## Putting it on GitHub
+
+The folder is already a git repository with an initial commit; generated output
+(`reports/`, `cache/`, `logs/`) is ignored, so only the 24 source files are
+tracked. To push it:
+
+```bash
+git -C "C:/Users/GamerX/OneDrive/Market Prep" remote add origin https://github.com/<you>/market-prep.git
+```
+
+```bash
+git -C "C:/Users/GamerX/OneDrive/Market Prep" push -u origin main
+```
+
+Create the repo on GitHub first (or install the `gh` CLI and use
+`gh repo create market-prep --private --source=. --push`).
+
+**Consider making it private.** `watchlist.json` holds the symbols you follow,
+and the README describes how you trade. Nothing here contains credentials, but a
+public repo publishes your setup.
+
+One caveat about the `.git` folder living in OneDrive: sync and git can collide
+if two machines write at once. It is fine for one machine at a time; if you work
+from several, clone from GitHub to a local (non-synced) folder on each instead.
+
+## A URL you can open anywhere
+
+`make-page.mjs` converts a finished report into a body-only fragment for hosts
+that supply their own page skeleton:
+
+```bash
+node make-page.mjs
+```
+
+That writes `reports/page.html`. Because the report has no external resources,
+the hosted page keeps working once loaded, the same as the file.
+
+A hosted copy is a **snapshot** — it does not update when the 8:15 task runs.
+Re-publish after a run to refresh it.
+
 ## Views
 
 Two top-level buttons under the header: **Watchlist** and **Movers board**. The

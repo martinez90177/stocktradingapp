@@ -862,6 +862,7 @@ export function renderReport(input: ReportInput): string {
   --bg:#0a0e17; --panel:#111725; --panel2:#0f1420; --line:#1e2637; --line2:#2a3448;
   --text:#e6eaf2; --dim:#8b95a8; --dim2:#6b7488;
   --up:#26a69a; --down:#ef5350; --gold:#e6b422; --accent:#3f7fff;
+  color-scheme:dark;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
