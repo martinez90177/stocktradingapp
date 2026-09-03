@@ -1,0 +1,25 @@
+{
+  "_comment": "Edit this file to change what gets analyzed. Symbols are Yahoo Finance tickers.",
+  "symbols": [
+    "SPY",
+    "QQQ",
+    "AAPL",
+    "NVDA",
+    "MSFT",
+    "AMZN",
+    "META",
+    "TSLA",
+    "AMD",
+    "GOOGL",
+    "MU"
+  ],
+  "options": {
+    "dailyLookbackDays": 180,
+    "intradayDays": 2,
+    "maxConfluenceLevels": 9,
+    "theme": "dark",
+    "moversLimit": 12,
+    "moversMinPrice": 3,
+    "moversMinDollarVolume": 20000000
+  }
+}

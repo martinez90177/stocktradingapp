@@ -1,0 +1,10 @@
+{
+  "name": "market-prep",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pre-market watchlist research: price levels, Fibonacci, chart patterns -> one offline HTML report.",
+  "scripts": {
+    "start": "node run.ts"
+  }
+}

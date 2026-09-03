@@ -1,0 +1,12 @@
+# Generated output. Every report is reproducible by running the tool, and the
+# archive would otherwise add megabytes of HTML to the repo on every run.
+reports/
+cache/
+logs/
+
+# Local scratch
+_patch.mjs
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
