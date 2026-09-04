@@ -6,6 +6,7 @@ import { mapPool } from "./src/yahoo.ts";
 import { analyzeSymbol } from "./src/pipeline.ts";
 import { renderReport, marketPhase } from "./src/report.ts";
 import { discoverMovers } from "./src/movers.ts";
+import { loadRules } from "./src/rules.ts";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const REPORTS = join(ROOT, "reports");
@@ -167,8 +168,14 @@ async function main() {
     }
   }
 
+  const rules = await loadRules(join(ROOT, "rules.json")).catch((e) => {
+    console.warn(`  ~ ${(e as Error).message}`);
+    return null;
+  });
+
   const html = renderReport({
     analyses,
+    rules,
     movers,
     moversScanned,
     moversNotes,

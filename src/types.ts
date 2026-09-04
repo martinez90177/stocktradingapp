@@ -236,6 +236,14 @@ export interface OptionsView {
   groups: { expiry: number; days: number; ideas: OptionIdea[] }[];
 }
 
+/** The trading rules, loaded verbatim from rules.json. */
+export interface RuleBook {
+  title: string;
+  subtitle: string;
+  groups: { name: string; rules: { rule: string; why: string }[] }[];
+  count: number;
+}
+
 /** A discovered symbol from the movers scan, analysed more lightly. */
 export interface Mover {
   symbol: string;

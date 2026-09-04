@@ -96,6 +96,36 @@ The lookup needs a connection — it is fetching live data. The saved morning
 report stays fully offline; the lookup box exists only in what the server hands
 out, never in the file itself.
 
+## Alex's Rules
+
+A button in the header opens the rules popup. Press **r** anywhere, or open
+`latest.html#rules` to land straight on it. **Esc**, the backdrop or the close
+button dismiss it.
+
+The rules live in **`rules.json`** and that file is the only author — whatever
+you write renders, in the order you write it, grouped how you group it. Nothing
+is merged in from a default set, because a rule you did not write is a rule you
+will not follow, and a rule that reappears after you delete it is worse than no
+rule at all.
+
+```json
+{
+  "name": "Chasing",
+  "rules": [
+    { "rule": "If you missed the entry, you missed the trade.",
+      "why": "The setup had a price. Above it, the odds are worse and the stop is wider." }
+  ]
+}
+```
+
+`why` is optional. A group with no rules is skipped. If the file is missing the
+button simply does not appear; if it is malformed the run says so and carries
+on without it.
+
+The groups are numbered because they are a sequence, not a set of headings —
+before you click, then the trap, then the money, then what to do when it turns,
+then how the day closes.
+
 ## The look
 
 **Typefaces are embedded, not linked.** Archivo for the interface, IBM Plex Mono

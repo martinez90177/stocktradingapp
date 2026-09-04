@@ -1,4 +1,4 @@
-import type { Analysis, Catalysts, Level, Mover, TradeGrade } from "./types.ts";
+import type { Analysis, Catalysts, Level, Mover, RuleBook, TradeGrade } from "./types.ts";
 import { C, renderChart } from "./chart.ts";
 import { etTime } from "./intraday.ts";
 import { resample, sma } from "./ta.ts";
@@ -706,6 +706,46 @@ function tickerSection(a: Analysis, lookbackDays: number, intradayDays: number):
 }
 
 /**
+ * The rules popup.
+ *
+ * A native <dialog> rather than a hand-rolled overlay: it brings focus
+ * trapping, Escape to close and a backdrop with no library, which matters on a
+ * page that has to work with no network.
+ *
+ * Groups are numbered because they are a sequence -- before you click, then the
+ * trap, then the money, then what to do when it turns, then the close. The
+ * numbers say "in this order", not "here are some headings".
+ */
+function rulesDialog(rb: RuleBook | null): string {
+  if (!rb) return "";
+  const groups = rb.groups
+    .map(
+      (g, i) => `<section class="rgroup">
+      <h3><span class="rnum">${String(i + 1).padStart(2, "0")}</span>${esc(g.name)}</h3>
+      <ol class="rlist">${g.rules
+        .map(
+          (r) => `<li>
+          <p class="rtext">${esc(r.rule)}</p>
+          ${r.why ? `<p class="rwhy">${esc(r.why)}</p>` : ""}
+        </li>`,
+        )
+        .join("")}</ol>
+    </section>`,
+    )
+    .join("");
+
+  return `<dialog id="rulesDialog" class="rules" aria-labelledby="rulesTitle">
+    <form method="dialog" class="rclose"><button value="close" aria-label="Close rules">&times;</button></form>
+    <header class="rhead">
+      <h2 id="rulesTitle">${esc(rb.title)}</h2>
+      ${rb.subtitle ? `<p>${esc(rb.subtitle)}</p>` : ""}
+    </header>
+    <div class="rbody">${groups}</div>
+    <footer class="rfoot">${rb.count} rules &middot; edit them in <code>rules.json</code> &middot; <kbd>Esc</kbd> to close</footer>
+  </dialog>`;
+}
+
+/**
  * The four numbers worth knowing before reading anything else: how much work
  * the run did, and where the attention should start.
  */
@@ -810,6 +850,8 @@ export interface ReportInput {
   intradayDays: number;
   /** Overrides the page heading, used by the ad-hoc lookup. */
   title?: string;
+  /** Trading rules for the popup; omitted means no rules button. */
+  rules?: RuleBook | null;
 }
 
 export function renderReport(input: ReportInput): string {
@@ -1173,6 +1215,45 @@ th.confh{min-width:86px}
 .viewbtn i{font-style:normal;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--bg);background:var(--dim);border-radius:4px;padding:1px 6px}
 .viewbtn.on i{background:var(--accent);color:#fff}
 
+/* Set apart from the view buttons: this one opens a dialog rather than
+   switching what is on screen, so it should not read as a third tab. */
+.rulesbtn{margin-left:auto;background:transparent;border:1px dashed var(--line2);border-radius:8px;
+  color:var(--dim);font:650 13px/1 var(--sans);padding:9px 14px;cursor:pointer;letter-spacing:.1px}
+.rulesbtn::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:var(--gold);margin-right:8px;vertical-align:middle}
+.rulesbtn:hover{color:var(--text);border-color:var(--gold);border-style:solid;background:rgba(245,165,36,.07)}
+
+dialog.rules{width:min(760px,calc(100vw - 28px));max-height:min(86vh,900px);padding:0;border:1px solid var(--line2);
+  border-radius:14px;background:var(--panel);color:var(--text);overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.6)}
+dialog.rules::backdrop{background:rgba(4,6,10,.72);backdrop-filter:blur(3px)}
+dialog.rules[open]{display:flex;flex-direction:column}
+.rclose{position:absolute;top:12px;right:12px;margin:0}
+.rclose button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line2);background:var(--panel2);
+  color:var(--dim);font-size:19px;line-height:1;cursor:pointer}
+.rclose button:hover{color:var(--text);border-color:var(--accent)}
+.rhead{padding:24px 26px 18px;border-bottom:1px solid var(--line);flex:0 0 auto}
+.rhead h2{margin:0;font-size:25px;letter-spacing:-.6px;font-weight:700;text-wrap:balance}
+.rhead p{margin:8px 0 0;color:var(--dim);font-size:13.5px;line-height:1.55;max-width:56ch}
+.rbody{padding:6px 26px 22px;overflow-y:auto;flex:1 1 auto}
+.rgroup{padding-top:20px}
+.rgroup h3{display:flex;align-items:baseline;gap:10px;margin:0 0 10px;font-size:12px;text-transform:uppercase;
+  letter-spacing:1.3px;color:var(--dim2);font-weight:650}
+.rnum{font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:0}
+ol.rlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:13px}
+ol.rlist li{border-left:2px solid var(--line2);padding-left:13px}
+ol.rlist li:hover{border-left-color:var(--gold)}
+.rtext{margin:0;font-size:14.5px;line-height:1.5;font-weight:600;letter-spacing:-.1px;text-wrap:pretty}
+.rwhy{margin:5px 0 0;font-size:12.5px;line-height:1.55;color:var(--dim);max-width:62ch;text-wrap:pretty}
+.rfoot{padding:13px 26px;border-top:1px solid var(--line);color:var(--dim2);font-size:11.5px;flex:0 0 auto;background:var(--panel2)}
+.rfoot code{font-family:var(--mono);color:var(--dim)}
+.rfoot kbd{font-family:var(--mono);border:1px solid var(--line2);border-radius:4px;padding:1px 5px;font-size:10.5px}
+@media(max-width:720px){
+  dialog.rules{max-height:92vh;border-radius:12px}
+  .rhead{padding:20px 18px 15px} .rhead h2{font-size:21px}
+  .rbody{padding:4px 18px 18px} .rfoot{padding:11px 18px}
+  .rulesbtn{margin-left:0;width:100%;text-align:center}
+}
+
 .panel.wide{grid-column:1/-1}
 .ivnote{margin:0 0 11px;font-size:12.5px;color:var(--dim);line-height:1.55}
 .ivnote b{color:var(--text)}
@@ -1264,6 +1345,7 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
   <div class="views">
     <button type="button" class="viewbtn on" data-view="watchlist">Watchlist <i>${ranked.length}</i></button>
     <button type="button" class="viewbtn" data-view="movers">Movers board <i>${input.movers.length}</i></button>
+    ${input.rules ? `<button type="button" class="rulesbtn" id="rulesOpen">${esc(input.rules.title)}</button>` : ""}
   </div>
   <nav class="navrow" id="tickerNav">${nav}</nav>
 </div></header>
@@ -1294,7 +1376,45 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
   <p>Every number here is computed from real OHLCV bars. Where a level or pattern could not be measured, the report says so rather than substituting an estimate.</p>
   <p>Technical analysis output for your own research. Not investment advice, and not a recommendation to buy or sell anything.</p>
 </footer>
+${rulesDialog(input.rules ?? null)}
 <script>
+/* Rules popup. Opens from the button, from "r", and from a #rules link so it
+   can be bookmarked straight to the rules. */
+(function () {
+  var dlg = document.getElementById("rulesDialog");
+  var btn = document.getElementById("rulesOpen");
+  if (!dlg || !btn) return;
+
+  function open() {
+    if (dlg.open) return;
+    if (typeof dlg.showModal === "function") dlg.showModal();
+    else dlg.setAttribute("open", "");
+    if (dlg.querySelector(".rbody")) dlg.querySelector(".rbody").scrollTop = 0;
+  }
+
+  btn.addEventListener("click", open);
+
+  // Clicking the backdrop closes it: the dialog itself is the click target
+  // outside its own content box.
+  dlg.addEventListener("click", function (e) {
+    if (e.target !== dlg) return;
+    var r = dlg.getBoundingClientRect();
+    var inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    if (!inside) dlg.close();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "r" && e.key !== "R") return;
+    var t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    if (dlg.open) return;
+    e.preventDefault();
+    open();
+  });
+
+  if (location.hash === "#rules") open();
+})();
+
 /* Live market clock.
    The report is read in the hour before the bell, so the single most useful
    moving number on the page is how long is left. Everything else here is a

@@ -1,0 +1,124 @@
+{
+  "_comment": "Alex's Rules. Edit freely - this file is yours. Every rule renders in the popup exactly as written here, in this order. Add, delete, reword. A group with no rules is skipped.",
+  "title": "Alex's Rules",
+  "subtitle": "Read before the bell. The market pays for discipline, not for being right.",
+  "groups": [
+    {
+      "name": "Before you click",
+      "rules": [
+        {
+          "rule": "Entry, stop and target — say all three out loud before you click.",
+          "why": "If you cannot state all three, you do not have a trade. You have an opinion."
+        },
+        {
+          "rule": "Trade the plan you wrote before the open, not the one you invent at 10:05.",
+          "why": "The plan was written by the calm version of you. The 10:05 version has money on the line."
+        },
+        {
+          "rule": "Size from the stop distance, never from how confident you feel.",
+          "why": "Confidence is not information. The stop is the only thing that decides what a loss costs."
+        },
+        {
+          "rule": "Set the maximum you will lose today before the open. When you hit it, you are done.",
+          "why": "The number is easy to pick at 8am and impossible to pick at 2pm down three trades."
+        },
+        {
+          "rule": "No setup, no trade. Boredom is not a signal.",
+          "why": "Most days have two or three real setups. Everything else is the market taking commissions."
+        }
+      ]
+    },
+    {
+      "name": "Chasing",
+      "rules": [
+        {
+          "rule": "If you missed the entry, you missed the trade.",
+          "why": "The setup had a price. Above that price it is a different trade with worse odds and a wider stop."
+        },
+        {
+          "rule": "A stock that already ran to your target is not an entry. It is someone else's exit.",
+          "why": "You would be buying the profit of whoever got in at the level you were watching."
+        },
+        {
+          "rule": "If price is more than one ATR past your level, the trade is gone. Wait for the pullback or move on.",
+          "why": "Entering extended means your stop is now further away and your target is now closer. Both sides get worse."
+        },
+        {
+          "rule": "The next setup is not a reward for missing this one, and not a punishment either.",
+          "why": "Treating the next trade as a make-up trade is how one miss becomes three losses."
+        },
+        {
+          "rule": "Urgency is the signal to stand up, not to click.",
+          "why": "Nothing about a good setup requires you to hurry. The feeling of hurry is information about you, not the chart."
+        }
+      ]
+    },
+    {
+      "name": "Money and emotion",
+      "rules": [
+        {
+          "rule": "Watch the level, not the P&L in dollars.",
+          "why": "Dollars make you exit winners early and hold losers long. The level tells you whether you are still right."
+        },
+        {
+          "rule": "Never add to a loser to improve the average.",
+          "why": "You are increasing risk precisely when the trade is telling you the read was wrong."
+        },
+        {
+          "rule": "Revenge trading is the most expensive habit in the market.",
+          "why": "The market does not know you lost, and will not give it back because you asked louder."
+        },
+        {
+          "rule": "Protect a green day. After a good gain, cut size or stop.",
+          "why": "Giving back a winning day costs twice: the money, and the belief that you can hold a win."
+        },
+        {
+          "rule": "Greed is just an exit you did not plan.",
+          "why": "If the target was written down, taking it is not leaving money behind. It is doing the job."
+        }
+      ]
+    },
+    {
+      "name": "When it goes against you",
+      "rules": [
+        {
+          "rule": "Take the stop. Every time.",
+          "why": "The stop is the cost of being wrong, and being wrong is a normal, budgeted part of the work."
+        },
+        {
+          "rule": "Never move a stop away from price. Closer is fine, further is never fine.",
+          "why": "Widening a stop converts a planned small loss into an unplanned large one."
+        },
+        {
+          "rule": "If the reason you entered is gone, exit — even at breakeven, even at a small profit.",
+          "why": "You are not paid for holding. You are paid for being in position while the reason holds."
+        },
+        {
+          "rule": "Two losses in a row: stand up and walk away for ten minutes.",
+          "why": "The third trade after two losses is almost never taken by the calm version of you."
+        }
+      ]
+    },
+    {
+      "name": "Ending the day",
+      "rules": [
+        {
+          "rule": "Grade the execution, not the outcome.",
+          "why": "A well-executed trade can lose and a reckless one can win. Only one of those is repeatable."
+        },
+        {
+          "rule": "Log every trade, including the good setups you correctly skipped.",
+          "why": "The skips are evidence of discipline, and they are invisible unless you write them down."
+        },
+        {
+          "rule": "One setup executed a hundred times beats ten setups executed once.",
+          "why": "An edge is a thing you can measure. You cannot measure something you only did once."
+        },
+        {
+          "rule": "Write one line: what did I do today that I would not want to repeat?",
+          "why": "The leak is usually the same leak. Naming it is most of the fix."
+        }
+      ]
+    }
+  ]
+}

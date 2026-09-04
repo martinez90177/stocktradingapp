@@ -15,6 +15,7 @@ import { dirname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { analyzeSymbol } from "./src/pipeline.ts";
 import { renderReport } from "./src/report.ts";
+import { loadRules } from "./src/rules.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "reports");
@@ -147,7 +148,8 @@ async function handleLookup(url) {
   analyses.sort((a, b) => b.grade.total - a.grade.total);
   const html = withBar(
     renderReport({
-      analyses, movers: [], moversScanned: 0, moversNotes: [], failures,
+      analyses, rules: await loadRules(join(HERE, "rules.json")).catch(() => null),
+      movers: [], moversScanned: 0, moversNotes: [], failures,
       generatedAt: new Date(), lookbackDays: 180, intradayDays: 2,
       title: `Lookup: ${analyses.map((a) => a.symbol).join(", ")}`,
     }),

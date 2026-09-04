@@ -13,6 +13,7 @@ import type { Analysis } from "./src/types.ts";
 import { mapPool } from "./src/yahoo.ts";
 import { analyzeSymbol, levelsText } from "./src/pipeline.ts";
 import { renderReport } from "./src/report.ts";
+import { loadRules } from "./src/rules.ts";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const REPORTS = join(ROOT, "reports");
@@ -80,6 +81,7 @@ async function main() {
 
   const html = renderReport({
     analyses,
+    rules: await loadRules(join(ROOT, "rules.json")).catch(() => null),
     movers: [],
     moversScanned: 0,
     moversNotes: [],
