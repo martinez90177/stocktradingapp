@@ -649,7 +649,6 @@ function tickerSection(a: Analysis, lookbackDays: number, intradayDays: number):
     ${errs}
     ${planStrip(a)}
     ${catalystChips(a.catalysts)}
-    ${blk("session", "Prior session", a.session?.shapeSummary ?? "", sessionBlock(a))}
     ${blk("charts", "Charts", `${visible.length} daily sessions`, `<div class="chartwrap"><div class="chartlabel">Daily &middot; ${visible.length} sessions &middot; levels, fib and pattern overlay</div>${dailyChart}</div>
     <div class="legend">
       <span><i style="background:${C.ma20}"></i>20 SMA</span>
@@ -661,6 +660,7 @@ function tickerSection(a: Analysis, lookbackDays: number, intradayDays: number):
       <span><i style="background:${C.resistance}"></i>Resistance</span>
     </div>
     ${intraChart}`)}
+    ${blk("session", "Prior session", a.session?.shapeSummary ?? "", sessionBlock(a))}
     ${blk("levels", "Levels in play", `${a.levels.length} mapped`, keyLevelsBlock(a))}
     <details class="more">
       <summary>Full detail &mdash; all levels, every pattern, Fibonacci tables, intraday reference, indicators</summary>
