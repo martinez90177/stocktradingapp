@@ -1,26 +1,32 @@
 import type { Bar, FibSet, Level, Pattern } from "./types.ts";
 
-/* Palette tuned to read like a dark trading terminal. */
+/**
+ * Chart palette.
+ *
+ * Semantic colours (up, down, the amber of a fib zone) are held apart from the
+ * indigo the interface uses as its accent, so a green line never has to be read
+ * as "selected" and the accent never has to be read as "rising".
+ */
 export const C = {
-  bg: "#0f1420",
-  grid: "#1c2333",
-  gridStrong: "#242c40",
-  text: "#7d8799",
-  textBright: "#d5dae5",
-  up: "#26a69a",
-  down: "#ef5350",
-  upFill: "#26a69a",
-  downFill: "#ef5350",
-  ma20: "#f0b90b",
-  ma50: "#2f80ed",
-  ma200: "#e0509a",
-  vwap: "#9b8cff",
-  support: "#26a69a",
-  resistance: "#ef5350",
-  neutral: "#8892a6",
-  fib: "#c9a227",
-  golden: "#e6b422",
-  price: "#e8eaed",
+  bg: "#0b1017",
+  grid: "#19212c",
+  gridStrong: "#243040",
+  text: "#7b8695",
+  textBright: "#d7dde6",
+  up: "#2dd4a7",
+  down: "#f4525f",
+  upFill: "#2dd4a7",
+  downFill: "#f4525f",
+  ma20: "#f5a524",
+  ma50: "#7b6cf6",
+  ma200: "#ef5da8",
+  vwap: "#4cc9f0",
+  support: "#2dd4a7",
+  resistance: "#f4525f",
+  neutral: "#7b8695",
+  fib: "#c08a2e",
+  golden: "#f5a524",
+  price: "#eef2f7",
 };
 
 /** Unique clipPath ids: a page holds many charts and duplicate ids collide. */
@@ -150,28 +156,28 @@ export function renderChart(o: ChartOptions): string {
   // will cover. Drawing the labels first and stamping tags over them leaves
   // half-hidden numbers peeking out from behind the boxes.
   type Tag = { y: number; text: string; color: string; bold?: boolean };
-  const levels = o.levels ?? [];
-  // Only the strongest levels earn a tag, and only as many as fit without the
-  // column becoming a solid block. Tagging all of them buries the last price,
-  // which is the one tag that always matters.
-  const maxTags = Math.max(3, Math.min(6, Math.floor(plotH / (tagH * 2.1))));
-  const tagged = new Set([...levels].sort((a, b) => b.score - a.score).slice(0, maxTags));
   const inPane = (yy: number) => yy >= padT - 2 && yy <= padT + plotH + 2;
 
-  const rawTags: Tag[] = [];
-  for (const l of levels) {
-    if (!tagged.has(l) || !inPane(y(l.price))) continue;
-    const col = l.side === "resistance" ? C.resistance : l.side === "support" ? C.support : C.price;
-    rawTags.push({ y: y(l.price), text: fmtPrice(l.price), color: col });
-  }
-  for (const h of o.hlines ?? []) {
-    if (inPane(y(h.price))) rawTags.push({ y: y(h.price), text: fmtPrice(h.price), color: h.color });
-  }
-  const priceY = y(o.price);
-  if (inPane(priceY)) rawTags.push({ y: priceY, text: fmtPrice(o.price), color: C.price, bold: true });
+  // The price axis carries the grid and the last price, and nothing else.
+  // Every level used to claim its own tag here, which stacked the right edge
+  // into a wall of boxes and buried the one number that always matters. Levels
+  // are now labelled on the line itself, inside the plot.
+  const levels = o.levels ?? [];
+  // Four is about what a reader takes in at a glance; the rest stay as faint
+  // lines, and the full list is in the table under the chart.
+  const maxLabels = Math.max(2, Math.min(4, Math.floor(plotH / 34)));
+  const labelled = new Set(
+    [...levels]
+      .filter((l) => inPane(y(l.price)))
+      .sort((a, b) => Math.abs(a.price - o.price) - Math.abs(b.price - o.price))
+      .slice(0, maxLabels),
+  );
 
-  const placedTags = decollide(rawTags, tagH + 1.5, padT + 5, padT + plotH - 1) as Tag[];
-  const coveredByTag = (yy: number) => placedTags.some((t) => Math.abs(t.y - yy) < tagH * 0.85);
+  const priceY = y(o.price);
+  const placedTags: Tag[] = inPane(priceY)
+    ? [{ y: priceY, text: fmtPrice(o.price), color: C.price, bold: true }]
+    : [];
+  const coveredByTag = (yy: number) => placedTags.some((t) => Math.abs(t.y - yy) < tagH * 1.15);
 
   const out: string[] = [];
   out.push(
@@ -326,24 +332,34 @@ export function renderChart(o: ChartOptions): string {
 
   /* ---- levels + right-axis tags ----------------------------------- */
 
+  // Labels ride the right end of their own line, inside the plot, and are
+  // de-collided among themselves so a cluster of levels stays readable.
+  const lineLabels: { y: number; text: string; color: string }[] = [];
+
   for (const l of levels) {
     const yy = y(l.price);
     if (!inPane(yy)) continue;
     const col = l.side === "resistance" ? C.resistance : l.side === "support" ? C.support : C.price;
-    const weight = Math.min(1.8, 0.6 + l.score / 18);
-    const alpha = Math.min(0.8, 0.22 + l.score / 38);
+    const strong = labelled.has(l);
+    const weight = strong ? Math.min(1.6, 0.75 + l.score / 22) : 0.7;
+    const alpha = strong ? Math.min(0.7, 0.3 + l.score / 42) : 0.16;
     out.push(`<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${padL + plotW}" y2="${yy.toFixed(1)}" stroke="${col}" stroke-width="${weight.toFixed(2)}" opacity="${alpha.toFixed(2)}"/>`);
+    if (strong) lineLabels.push({ y: yy, text: `${fmtPrice(l.price)}  ${l.methods.length}x`, color: col });
   }
 
   for (const h of o.hlines ?? []) {
     const yy = y(h.price);
     if (!inPane(yy)) continue;
-    out.push(`<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${padL + plotW}" y2="${yy.toFixed(1)}" stroke="${h.color}" stroke-width="1.1" opacity="0.8"${h.dashed !== false ? ' stroke-dasharray="5 4"' : ""}/>`);
-    out.push(`<text x="${padL + 5}" y="${(yy - 3).toFixed(1)}" fill="${h.color}" font-size="${fs(9.5)}" opacity="0.95" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">${esc(h.label)}</text>`);
+    out.push(`<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${padL + plotW}" y2="${yy.toFixed(1)}" stroke="${h.color}" stroke-width="1.1" opacity="0.75"${h.dashed !== false ? ' stroke-dasharray="5 4"' : ""}/>`);
+    out.push(`<text x="${padL + 5}" y="${(yy - 3).toFixed(1)}" fill="${h.color}" font-size="${fs(9.5)}" opacity="0.95" font-family="'IBM Plex Mono',ui-monospace,Menlo,monospace">${esc(h.label)} ${fmtPrice(h.price)}</text>`);
+  }
+
+  for (const t of decollide(lineLabels, 15 * tk, padT + 8, padT + plotH - 4)) {
+    out.push(`<text x="${padL + plotW - 5}" y="${(t.y - 3.5).toFixed(1)}" fill="${t.color}" font-size="${(9.5 * tk).toFixed(1)}" text-anchor="end" opacity="0.95" font-family="'IBM Plex Mono',ui-monospace,Menlo,monospace" font-weight="600">${esc(t.text as string)}</text>`);
   }
 
   if (inPane(priceY)) {
-    out.push(`<line x1="${padL}" y1="${priceY.toFixed(1)}" x2="${padL + plotW}" y2="${priceY.toFixed(1)}" stroke="${C.price}" stroke-width="1" stroke-dasharray="2 3" opacity="0.75"/>`);
+    out.push(`<line x1="${padL}" y1="${priceY.toFixed(1)}" x2="${padL + plotW}" y2="${priceY.toFixed(1)}" stroke="${C.price}" stroke-width="1" stroke-dasharray="2 3" opacity="0.8"/>`);
   }
 
   for (const t of placedTags) {

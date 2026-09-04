@@ -2,6 +2,7 @@ import type { Analysis, Catalysts, Level, Mover, TradeGrade } from "./types.ts";
 import { C, renderChart } from "./chart.ts";
 import { etTime } from "./intraday.ts";
 import { resample, sma } from "./ta.ts";
+import { FONT_CSS } from "./fonts.ts";
 
 const esc = (s: string) =>
   String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -704,6 +705,27 @@ function tickerSection(a: Analysis, lookbackDays: number, intradayDays: number):
   </section>`;
 }
 
+/**
+ * The four numbers worth knowing before reading anything else: how much work
+ * the run did, and where the attention should start.
+ */
+function railStats(ranked: Analysis[], movers: Mover[]): string {
+  const gapping = ranked.filter((a) => Math.abs(a.intradayContext.gapPct ?? 0) >= 1).length;
+  const triggered = ranked.filter((a) => a.patterns.some((p) => p.status === "triggered")).length;
+  const best = ranked[0];
+
+  const cell = (value: string, label: string, tone = "") =>
+    `<div class="railcell"><b class="${tone}">${value}</b><span>${label}</span></div>`;
+
+  return [
+    cell(String(ranked.length), "symbols read"),
+    cell(best ? `${esc(best.symbol)} ${esc(best.grade.letter)}` : "&mdash;", "top grade", "hl"),
+    cell(String(gapping), "gapping over 1%", gapping > 0 ? "hot" : ""),
+    cell(String(triggered), "patterns triggered", triggered > 0 ? "hot" : ""),
+    cell(String(movers.length), "movers found"),
+  ].join("");
+}
+
 /* ------------------------------------------------------------------ *
  * Movers board
  * ------------------------------------------------------------------ */
@@ -858,13 +880,20 @@ export function renderReport(input: ReportInput): string {
 <meta name="color-scheme" content="dark">
 <title>${esc(input.title ?? "Market Prep")} &middot; ${esc(dateLine)}</title>
 <style>
+${FONT_CSS}
 :root{
-  --bg:#0a0e17; --panel:#111725; --panel2:#0f1420; --line:#1e2637; --line2:#2a3448;
-  --text:#e6eaf2; --dim:#8b95a8; --dim2:#6b7488;
-  --up:#26a69a; --down:#ef5350; --gold:#e6b422; --accent:#3f7fff;
+  /* Neutrals carry a faint indigo bias so they sit under the accent rather
+     than beside it; a pure grey would read as unconsidered. */
+  --bg:#080b11; --panel:#121826; --panel2:#0d1220; --line:#1d2637; --line2:#2b3547;
+  --text:#e9edf5; --dim:#8994a6; --dim2:#67717f;
+  /* Semantic colours are fixed and never borrowed for interface state. */
+  --up:#2dd4a7; --down:#f4525f; --gold:#f5a524;
+  /* The accent is deliberately none of the three semantic hues, so "selected"
+     can never be misread as rising, falling or warning. */
+  --accent:#7b6cf6; --accent-soft:rgba(123,108,246,.14);
   color-scheme:dark;
-  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:'Archivo',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -874,14 +903,36 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--sans);p
 .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
 a{color:inherit;text-decoration:none}
 
-header.top{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0d1220,#0a0e17);padding:22px 0 0}
-.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.brand h1{margin:0;font-size:19px;letter-spacing:-.2px;font-weight:680}
-.brand .date{color:var(--dim);font-size:13px}
-.phase{margin-left:auto;font-size:11.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
-.phase.open{color:var(--up);border-color:rgba(38,166,154,.45);background:rgba(38,166,154,.1)}
-.phase.pre{color:var(--gold);border-color:rgba(230,180,34,.4);background:rgba(230,180,34,.09)}
-.gen{color:var(--dim2);font-size:12px;margin:6px 0 0}
+header.top{border-bottom:1px solid var(--line);padding:26px 0 0;position:relative;overflow:hidden}
+/* A single faint indigo wash behind the masthead: the one flourish on the
+   page, so the accent has somewhere to live besides small controls. */
+header.top::before{content:"";position:absolute;inset:-60% -20% auto -20%;height:220%;
+  background:radial-gradient(60% 55% at 18% 40%,rgba(123,108,246,.16),transparent 70%);pointer-events:none}
+header.top>.wrap{position:relative}
+.brand{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.mark h1{margin:0;font-size:31px;line-height:1;letter-spacing:-1.1px;font-weight:700;text-wrap:balance}
+.mark .date{display:block;color:var(--dim);font-size:13px;margin-top:7px;letter-spacing:.1px}
+.clock{margin-left:auto;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.phase{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;padding:3px 10px;border-radius:999px;
+  border:1px solid var(--line2);color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.phase .pulse{width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.phase.open{color:var(--up);border-color:rgba(45,212,167,.45);background:rgba(45,212,167,.1)}
+.phase.open .pulse{animation:beat 1.8s ease-in-out infinite}
+.phase.pre{color:var(--gold);border-color:rgba(245,165,36,.4);background:rgba(245,165,36,.09)}
+@keyframes beat{0%,100%{opacity:1}50%{opacity:.25}}
+@media(prefers-reduced-motion:reduce){.phase.open .pulse{animation:none}}
+#countdown{font-size:27px;line-height:1.05;font-weight:600;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.clocknote{font-size:10.5px;color:var(--dim2);text-transform:uppercase;letter-spacing:1px}
+
+.rail{display:flex;gap:0;flex-wrap:wrap;margin:20px 0 0;border-top:1px solid var(--line)}
+.railcell{padding:12px 22px 12px 0;margin-right:22px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:3px}
+.railcell:last-child{border-right:0;margin-right:0}
+.railcell b{font-family:var(--mono);font-size:17px;font-weight:600;letter-spacing:-.3px}
+/* Named apart from .warn, which is the bordered warning box elsewhere on the
+   page and would otherwise wrap these figures in a panel. */
+.railcell b.hl{color:var(--accent)} .railcell b.hot{color:var(--gold)}
+.railcell span{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim2)}
+.gen{color:var(--dim2);font-size:11.5px;margin:12px 0 0}
 .navrow{display:flex;gap:6px;overflow-x:auto;padding:14px 0 12px;scrollbar-width:thin}
 .navchip{flex:0 0 auto;border:1px solid var(--line2);border-radius:7px;padding:5px 9px;display:flex;gap:7px;align-items:baseline;background:var(--panel2);font-size:12px}
 .navchip b{font-size:12.5px;letter-spacing:.2px}
@@ -1196,11 +1247,20 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
 </head><body><a id="top"></a>
 <header class="top"><div class="wrap">
   <div class="brand">
-    <h1>${esc(input.title ?? "Market Prep")}</h1>
-    <span class="date">${esc(dateLine)}</span>
-    <span class="phase ${phase.tone}">${phase.label}</span>
+    <div class="mark">
+      <h1>${esc(input.title ?? "Market Prep")}</h1>
+      <span class="date">${esc(dateLine)}</span>
+    </div>
+    <div class="clock">
+      <span class="phase ${phase.tone}" id="phaseLabel"><i class="pulse"></i>${phase.label}</span>
+      <b class="mono" id="countdown">&mdash;</b>
+      <span class="clocknote" id="countdownNote">to the opening bell</span>
+    </div>
   </div>
-  <p class="gen">Generated ${esc(etTime(generatedAt.getTime()))} ET &middot; ${analyses.length} symbol${analyses.length === 1 ? "" : "s"} analyzed &middot; measured from Yahoo Finance OHLCV</p>
+  <div class="rail">
+    ${railStats(ranked, input.movers)}
+  </div>
+  <p class="gen">Generated ${esc(etTime(generatedAt.getTime()))} ET &middot; measured from Yahoo Finance OHLCV</p>
   <div class="views">
     <button type="button" class="viewbtn on" data-view="watchlist">Watchlist <i>${ranked.length}</i></button>
     <button type="button" class="viewbtn" data-view="movers">Movers board <i>${input.movers.length}</i></button>
@@ -1235,6 +1295,75 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
   <p>Technical analysis output for your own research. Not investment advice, and not a recommendation to buy or sell anything.</p>
 </footer>
 <script>
+/* Live market clock.
+   The report is read in the hour before the bell, so the single most useful
+   moving number on the page is how long is left. Everything else here is a
+   measurement of the past; this is the one thing happening now. */
+(function () {
+  var out = document.getElementById("countdown");
+  var note = document.getElementById("countdownNote");
+  var label = document.getElementById("phaseLabel");
+  if (!out) return;
+
+  var FMT = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York", hour12: false,
+    weekday: "short", hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+
+  function etParts(d) {
+    var p = {};
+    FMT.formatToParts(d).forEach(function (x) { p[x.type] = x.value; });
+    return {
+      weekday: p.weekday,
+      secs: (+p.hour) * 3600 + (+p.minute) * 60 + (+p.second),
+    };
+  }
+
+  var OPEN = 9.5 * 3600, CLOSE = 16 * 3600, PRE = 4 * 3600;
+
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function hms(s) {
+    s = Math.max(0, Math.round(s));
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return h + ":" + pad(m) + ":" + pad(s % 60);
+  }
+
+  function tick() {
+    var t = etParts(new Date());
+    var weekend = t.weekday === "Sat" || t.weekday === "Sun";
+    var s = t.secs;
+    var text, sub, tone, phase;
+
+    if (weekend) {
+      text = "Closed"; sub = "weekend"; tone = "muted"; phase = "Weekend";
+    } else if (s < OPEN) {
+      text = hms(OPEN - s);
+      sub = s < PRE ? "to the opening bell" : "to the opening bell &middot; premarket open";
+      tone = s < PRE ? "muted" : "pre";
+      phase = s < PRE ? "Overnight" : "Pre-market";
+    } else if (s < CLOSE) {
+      text = hms(CLOSE - s); sub = "left in the session"; tone = "open"; phase = "Session open";
+    } else {
+      // Friday after the close counts to Monday, so the figure is never wrong.
+      var toNext = (24 * 3600 - s) + OPEN + (t.weekday === "Fri" ? 2 * 24 * 3600 : 0);
+      text = hms(toNext); sub = "to the next open"; tone = "muted";
+      phase = s < 20 * 3600 ? "After hours" : "Market closed";
+      if (s >= 20 * 3600 || t.weekday === "Fri") tone = "muted"; else tone = "pre";
+    }
+
+    out.textContent = text;
+    if (note) note.innerHTML = sub;
+    if (label) {
+      label.classList.remove("open", "pre", "muted");
+      label.classList.add(tone);
+      label.innerHTML = '<i class="pulse"></i>' + phase;
+    }
+  }
+
+  tick();
+  setInterval(tick, 1000);
+})();
+
 /* Collapsible blocks. State is stored per block kind, so collapsing "Charts"
    once collapses it on every ticker and the choice survives a reload. */
 (function () {

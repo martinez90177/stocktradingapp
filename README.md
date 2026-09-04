@@ -96,6 +96,43 @@ The lookup needs a connection — it is fetching live data. The saved morning
 report stays fully offline; the lookup box exists only in what the server hands
 out, never in the file itself.
 
+## The look
+
+**Typefaces are embedded, not linked.** Archivo for the interface, IBM Plex Mono
+for every figure. They are inlined into the CSS as base64 woff2, because a
+Google Fonts `<link>` would silently fall back to system faces on a phone with
+no signal — which is exactly when this gets read. Costs about 170KB once.
+Regenerate only if you change typefaces:
+
+```bash
+node tools/build-fonts.mjs
+```
+
+**The accent is deliberately none of the semantic colours.** Green means rising,
+red means falling, amber means warning — so the indigo used for selection and
+emphasis can never be misread as any of them. Neutrals carry a faint indigo bias
+rather than being flat grey.
+
+**The masthead runs a live clock** counting to the opening bell, to the close
+while the session is open, or to the next open after hours (it jumps the weekend
+on a Friday). Beside it, five figures orient you before you read anything:
+symbols read, the top grade, how many are gapping over 1%, how many patterns
+have triggered, and how many movers were found.
+
+It does not know about market holidays, so on one of those it counts to an open
+that will not happen.
+
+## Reading the chart
+
+The price axis carries the grid and **the last price, and nothing else**. Levels
+are labelled on their own line instead, at the right end inside the plot, as
+price plus the number of methods agreeing — `382.74  3x`.
+
+Only the four levels nearest price get a label; the rest stay as faint lines,
+with the full list in the table underneath. Every level used to claim its own
+tag on the axis, which stacked the right edge into a wall of boxes and buried
+the one number that always matters.
+
 ## Collapsing sections
 
 Every tall block — the watchlist board, prior session, charts, levels in play,
