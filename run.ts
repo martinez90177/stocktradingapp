@@ -8,6 +8,7 @@ import { renderReport, marketPhase } from "./src/report.ts";
 import { discoverMovers } from "./src/movers.ts";
 import { loadRules } from "./src/rules.ts";
 import { renderPractice } from "./src/practice.ts";
+import { harvest, loadForEmbed } from "./src/replay.ts";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const REPORTS = join(ROOT, "reports");
@@ -194,8 +195,15 @@ async function main() {
 
   // The practice terminal is a sibling page, written next to the report so the
   // link between them works from the file system, OneDrive or a web host alike.
+  const SESSIONS = join(ROOT, "sessions");
+  if (flags["no-replay"] !== true) {
+    const h = await harvest(config.symbols.slice(0, 6), SESSIONS, CACHE, (m) => console.warn(`  ~ ${m}`));
+    console.log(`  replay library: ${h.added} new, ${h.total} sessions total`);
+  }
+
   try {
-    const practice = await renderPractice(join(ROOT, "src", "vendor", "practice-app.html"));
+    const sessions = await loadForEmbed(SESSIONS, 30);
+    const practice = await renderPractice(join(ROOT, "src", "vendor", "practice-app.html"), "latest.html", sessions);
     await writeFile(join(REPORTS, "practice.html"), practice, "utf8");
   } catch (e) {
     console.warn(`  ~ practice page not written (${(e as Error).message})`);

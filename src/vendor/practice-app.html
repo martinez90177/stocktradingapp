@@ -148,7 +148,7 @@ footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-h
     <select class="tksel" id="tk"></select>
     <span class="px" id="px">—</span>
     <span class="chg u" id="chg">—</span>
-    <div class="clk"><span id="clk">9:45</span><br><span id="sub" style="font-size:10px">5m · live</span></div>
+    <div class="clk"><span id="clk">9:45</span><br><span id="sub" style="font-size:10px">5m · live</span><br><span id="sess" style="font-size:10px"></span></div>
   </div>
   <div class="ohlc" id="ohlc"></div>
 </div>
@@ -218,6 +218,19 @@ const TICKERS={
   NVDA:{px:139,v:.0030,iv:.50,inc:1},
   TSLA:{px:262,v:.0035,iv:.58,inc:2.5}
 };
+/**
+ * Config for a symbol. Recorded sessions can carry any ticker, so an unknown
+ * one gets an increment derived from its price and a middling vol base instead
+ * of crashing the pane that asks for it.
+ */
+function cfg(t){
+  const known=TICKERS[t];
+  if(known)return known;
+  let px=100;
+  try{px=price();}catch(e){}
+  const inc=px>=500?5:px>=200?2.5:px>=40?1:px>=10?.5:.25;
+  return {px,v:.002,iv:.35,inc};
+}
 const TFS=[{k:'1m',m:1},{k:'2m',m:2},{k:'5m',m:5},{k:'10m',m:10},{k:'15m',m:15},
   {k:'30m',m:30},{k:'1H',m:60},{k:'4H',m:240},{k:'1D',m:'D'}];
 const MPD=390,HIST=34,OR_MIN=15,LV=[0,.236,.382,.5,.618,.786,1],YEAR=252*390;
@@ -251,7 +264,7 @@ function bs(S0,K,T,iv,type){
   return {price:Math.max(price,0),delta,gamma,theta,vega};
 }
 function ivFor(K,S0,dte){
-  const base=TICKERS[S.ticker].iv;
+  const base=cfg(S.ticker).iv;
   const mny=Math.abs(K-S0)/S0;
   const smile=1+3.2*mny;                       // OTM richer
   const term=dte===0?1.55:dte<=1?1.25:1;       // 0DTE elevated
@@ -270,7 +283,7 @@ function quote(K,type,exDays,under){
     thetaHr:g.theta*60};
 }
 function strikes(under){
-  const inc=TICKERS[S.ticker].inc;
+  const inc=cfg(S.ticker).inc;
   const atm=Math.round(under/inc)*inc;
   const out=[];for(let k=-5;k<=5;k++)out.push(+(atm+k*inc).toFixed(2));
   return out;
@@ -283,8 +296,8 @@ function build(ticker,regime,vm,seed){
     return Math.sqrt(-2*Math.log(u))*Math.cos(6.283185*v);};
   let reg=regime;
   if(reg==='random')reg=['trendup','trenddown','chop','fakeout','chop','trendup','trenddown','fakeout'][Math.floor(rng()*8)];
-  const cfg=TICKERS[ticker],mv=cfg.v*vm/Math.sqrt(5);
-  let price=cfg.px*(1-.05+rng()*.10);
+  const gcfg=TICKERS[ticker]||{px:100,v:.002,iv:.35,inc:1},mv=gcfg.v*vm/Math.sqrt(5);
+  let price=gcfg.px*(1-.05+rng()*.10);
   const mins=[],dates=[];
   let d=new Date(2026,8,4),stack=[];
   for(let i=0;i<=HIST;i++){stack.push(new Date(d));do{d.setDate(d.getDate()-1);}while(d.getDay()===0||d.getDay()===6);}
@@ -308,32 +321,85 @@ function build(ticker,regime,vm,seed){
       const uv=mv*(1+1.7*Math.exp(-m/26)+.5*Math.exp(-(MPD-m)/34));
       const o=price;let c=o*(1+g()*uv+bias);
       const h=Math.max(o,c)+Math.abs(g())*uv*o*.5, l=Math.min(o,c)-Math.abs(g())*uv*o*.5;
-      const v=Math.round((1+3.2*Math.exp(-m/24)+1.2*Math.exp(-(MPD-m)/30)+rng()*.8)*(cfg.px>300?2.2e4:6e4));
+      const v=Math.round((1+3.2*Math.exp(-m/24)+1.2*Math.exp(-(MPD-m)/30)+rng()*.8)*(gcfg.px>300?2.2e4:6e4));
       mins.push({o,h,l,c,v,day,m});price=c;
     }
   }
   return {mins,reg,dates};
 }
-function init(ticker,regime,vm,seed){
+/* Real recorded sessions, embedded at build time. Each entry is one measured
+   trading day of 1-minute bars. Empty means none were available, and the
+   generator below is used instead. */
+const REPLAY=window.MP_SESSIONS||[];
+let HISTN=HIST;
+
+/** Turns embedded sessions into the minute array the engine expects. */
+function fromReplay(pick){
+  const sess=REPLAY.filter(r=>r.symbol===pick.symbol).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!sess.length)return null;
+  // The chosen day is the one traded; everything before it is real history.
+  let end=sess.findIndex(r=>r.date===pick.date);
+  if(end<0)end=sess.length-1;
+  const use=sess.slice(0,end+1);
+  const mins=[],dates=[];
+  use.forEach((r,day)=>{
+    dates.push(new Date(r.date+'T12:00:00Z'));
+    r.bars.forEach((b,m)=>mins.push({o:b[0],h:b[1],l:b[2],c:b[3],v:b[4],day,m}));
+  });
+  return {mins,dates,days:use.length,carried:use[use.length-1].carried,date:use[use.length-1].date};
+}
+
+/**
+ * A random recorded session, optionally restricted to one symbol. Returns null
+ * when nothing is embedded, which sends init() down the generator path.
+ */
+function randomReplay(symbol){
+  const pool=symbol?REPLAY.filter(r=>r.symbol===symbol):REPLAY;
+  if(!pool.length)return null;
+  const r=pool[Math.floor(Math.random()*pool.length)];
+  return {symbol:r.symbol,date:r.date};
+}
+
+function init(ticker,regime,vm,seed,replayPick){
   const sd=seed??Math.floor(Math.random()*90000+10000);
-  const {mins,reg,dates}=build(ticker,regime,vm,sd);
-  S={ticker,regime,reg,vm,seed:sd,mins,dates,cursor:OR_MIN,tf:'5m',
+  let mins,reg,dates,live=null;
+  const pick=replayPick===undefined?randomReplay(ticker):replayPick;
+  if(pick)live=fromReplay(pick);
+  if(live){
+    mins=live.mins;dates=live.dates;reg='recorded';
+    HISTN=live.days-1;ticker=pick.symbol;
+  }else{
+    HISTN=HIST;
+    ({mins,reg,dates}=build(ticker,regime,vm,sd));
+  }
+  const tkEl=document.getElementById('tk');
+  if(tkEl&&ticker&&tkEl.value!==ticker)tkEl.value=ticker;
+  S={ticker,regime,reg,vm,seed:sd,mins,dates,cursor:OR_MIN,tf:'5m',replay:live,
     or:null,fib:null,brk:null,brkMin:null,
     mode:'options',optType:'call',strike:null,exDays:0,
     pos:null,trades:[],draw:[],pend:null,log:[],autoTrim:false,
     ind:{fib:1,or:1,vwap:0,ema9:0,ema20:0,vol:1,magnet:1},
     tool:'cursor',tab:'trade',auto:null,
-    view:{right:null,count:window.innerWidth<600?46:80},yMan:null,
+    // Fewer bars on screen means wider candles and a tighter price range, so
+    // bodies read at a glance instead of as a hairline. Zoom out for context.
+    view:{right:null,count:window.innerWidth<600?32:54},yMan:null,
     hover:null,cache:{}};
   setRange();
-  S.strike=Math.round(price()/TICKERS[ticker].inc)*TICKERS[ticker].inc;
-  log('Session loaded — '+ticker+'. Opening range set from 9:30–9:45.','hl');
+  S.strike=Math.round(price()/cfg(ticker).inc)*cfg(ticker).inc;
+  const sessEl=document.getElementById('sess');
+  if(sessEl)sessEl.textContent=live?live.date:'generated';
+  if(live){
+    log('Recorded session — '+ticker+' '+live.date+', real 1-minute bars. Opening range set from 9:30–9:45.','hl');
+    if(live.carried)log(live.carried+' minute(s) that day had no trade and are carried flat at the prior close.','y');
+  }else{
+    log('Generated session — '+ticker+'. No recorded days are embedded, so this is a simulated random walk.','y');
+  }
   resize();renderAll();
 }
 function log(t,c){S.log.push({t,c});if(S.tab==='tape')pane();}
 
 /* ================= helpers ================= */
-const todayStart=()=>HIST*MPD;
+const todayStart=()=>HISTN*MPD;
 const revealed=()=>todayStart()+S.cursor;
 const price=()=>S.mins[revealed()-1].c;
 function tfMin(){return TFS.find(t=>t.k===S.tf).m;}
@@ -506,7 +572,13 @@ window.addEventListener('orientationchange',()=>setTimeout(resize,220));
 
 function scale(){
   const B=bars();if(!B.length)return null;
-  const padL=6,padR=58,padT=8,padB=22;
+  // RGAP holds empty chart between the newest candle and the price axis, so
+  // the last bars are not jammed under the level labels drawn along that edge.
+  // RGAP holds empty chart between the newest candle and the price axis. It has
+  // to clear the level labels drawn along that edge (261.8%, PDH and friends),
+  // which are right-aligned to the axis -- a gap narrower than the widest label
+  // just moves the collision rather than fixing it.
+  const padL=6,padR=64,padT=8,padB=22,RGAP=G.w<600?48:56;
   const volH=S.ind.vol?Math.round(G.h*.15):0;
   const ph=G.h-padT-padB-volH-(volH?5:0);
   let right=S.view.right==null?B.length-1:Math.min(S.view.right,B.length-1);
@@ -517,13 +589,13 @@ function scale(){
   if(S.yMan){lo=S.yMan.lo;hi=S.yMan.hi;}
   else{
     lo=Math.min(...vis.map(b=>b.l));hi=Math.max(...vis.map(b=>b.h));
-    const todayVis=vis.some(b=>b.day===HIST);
+    const todayVis=vis.some(b=>b.day===HISTN);
     if(S.ind.or&&S.or&&todayVis){lo=Math.min(lo,S.or.lo);hi=Math.max(hi,S.or.hi);}
     if(S.pos)[S.pos.stopU,S.pos.targetU].forEach(v=>{if(v!=null){lo=Math.min(lo,v);hi=Math.max(hi,v);}});
     const pd=(hi-lo)*.07||1;lo-=pd;hi+=pd;
   }
-  const cw=(G.w-padL-padR)/count;
-  G={...G,padL,padR,padT,padB,volH,ph,lo,hi,cw,left,right,count,B,
+  const cw=(G.w-padL-padR-RGAP)/count;
+  G={...G,padL,padR,padT,padB,volH,ph,lo,hi,cw,left,right,count,B,RGAP,
     x:i=>padL+(i-left+.5)*cw,
     y:p=>padT+ph*(1-(p-lo)/(hi-lo)),
     ix:x=>left+(x-padL)/cw-.5,
@@ -556,7 +628,7 @@ function draw(){
   for(let i=left;i<=right;i+=st){const b=B[i];cx.fillStyle='#5a6472';
     cx.fillText(tfMin()==='D'?dayLbl(b.day):lbl(b.day,b.m),G.x(i)-14,h-6);}
 
-  const todayVis=B.slice(left,right+1).some(b=>b.day===HIST);
+  const todayVis=B.slice(left,right+1).some(b=>b.day===HISTN);
   if(S.ind.or&&S.or&&todayVis){
     cx.save();cx.fillStyle='rgba(109,156,245,.06)';
     cx.fillRect(padL,G.y(S.or.hi),w-padL-padR,G.y(S.or.lo)-G.y(S.or.hi));cx.restore();
@@ -696,13 +768,14 @@ cv.addEventListener('pointermove',e=>{
   }
   const{mx,my}=pos(e);
   S.hover={mx,my,in:mx>G.padL&&mx<G.w-G.padR&&my>G.padT&&my<G.padT+G.ph};
+  if(!drag&&!pinch)cv.style.cursor=inYAxis(mx)?'ns-resize':inXAxis(my)?'ew-resize':S.tool==='cursor'?'crosshair':'default';
   if(drag){
     if(drag.mode==='yaxis'){
-      const f=Math.exp((my-drag.my)*.006);
+      const f=Math.exp((my-drag.my)*.014);
       const mid=(drag.lo+drag.hi)/2,r=(drag.hi-drag.lo)*f;
       S.yMan={lo:mid-r/2,hi:mid+r/2};
     }else if(drag.mode==='xaxis'){
-      const f=Math.exp((drag.mx-mx)*.006);
+      const f=Math.exp((drag.mx-mx)*.012);
       S.view.count=Math.max(12,Math.min(400,Math.round(drag.count*f)));
     }else{
       const B=bars();
@@ -726,7 +799,7 @@ cv.addEventListener('pointercancel',endPtr);
 cv.addEventListener('pointerleave',()=>{S.hover=null;draw();headline();});
 cv.addEventListener('wheel',e=>{e.preventDefault();
   const{mx}=pos(e);
-  if(inYAxis(mx)){lockY();const mid=(G.lo+G.hi)/2,r=(G.hi-G.lo)*(e.deltaY>0?1.08:.93);
+  if(inYAxis(mx)){lockY();const mid=(G.lo+G.hi)/2,r=(G.hi-G.lo)*(e.deltaY>0?1.16:.86);
     S.yMan={lo:mid-r/2,hi:mid+r/2};}
   else S.view.count=Math.max(12,Math.min(400,Math.round(S.view.count*(e.deltaY>0?1.12:.89))));
   draw();},{passive:false});
@@ -808,7 +881,7 @@ function paneTrade(){
   </div>
   <div class="grid2" style="margin-top:9px">
     <label><span>Strike</span><select id="strikeSel">
-      ${strikes(u).map(k=>`<option value="${k}" ${k===S.strike?'selected':''}>${k.toFixed(TICKERS[S.ticker].inc<1?2:2)}${Math.abs(k-u)<TICKERS[S.ticker].inc/2?' · ATM':''}</option>`).join('')}
+      ${strikes(u).map(k=>`<option value="${k}" ${k===S.strike?'selected':''}>${k.toFixed(cfg(S.ticker).inc<1?2:2)}${Math.abs(k-u)<cfg(S.ticker).inc/2?' · ATM':''}</option>`).join('')}
     </select></label>
     <label><span>Contracts</span><input class="n" id="qty" type="number" inputmode="numeric" value="${val('qty')||1}"></label>
   </div>
@@ -902,7 +975,7 @@ function paneChain(){
   const u=price();
   const rows=strikes(u).map(K=>{
     const c=quote(K,'call',S.exDays,u),p=quote(K,'put',S.exDays,u);
-    const atm=Math.abs(K-u)<TICKERS[S.ticker].inc/2;
+    const atm=Math.abs(K-u)<cfg(S.ticker).inc/2;
     const pick=K===S.strike;
     return `<tr class="${atm?'atm':''} ${pick?'pick':''}" data-k="${K}">
       <td data-t="call">${c.bid.toFixed(2)}/${c.ask.toFixed(2)}</td>
@@ -1033,13 +1106,16 @@ function paneSetup(){
 function wireSetup(){
   $('regime').value=S.regime;$('vm').value=String(S.vm);
   $('newS').onclick=()=>{stopAuto();init($('tk').value,$('regime').value,parseFloat($('vm').value));};
-  $('replayS').onclick=()=>{stopAuto();init(S.ticker,S.regime,S.vm,S.seed);};
+  $('anyS')&&($('anyS').onclick=()=>{stopAuto();init(null,S.regime,S.vm,undefined,randomReplay());});
+  $('replayS').onclick=()=>{stopAuto();
+    init(S.ticker,S.regime,S.vm,S.seed,S.replay?{symbol:S.ticker,date:S.replay.date}:undefined);};
   $('cp').onclick=()=>{navigator.clipboard?.writeText(S.ticker+'-'+S.seed);log('Session code copied.','hl');};
 }
 
 /* ================= wiring ================= */
 const tkSel=$('tk');
-Object.keys(TICKERS).forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;tkSel.appendChild(o);});
+const PICKABLE=REPLAY.length?[...new Set(REPLAY.map(r=>r.symbol))].sort():Object.keys(TICKERS);
+PICKABLE.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;tkSel.appendChild(o);});
 tkSel.onchange=()=>{stopAuto();init(tkSel.value,S.regime,S.vm);};
 const tfbar=$('tfbar');
 TFS.forEach(t=>{const b=document.createElement('button');b.className='tf'+(t.k==='5m'?' on':'');b.textContent=t.k;
@@ -1076,7 +1152,7 @@ document.addEventListener('keydown',e=>{
   else if(k==='u'){S.draw.pop();draw();}
   else if(k==='escape')document.querySelector('.tool[data-t="cursor"]').click();
 });
-init('SPY','random',1);
+(function(){const first=randomReplay();init(first?first.symbol:'SPY','random',1,undefined,first);})();
 </script>
 </body>
 </html>

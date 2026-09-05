@@ -2,6 +2,7 @@
 # archive would otherwise add megabytes of HTML to the repo on every run.
 reports/
 site/
+sessions/
 cache/
 logs/
 

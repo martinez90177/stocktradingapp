@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { FONT_CSS } from "./fonts.ts";
+import type { ReplaySession } from "./replay.ts";
 
 /**
  * The practice terminal, re-skinned to match the report.
@@ -52,6 +53,7 @@ input,select{background:var(--p2);border:1px solid var(--line2);border-radius:8p
 .sim{display:flex;align-items:flex-start;gap:10px;margin:16px 0 0;padding:11px 14px;border-radius:9px;
   border:1px solid rgba(245,165,36,.4);background:rgba(245,165,36,.08);color:var(--fib);font-size:12.5px;line-height:1.5}
 .sim b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}
+.sim.real{border-color:rgba(45,212,167,.38);background:rgba(45,212,167,.07);color:var(--up)}
 .sim span{color:var(--dim)}
 
 /* ---- app chrome -------------------------------------------------- */
@@ -181,7 +183,31 @@ footer{color:var(--dim2);font-size:11px;text-align:center;padding:0 20px 28px;li
 @media(prefers-reduced-motion:reduce){button:active:not(:disabled){transform:none}}
 `;
 
-const banner = (reportHref: string) => `<header class="mp-head"><div class="mp-wrap">
+/**
+ * The banner says which kind of data is actually loaded, because the answer
+ * changes: with recorded sessions embedded the candles are measured, and only
+ * the option quotes are modelled. Claiming "simulated" over real bars would be
+ * as wrong as the reverse.
+ */
+function bannerFor(reportHref: string, sessions: ReplaySession[]): string {
+  const symbols = [...new Set(sessions.map((s) => s.symbol))];
+  const dates = sessions.map((s) => s.date).sort();
+
+  const note = sessions.length
+    ? `<b>Real candles, modelled options</b>
+       Every candle is a measured 1-minute bar from an actual session &mdash;
+       ${sessions.length} recorded ${sessions.length === 1 ? "day" : "days"} across
+       ${symbols.length} ${symbols.length === 1 ? "symbol" : "symbols"}
+       (${esc(symbols.slice(0, 8).join(", "))}), ${esc(dates[0])} to ${esc(dates[dates.length - 1])}.
+       A random one loads each time.
+       <span>Option prices are still modelled with Black-Scholes rather than quoted, and fills are
+       assumed at the mid, so treat the option side as an approximation of the real chain.</span>`
+    : `<b>Generated prices</b>
+       No recorded sessions are embedded yet, so this falls back to a seeded random walk.
+       <span>Run the tool once with a network connection to record real sessions; the library
+       grows by a day per symbol per run.</span>`;
+
+  return `<header class="mp-head"><div class="mp-wrap">
   <div class="mp-brand">
     <div>
       <h1>Practice</h1>
@@ -189,20 +215,22 @@ const banner = (reportHref: string) => `<header class="mp-head"><div class="mp-w
     </div>
     <a class="mp-back" href="${reportHref}">&larr; Back to the report</a>
   </div>
-  <div class="sim">
-    <div>
-      <b>Simulated prices</b>
-      Every candle and option quote on this page is generated from a seeded random walk, not measured from the market.
-      <span>Nothing here is a real price, a real chain or a real fill. The report next door is the opposite &mdash; every number in it is measured from real bars.</span>
-    </div>
-  </div>
+  <div class="sim ${sessions.length ? "real" : ""}"><div>${note}</div></div>
 </div></header>`;
+}
+
+const esc = (s: string) =>
+  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /**
  * Builds the practice page from the vendored app: its body and script are
  * carried over untouched, wrapped in the report's chrome and stylesheet.
  */
-export async function renderPractice(vendorPath: string, reportHref = "latest.html"): Promise<string> {
+export async function renderPractice(
+  vendorPath: string,
+  reportHref = "latest.html",
+  sessions: ReplaySession[] = [],
+): Promise<string> {
   const src = await readFile(vendorPath, "utf8");
 
   const bodyOpen = src.search(/<body[^>]*>/i);
@@ -212,7 +240,10 @@ export async function renderPractice(vendorPath: string, reportHref = "latest.ht
   }
   const body = src.slice(src.indexOf(">", bodyOpen) + 1, bodyClose);
 
-  const title = src.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "Practice";
+  // Embedded ahead of the app script, which reads window.MP_SESSIONS on load.
+  // JSON.stringify cannot emit "</script>", but a symbol could in principle
+  // carry a "<", so the sequence is escaped rather than trusted.
+  const data = `<script>window.MP_SESSIONS=${JSON.stringify(sessions).replace(/</g, "\\u003c")};</script>`;
 
   return `<!doctype html>
 <html lang="en"><head>
@@ -223,7 +254,8 @@ export async function renderPractice(vendorPath: string, reportHref = "latest.ht
 <title>Practice &middot; Market Prep</title>
 <style>${SKIN}</style>
 </head><body>
-${banner(reportHref)}
+${bannerFor(reportHref, sessions)}
+${data}
 ${body}
 </body></html>`;
 }

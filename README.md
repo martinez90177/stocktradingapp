@@ -22,7 +22,8 @@ Runs on Node alone. **No `npm install`, no dependencies, no build step.**
 | `serve.mjs` | Local viewer plus the live lookup box |
 | `publish-site.mjs` | Builds the `site/` folder for hosting |
 | `rules.json` | Your trading rules. **Yours to edit.** |
-| `src/vendor/practice-app.html` | The practice terminal, vendored |
+| `src/vendor/practice-app.html` | The practice terminal |
+| `sessions/` | Recorded real trading days, grows each run |
 | `Setup-Schedule.ps1` | Registers / removes the Windows scheduled task |
 
 Because this folder lives in OneDrive, the reports sync to your phone and
@@ -63,6 +64,7 @@ node run.ts --symbols TSLA,AMD,PLTR   # ignore watchlist.json for this run
 node run.ts --no-cache                # force fresh data
 node run.ts --no-movers               # skip the movers scan
 node run.ts --no-options              # skip the options chains
+node run.ts --no-replay               # skip recording sessions for practice
 node run.ts --open                    # open the report when it finishes
 ```
 
@@ -106,18 +108,52 @@ terminal for rehearsing entries, stops and exits. Step the chart forward one bar
 at a time, draw on it, take shares or options, and manage the position — with a
 Chain, Fib, Tape, Journal and Coach pane alongside.
 
-**Every price on that page is generated, not measured.** It is a seeded random
-walk with Black-Scholes quotes on top, which is what makes bar-by-bar practice
-possible at all — you cannot rehearse on live data. Because it sits one click
-from a report where every number *is* measured from real bars, the page says so
-in a banner you cannot scroll past. Nothing there is a real price, a real chain
-or a real fill.
+### The candles are real
 
-The app itself is vendored at `src/vendor/practice-app.html`. Its markup and
-script are used verbatim — every class name in it is load-bearing, because the
-script builds its panes by writing those classes — and `src/practice.ts` swaps
-the stylesheet and wraps it in the report's chrome. To update the app, replace
-the vendored file; the skin re-applies on the next run.
+Each replay is an **actual recorded trading day**, minute by minute, measured
+from the market — not a random walk. A random one loads each time; the ticker
+picker chooses which symbol, and **New session** rerolls the day.
+
+Yahoo only serves seven days of 1-minute history, so no single fetch can build a
+deep library. Instead every run files whatever it can see into `sessions/`, and
+the library **grows by a day per symbol per run**. After a month of weekday runs
+you have a few hundred real sessions to practise on.
+
+Minutes that genuinely had no trade are carried flat at the previous close with
+zero volume — stating what happened rather than inventing a price — and any
+session missing more than a dozen minutes is rejected outright.
+
+**Option prices are still modelled**, with Black-Scholes over the real
+underlying, and fills are assumed at the mid. So the chart is real and the
+option side is an approximation of the real chain. The banner on the page says
+exactly this, and turns amber if no recorded sessions are embedded and it has
+fallen back to the generator.
+
+Skip the harvest with `--no-replay`.
+
+### Reading the chart
+
+The default view shows fewer bars than it used to, because 80 candles across a
+whole session squeezed the bodies to hairlines. Fewer bars means wider candles
+*and* a tighter price range, so the bodies read at a glance. Zoom out for
+context: pinch, scroll, or drag the time axis.
+
+The price axis is draggable to stretch or squash the scale — the cursor turns
+into a resize arrow over it — and scrolling there zooms the price scale alone.
+Double-tap the axis to reset it, or press **auto fit**.
+
+There is deliberate empty space between the newest candle and the price axis. It
+is sized to clear the level labels drawn along that edge, so 261.8% and PDH sit
+in clear air instead of on top of the last few bars.
+
+### Maintaining it
+
+The app lives at `src/vendor/practice-app.html` and is now **maintained here** —
+it started as an import but has since been patched for recorded data, the
+scaling defaults and the axis behaviour. `src/practice.ts` swaps its stylesheet
+and wraps it in the report's chrome; every class name in the app is load-bearing,
+because its script builds panes by writing those classes, so the markup is left
+alone.
 
 ## The website
 

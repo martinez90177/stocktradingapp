@@ -11,6 +11,7 @@ import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderPractice } from "./src/practice.ts";
+import { loadForEmbed } from "./src/replay.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPORTS = join(HERE, "reports");
@@ -30,7 +31,11 @@ await mkdir(SITE, { recursive: true });
 await writeFile(join(SITE, "index.html"), report, "utf8");
 await writeFile(
   join(SITE, "practice.html"),
-  await renderPractice(join(HERE, "src", "vendor", "practice-app.html"), "index.html"),
+  await renderPractice(
+    join(HERE, "src", "vendor", "practice-app.html"),
+    "index.html",
+    await loadForEmbed(join(HERE, "sessions"), 30),
+  ),
   "utf8",
 );
 
