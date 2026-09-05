@@ -1,4 +1,4 @@
-# Market Prep
+# stocktradingapp — Market Prep
 
 Automated pre-market research for a stock watchlist. Every weekday morning it
 measures your symbols and writes one self-contained HTML report with price
@@ -20,6 +20,9 @@ Runs on Node alone. **No `npm install`, no dependencies, no build step.**
 | `run.ts` | Entry point for the full report |
 | `lookup.ts` | Ad-hoc ticker lookup |
 | `serve.mjs` | Local viewer plus the live lookup box |
+| `publish-site.mjs` | Builds the `site/` folder for hosting |
+| `rules.json` | Your trading rules. **Yours to edit.** |
+| `src/vendor/practice-app.html` | The practice terminal, vendored |
 | `Setup-Schedule.ps1` | Registers / removes the Windows scheduled task |
 
 Because this folder lives in OneDrive, the reports sync to your phone and
@@ -95,6 +98,68 @@ without the server.
 The lookup needs a connection — it is fetching live data. The saved morning
 report stays fully offline; the lookup box exists only in what the server hands
 out, never in the file itself.
+
+## Practice
+
+A **Practice** link in the header opens a second page: a bar-by-bar replay
+terminal for rehearsing entries, stops and exits. Step the chart forward one bar
+at a time, draw on it, take shares or options, and manage the position — with a
+Chain, Fib, Tape, Journal and Coach pane alongside.
+
+**Every price on that page is generated, not measured.** It is a seeded random
+walk with Black-Scholes quotes on top, which is what makes bar-by-bar practice
+possible at all — you cannot rehearse on live data. Because it sits one click
+from a report where every number *is* measured from real bars, the page says so
+in a banner you cannot scroll past. Nothing there is a real price, a real chain
+or a real fill.
+
+The app itself is vendored at `src/vendor/practice-app.html`. Its markup and
+script are used verbatim — every class name in it is load-bearing, because the
+script builds its panes by writing those classes — and `src/practice.ts` swaps
+the stylesheet and wraps it in the report's chrome. To update the app, replace
+the vendored file; the skin re-applies on the next run.
+
+## The website
+
+```bash
+node run.ts && node publish-site.mjs
+```
+
+That writes a `site/` folder: `index.html` (the report) and `practice.html`,
+both self-contained. Open it from disk, drop it on any host, or let GitHub Pages
+deploy it — `.github/workflows/pages.yml` builds and publishes on a push, on a
+weekday schedule, or on demand from the Actions tab.
+
+**Pages makes the report public.** Anyone with the URL sees the watchlist and
+everything measured from it. If that is not what you want, leave the workflow
+disabled and keep using the local viewer or the OneDrive copy.
+
+The workflow's cron runs in UTC, so the two weekday builds drift by an hour when
+the US changes clocks.
+
+## Putting it on GitHub
+
+The folder is already a standalone git repository — **separate from the Sports
+Betting App**, different root, different history, no shared remote. Generated
+output (`reports/`, `site/`, `cache/`, `logs/`) is ignored, so only source is
+tracked.
+
+```bash
+git -C "C:/Users/GamerX/OneDrive/Market Prep" remote add origin https://github.com/martinez90177/stocktradingapp.git
+```
+
+```bash
+git -C "C:/Users/GamerX/OneDrive/Market Prep" push -u origin main
+```
+
+Create `stocktradingapp` on GitHub first. **Consider private**: `watchlist.json`
+holds the symbols you follow and `rules.json` is personal. Nothing here contains
+credentials, but a public repo publishes both. Private repos need a paid plan
+for Pages.
+
+One caveat about `.git` inside OneDrive: sync and git collide if two machines
+write at once. Fine from one machine; if you use several, clone from GitHub into
+a normal local folder on each.
 
 ## Alex's Rules
 
@@ -176,31 +241,6 @@ report opens the way you left it. With scripting off every block is simply open.
 
 Collapsed, the page is roughly a quarter of its full height — on a phone that is
 about 5,600 pixels of scrolling down to 1,500.
-
-## Putting it on GitHub
-
-The folder is already a git repository with an initial commit; generated output
-(`reports/`, `cache/`, `logs/`) is ignored, so only the 24 source files are
-tracked. To push it:
-
-```bash
-git -C "C:/Users/GamerX/OneDrive/Market Prep" remote add origin https://github.com/<you>/market-prep.git
-```
-
-```bash
-git -C "C:/Users/GamerX/OneDrive/Market Prep" push -u origin main
-```
-
-Create the repo on GitHub first (or install the `gh` CLI and use
-`gh repo create market-prep --private --source=. --push`).
-
-**Consider making it private.** `watchlist.json` holds the symbols you follow,
-and the README describes how you trade. Nothing here contains credentials, but a
-public repo publishes your setup.
-
-One caveat about the `.git` folder living in OneDrive: sync and git can collide
-if two machines write at once. It is fine for one machine at a time; if you work
-from several, clone from GitHub to a local (non-synced) folder on each instead.
 
 ## A URL you can open anywhere
 

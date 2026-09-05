@@ -1,0 +1,60 @@
+name: Build and deploy site
+
+# Runs the tool on GitHub's machines and publishes the result to GitHub Pages.
+#
+# Note this makes the report public: anyone with the Pages URL can see the
+# watchlist and everything measured from it. Keep the workflow disabled, or the
+# repository private with Pages restricted, if that is not what you want.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  schedule:
+    # 12:20 and 13:25 UTC == 8:20am and 9:25am US Eastern during daylight time.
+    # GitHub runs cron in UTC only, so these shift by an hour when the US
+    # changes clocks; adjust if the timing matters to you.
+    - cron: "20 12 * * 1-5"
+    - cron: "25 13 * * 1-5"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; let a run in progress finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Node 24 runs the TypeScript directly, which is why there is no
+          # build step and no dependencies to install.
+          node-version: "24"
+
+      - name: Build the report
+        run: node run.ts
+
+      - name: Assemble the site
+        run: node publish-site.mjs
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

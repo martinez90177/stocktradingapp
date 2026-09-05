@@ -7,6 +7,7 @@ import { analyzeSymbol } from "./src/pipeline.ts";
 import { renderReport, marketPhase } from "./src/report.ts";
 import { discoverMovers } from "./src/movers.ts";
 import { loadRules } from "./src/rules.ts";
+import { renderPractice } from "./src/practice.ts";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const REPORTS = join(ROOT, "reports");
@@ -190,6 +191,15 @@ async function main() {
   await writeFile(dated, html, "utf8");
   await writeFile(latest, html, "utf8");
   await prune(40);
+
+  // The practice terminal is a sibling page, written next to the report so the
+  // link between them works from the file system, OneDrive or a web host alike.
+  try {
+    const practice = await renderPractice(join(ROOT, "src", "vendor", "practice-app.html"));
+    await writeFile(join(REPORTS, "practice.html"), practice, "utf8");
+  } catch (e) {
+    console.warn(`  ~ practice page not written (${(e as Error).message})`);
+  }
 
   const kb = (Buffer.byteLength(html, "utf8") / 1024).toFixed(0);
   console.log(`\n${analyses.length} analyzed, ${failures.length} failed  ->  ${kb} KB`);

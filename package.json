@@ -1,10 +1,14 @@
 {
-  "name": "market-prep",
+  "name": "stocktradingapp",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Pre-market watchlist research: price levels, Fibonacci, chart patterns -> one offline HTML report.",
+  "description": "Pre-market watchlist research and a bar-by-bar practice terminal. Measured levels, Fibonacci, candlestick reads, catalysts and options - one offline HTML report before the open.",
   "scripts": {
-    "start": "node run.ts"
+    "start": "node run.ts",
+    "lookup": "node lookup.ts",
+    "serve": "node serve.mjs",
+    "site": "node publish-site.mjs",
+    "fonts": "node tools/build-fonts.mjs"
   }
 }

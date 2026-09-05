@@ -69,8 +69,14 @@ body{padding-bottom:82px}
 })();
 </script>`;
 
-/** Injects the bar just before </body>, leaving the saved file untouched. */
+/**
+ * Injects the bar just before </body>, leaving the saved file untouched.
+ *
+ * The practice terminal is skipped: it has its own sticky action bar along the
+ * bottom, and a floating lookup box sits on top of it.
+ */
 function withBar(html) {
+  if (html.includes("Practice &middot; Market Prep") || html.includes("Practice · Market Prep")) return html;
   const i = html.lastIndexOf("</body>");
   return i === -1 ? html + BAR : html.slice(0, i) + BAR + html.slice(i);
 }
