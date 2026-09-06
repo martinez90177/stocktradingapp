@@ -9,6 +9,35 @@ Runs on Node alone. **No `npm install`, no dependencies, no build step.**
 
 ---
 
+## The hosted site
+
+Published to GitHub Pages on every push to `main`, and rebuilt on GitHub's own
+machines at 8:20am and 9:25am US Eastern each weekday:
+
+**https://martinez90177.github.io/stocktradingapp/**
+
+| Page | What it is |
+|---|---|
+| `/` | The morning report |
+| `/practice.html` | The practice terminal |
+| `/journal.html` | The journal |
+
+Save the first link to a phone home screen and it behaves like an app. Because
+the rebuild runs on GitHub, the site is current each morning whether or not this
+computer is switched on -- which the local Windows scheduled task cannot do.
+
+Two things are deliberate about what does and does not get published.
+`journal.json` is gitignored, so the hosted journal builds empty and real trade
+history never leaves your own machines. `sessions/` **is** committed, because
+Yahoo serves only seven days of one-minute history and the practice terminal
+would otherwise fall back to generated candles.
+
+The repository is public, which is what makes the free Pages link work: anyone
+with the URL can read the report, and `watchlist.json` is readable by anyone
+browsing the code.
+
+---
+
 ## Where things are
 
 | Path | What it is |
