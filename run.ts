@@ -199,8 +199,14 @@ async function main() {
   // link between them works from the file system, OneDrive or a web host alike.
   const SESSIONS = join(ROOT, "sessions");
   if (flags["no-replay"] !== true) {
-    const h = await harvest(config.symbols.slice(0, 6), SESSIONS, CACHE, (m) => console.warn(`  ~ ${m}`));
-    console.log(`  replay library: ${h.added} new, ${h.total} sessions total`);
+    // Harvesting is an extra, and it runs after the report is already on disk.
+    // A network hiccup here must not throw away a finished run.
+    try {
+      const h = await harvest(config.symbols.slice(0, 6), SESSIONS, CACHE, (m) => console.warn(`  ~ ${m}`));
+      console.log(`  replay library: ${h.added} new, ${h.total} sessions total`);
+    } catch (e) {
+      console.warn(`  ~ replay harvest skipped (${(e as Error).message})`);
+    }
   }
 
   try {

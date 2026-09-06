@@ -39,8 +39,17 @@ jobs:
           # build step and no dependencies to install.
           node-version: "24"
 
+      # Switches Pages on for the repository, and points it at Actions, on the
+      # first run. Without this the deploy fails until someone visits
+      # Settings -> Pages and sets the source by hand.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - name: Build the report
-        run: node run.ts
+        # --no-replay: the recorded sessions come from the repo. Harvesting on
+        # a runner would fetch data that is thrown away when the job ends.
+        run: node run.ts --no-replay
 
       - name: Assemble the site
         run: node publish-site.mjs
