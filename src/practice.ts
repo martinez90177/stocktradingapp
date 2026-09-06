@@ -85,6 +85,11 @@ canvas{display:block;width:100%;touch-action:none}
 .badge{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:5px;min-height:0;font-weight:500;
   background:rgba(13,18,32,.85);border:1px solid var(--line2);color:var(--dim)}
 .badge.on{color:var(--text);border-color:var(--acc);background:rgba(123,108,246,.14)}
+.ctsel{font-family:var(--mono);font-size:10px;padding:3px 19px 3px 8px;width:auto;min-height:0;border-radius:5px;
+  background-color:rgba(13,18,32,.9);border:1px solid var(--line2);color:var(--text);
+  -webkit-appearance:none;appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+  background-position:calc(100% - 9px) 9px,calc(100% - 5px) 9px;background-size:4px 4px;background-repeat:no-repeat}
 .fitbtn{position:absolute;right:60px;bottom:26px;font-family:var(--mono);font-size:10.5px;padding:4px 9px;
   min-height:0;background:rgba(123,108,246,.16);border:1px solid var(--acc);color:var(--acc);display:none}
 .fitbtn.show{display:block}
@@ -98,9 +103,16 @@ canvas{display:block;width:100%;touch-action:none}
 .tool svg{width:18px;height:18px;fill:none;stroke:var(--dim);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .rail .lbl{flex:0 0 auto;align-self:center;font-size:10px;color:var(--dim2);text-transform:uppercase;letter-spacing:1.1px;font-weight:600;padding-right:2px}
 
-.actions{position:sticky;bottom:0;z-index:18;display:grid;grid-template-columns:1fr 44px 1fr 1fr;gap:7px;
+/* Two rows, each with its own track sizes. One grid cannot do this: the side
+   buttons would inherit the transport columns and come out uneven -- which is
+   how Buy put ended up half the width of Buy call. */
+.actions{position:sticky;bottom:0;z-index:18;display:flex;flex-direction:column;gap:7px;
   padding:10px 12px;background:rgba(8,11,17,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
-.actions button{min-height:46px;font-weight:650;font-size:13.5px;padding:0 4px}
+.trow{display:grid;grid-template-columns:46px 1fr 46px 76px;gap:7px}
+.srow{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.actions button{min-height:46px;font-weight:650;font-size:13.5px;padding:0 4px;white-space:nowrap}
+.actions select{min-height:46px;padding:0 4px;font-size:12.5px;text-align:center}
+.actions #back,.actions #auto{font-size:15px;padding:0}
 .bnext{background:var(--acc);border-color:var(--acc);color:#fff}
 .blong{border-color:rgba(45,212,167,.55);color:var(--up);background:rgba(45,212,167,.1)}
 .bshort{border-color:rgba(244,82,95,.5);color:var(--dn);background:rgba(244,82,95,.1)}
@@ -179,6 +191,18 @@ footer{color:var(--dim2);font-size:11px;text-align:center;padding:0 20px 28px;li
   .mp-brand h1{font-size:22px}
   .mp-back{margin-left:0}
   .actions{padding-bottom:calc(env(safe-area-inset-bottom) + 10px)}
+  /* Ten indicator chips and a chart-type picker cannot float over a phone-width
+     chart: they wrap to three rows and bury the candles. Below 900px they get
+     their own scrolling strip under the chart instead. */
+  .ov{position:static;max-width:none;flex-wrap:nowrap;overflow-x:auto;gap:6px;
+    padding:8px 12px;background:var(--panel);border-top:1px solid var(--line);
+    scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .ov::-webkit-scrollbar{display:none}
+  .badge{flex:0 0 auto;min-height:30px;font-size:11px;padding:0 11px;display:grid;place-items:center}
+  .ctsel{flex:0 0 auto;min-height:30px;font-size:11px;padding:0 20px 0 9px;
+    background-position:calc(100% - 9px) 13px,calc(100% - 5px) 13px}
+  /* nothing covers the top-left now, so auto fit leaves the volume bars alone */
+  .fitbtn{right:auto;left:10px;top:10px;bottom:auto}
 }
 @media(prefers-reduced-motion:reduce){button:active:not(:disabled){transform:none}}
 `;

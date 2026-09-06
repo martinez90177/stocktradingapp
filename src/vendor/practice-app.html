@@ -69,13 +69,15 @@ canvas{display:block;width:100%;touch-action:none;}
 .tool svg{width:18px;height:18px;fill:none;stroke:var(--dim);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
 .rail .lbl{flex:0 0 auto;align-self:center;font-size:11px;color:var(--dim);}
 
-.actions{position:sticky;bottom:0;z-index:18;display:grid;grid-template-columns:46px 1fr 46px 74px;gap:7px;
+/* Two rows, each with its own track sizes. A single grid cannot do this:
+   the side buttons would inherit the transport columns and come out uneven. */
+.actions{position:sticky;bottom:0;z-index:18;display:flex;flex-direction:column;gap:7px;
   padding:9px 12px calc(env(safe-area-inset-bottom) + 9px);background:rgba(8,11,16,.96);
   backdrop-filter:blur(10px);border-top:1px solid var(--line);}
-.actions button{min-height:46px;font-weight:600;font-size:14px;padding:0 4px;}
-.actions .blong{grid-column:1/3;}
-.actions .bshort{grid-column:3/5;}
-.actions select{min-height:46px;padding:0 6px;font-size:12.5px;text-align:center;}
+.trow{display:grid;grid-template-columns:46px 1fr 46px 76px;gap:7px;}
+.srow{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.actions button{min-height:46px;font-weight:600;font-size:14px;padding:0 4px;white-space:nowrap;}
+.actions select{min-height:46px;padding:0 4px;font-size:12.5px;text-align:center;}
 .actions #back,.actions #auto{font-size:15px;padding:0;}
 .bnext{background:var(--acc);border-color:var(--acc);color:#06090f;}
 .blong{border-color:var(--up);color:var(--up);background:rgba(38,163,122,.10);}
@@ -138,6 +140,21 @@ tr.pick td{outline:1px solid var(--acc);}
 .seed{font-family:var(--mono);font-size:12px;color:var(--acc);background:var(--p2);border:1px solid var(--line2);
   border-radius:7px;padding:8px 10px;}
 footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-height:1.5;}
+/* On a phone the chip strip is not an overlay. Ten indicator chips and a
+   chart-type picker wrap to two rows and bury the candles underneath them,
+   so below 900px they sit in their own scrolling strip under the chart. */
+@media(max-width:899px){
+  .ov{position:static;max-width:none;flex-wrap:nowrap;overflow-x:auto;gap:6px;
+    padding:8px 12px;background:var(--panel);border-top:1px solid var(--line);
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .ov::-webkit-scrollbar{display:none;}
+  .badge{flex:0 0 auto;min-height:30px;font-size:11.5px;padding:0 11px;background:transparent;}
+  .ctsel{flex:0 0 auto;min-height:30px;font-size:11.5px;padding:0 20px 0 9px;
+    background-position:calc(100% - 9px) 13px,calc(100% - 5px) 13px;}
+  /* the chart is no longer covered top-left, so auto fit moves out of the volume */
+  .fitbtn{right:auto;left:9px;top:9px;bottom:auto;}
+  .tfbar{padding:8px 12px 6px;}
+}
 @media(min-width:900px){
   .wrap{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:1fr 340px;gap:14px;padding:0 14px 20px;align-items:start;}
   .left{min-width:0;}
@@ -186,15 +203,19 @@ footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-h
   </div>
 
   <div class="actions">
-    <button id="back" title="Rewind one bar (left arrow)">◀</button>
-    <button class="bnext" id="next">Next bar</button>
-    <button id="auto" title="Play / pause (space)">▶</button>
-    <select id="spd" title="Playback speed">
-      <option value="0.5">0.5x</option><option value="1" selected>1x</option>
-      <option value="2">2x</option><option value="4">4x</option><option value="8">8x</option>
-    </select>
-    <button class="blong" id="long">Long</button>
-    <button class="bshort" id="short">Short</button>
+    <div class="trow">
+      <button id="back" title="Rewind one bar (left arrow)">◀</button>
+      <button class="bnext" id="next">Next bar</button>
+      <button id="auto" title="Play / pause (space)">▶</button>
+      <select id="spd" title="Playback speed">
+        <option value="0.5">0.5x</option><option value="1" selected>1x</option>
+        <option value="2">2x</option><option value="4">4x</option><option value="8">8x</option>
+      </select>
+    </div>
+    <div class="srow">
+      <button class="blong" id="long">Long</button>
+      <button class="bshort" id="short">Short</button>
+    </div>
   </div>
 </div>
 
@@ -359,10 +380,19 @@ function fromReplay(pick){
  * A random recorded session, optionally restricted to one symbol. Returns null
  * when nothing is embedded, which sends init() down the generator path.
  */
+const MIN_HIST=2;
 function randomReplay(symbol){
   const pool=symbol?REPLAY.filter(r=>r.symbol===symbol):REPLAY;
   if(!pool.length)return null;
-  const r=pool[Math.floor(Math.random()*pool.length)];
+  // A day with nothing recorded behind it has no context: the daily and 4H views
+  // are empty, prior-session levels do not exist, and the chart opens on three
+  // candles. Pick days that have history; if the library is too shallow for that,
+  // take the deepest available rather than the shallowest.
+  const depth=r=>REPLAY.filter(x=>x.symbol===r.symbol&&x.date<r.date).length;
+  const deep=pool.filter(r=>depth(r)>=MIN_HIST);
+  const best=Math.max.apply(null,pool.map(depth));
+  const use=deep.length?deep:pool.filter(r=>depth(r)===best);
+  const r=use[Math.floor(Math.random()*use.length)];
   return {symbol:r.symbol,date:r.date};
 }
 

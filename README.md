@@ -235,6 +235,14 @@ and wraps it in the report's chrome; every class name in the app is load-bearing
 because its script builds panes by writing those classes, so the markup is left
 alone.
 
+> **Styles for the shipped page live in `SKIN` in `src/practice.ts`, not in the
+> app's own `<style>` block.** `renderPractice()` replaces that block wholesale, so
+> CSS edited in `practice-app.html` changes nothing on the built page — markup and
+> script edits there *do* apply, which makes the failure quietly confusing: the new
+> elements appear unstyled, laid out by rules written for the old ones. The app's own
+> `<style>` is kept in step only so the raw file still renders when opened directly.
+> **Change layout in both, or change it in `SKIN` and verify there.**
+
 ## Journal
 
 A **Journal** link in the header opens the trading journal: what you took, what
