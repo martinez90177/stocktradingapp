@@ -1221,6 +1221,8 @@ th.confh{min-width:86px}
   background:var(--panel2);border:1px solid var(--line2);border-radius:8px;
   color:var(--dim);font:650 13px/1 var(--sans);padding:9px 14px}
 .practicebtn::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.practicebtn.alt{margin-left:0}
+.practicebtn.alt::before{background:var(--up)}
 .practicebtn:hover{color:var(--text);border-color:var(--accent);background:var(--accent-soft)}
 .rulesbtn{margin-left:0;background:transparent;border:1px dashed var(--line2);border-radius:8px;
   color:var(--dim);font:650 13px/1 var(--sans);padding:9px 14px;cursor:pointer;letter-spacing:.1px}
@@ -1350,7 +1352,8 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
   <div class="views">
     <button type="button" class="viewbtn on" data-view="watchlist">Watchlist <i>${ranked.length}</i></button>
     <button type="button" class="viewbtn" data-view="movers">Movers board <i>${input.movers.length}</i></button>
-    <a class="practicebtn" href="practice.html">Practice</a>
+    <a class="practicebtn" href="journal.html">Journal</a>
+    <a class="practicebtn alt" href="practice.html">Practice</a>
     ${input.rules ? `<button type="button" class="rulesbtn" id="rulesOpen">${esc(input.rules.title)}</button>` : ""}
   </div>
   <nav class="navrow" id="tickerNav">${nav}</nav>

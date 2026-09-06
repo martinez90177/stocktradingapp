@@ -16,6 +16,8 @@ import { fileURLToPath } from "node:url";
 import { analyzeSymbol } from "./src/pipeline.ts";
 import { renderReport } from "./src/report.ts";
 import { loadRules } from "./src/rules.ts";
+import { loadJournal, saveJournal } from "./src/journal.ts";
+import { renderJournal } from "./src/journalpage.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "reports");
@@ -172,9 +174,111 @@ async function handleLookup(url) {
   return html;
 }
 
+const JOURNAL = join(HERE, "journal.json");
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    req.on("data", (c) => {
+      data += c;
+      // A journal post is small; anything larger is a mistake, not a trade.
+      if (data.length > 512_000) reject(new Error("body too large"));
+    });
+    req.on("end", () => resolve(data));
+    req.on("error", reject);
+  });
+}
+
+/**
+ * Appends trades to the journal and rewrites journal.html.
+ *
+ * Rebuilding the page here means a trade logged from the practice terminal or
+ * the add form shows up on a refresh, with no run of the whole tool.
+ */
+async function addTrades(incoming) {
+  const journal = await loadJournal(JOURNAL);
+  const stamp = Date.now().toString(36);
+  let i = 0;
+  const added = [];
+
+  for (const raw of incoming) {
+    if (!raw || typeof raw.symbol !== "string" || !raw.symbol.trim()) continue;
+    const qty = Number(raw.qty);
+    const entryPrice = Number(raw.entryPrice);
+    if (!Number.isFinite(qty) || qty <= 0 || !Number.isFinite(entryPrice)) continue;
+
+    const exitPrice = raw.exitPrice == null || raw.exitPrice === "" ? null : Number(raw.exitPrice);
+    const instrument = raw.instrument === "option" ? "option" : "shares";
+    const side = raw.side === "short" ? "short" : "long";
+    const mult = instrument === "option" ? 100 : 1;
+
+    // P&L is computed here rather than trusted from the client, so a typo in
+    // one field cannot quietly poison every statistic on the page.
+    const pnl =
+      exitPrice == null
+        ? null
+        : Math.round(((side === "long" ? exitPrice - entryPrice : entryPrice - exitPrice) * qty * mult -
+            (Number(raw.fees) || 0)) * 100) / 100;
+
+    added.push({
+      id: `j${stamp}${(i++).toString(36)}`,
+      source: raw.source === "practice" ? "practice" : "manual",
+      practice: raw.practice === true || raw.source === "practice",
+      symbol: String(raw.symbol).toUpperCase().slice(0, 12),
+      side,
+      instrument,
+      option: raw.option && Number(raw.option.strike) > 0
+        ? { expiry: String(raw.option.expiry ?? ""), strike: Number(raw.option.strike),
+            type: raw.option.type === "put" ? "put" : "call" }
+        : undefined,
+      qty,
+      entryPrice,
+      entryTime: String(raw.entryTime || new Date().toISOString().slice(0, 19)),
+      exitPrice,
+      exitTime: exitPrice == null ? null : String(raw.exitTime || new Date().toISOString().slice(0, 19)),
+      fees: Number(raw.fees) || 0,
+      plannedStop: raw.plannedStop == null || raw.plannedStop === "" ? null : Number(raw.plannedStop),
+      plannedTarget: raw.plannedTarget == null || raw.plannedTarget === "" ? null : Number(raw.plannedTarget),
+      pnl,
+      setup: raw.setup ? String(raw.setup) : null,
+      mistakes: Array.isArray(raw.mistakes) ? raw.mistakes.map(String).slice(0, 12) : [],
+      rating: Number(raw.rating) > 0 ? Number(raw.rating) : null,
+      notes: String(raw.notes ?? "").slice(0, 4000),
+    });
+  }
+
+  if (added.length === 0) return { added: 0 };
+  journal.trades.push(...added);
+  await saveJournal(JOURNAL, journal);
+  await writeFile(join(ROOT, "journal.html"), renderJournal(journal), "utf8").catch(() => {});
+  return { added: added.length };
+}
+
 createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://localhost:${PORT}`);
+
+    if (url.pathname === "/journal/add" && req.method === "POST") {
+      let out;
+      try {
+        const body = JSON.parse(await readBody(req));
+        out = await addTrades(Array.isArray(body) ? body : [body]);
+      } catch (e) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: String(e.message || e) }));
+        return;
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(out));
+      return;
+    }
+
+    if (url.pathname === "/journal/playbooks") {
+      const j = await loadJournal(JOURNAL);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(j.playbooks));
+      return;
+    }
 
     if (url.pathname === "/lookup") {
       const html = await handleLookup(url);

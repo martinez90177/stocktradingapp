@@ -6,6 +6,10 @@ sessions/
 cache/
 logs/
 
+# Your own records. Tracked would mean your trade history and rules ship
+# with the code; keep them local and let OneDrive sync them.
+journal.json
+
 # Local scratch
 _patch.mjs
 *.log

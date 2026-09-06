@@ -12,6 +12,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderPractice } from "./src/practice.ts";
 import { loadForEmbed } from "./src/replay.ts";
+import { loadJournal } from "./src/journal.ts";
+import { renderJournal } from "./src/journalpage.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPORTS = join(HERE, "reports");
@@ -36,6 +38,12 @@ await writeFile(
     "index.html",
     await loadForEmbed(join(HERE, "sessions"), 30),
   ),
+  "utf8",
+);
+
+await writeFile(
+  join(SITE, "journal.html"),
+  renderJournal(await loadJournal(join(HERE, "journal.json")), "index.html"),
   "utf8",
 );
 

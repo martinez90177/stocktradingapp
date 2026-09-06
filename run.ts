@@ -9,6 +9,8 @@ import { discoverMovers } from "./src/movers.ts";
 import { loadRules } from "./src/rules.ts";
 import { renderPractice } from "./src/practice.ts";
 import { harvest, loadForEmbed } from "./src/replay.ts";
+import { loadJournal } from "./src/journal.ts";
+import { renderJournal } from "./src/journalpage.ts";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const REPORTS = join(ROOT, "reports");
@@ -207,6 +209,15 @@ async function main() {
     await writeFile(join(REPORTS, "practice.html"), practice, "utf8");
   } catch (e) {
     console.warn(`  ~ practice page not written (${(e as Error).message})`);
+  }
+
+  try {
+    const journal = await loadJournal(join(ROOT, "journal.json"));
+    await writeFile(join(REPORTS, "journal.html"), renderJournal(journal), "utf8");
+    const real = journal.trades.filter((t) => !t.practice).length;
+    console.log(`  journal: ${real} real trade(s), ${journal.trades.length - real} from practice`);
+  } catch (e) {
+    console.warn(`  ~ journal page not written (${(e as Error).message})`);
   }
 
   const kb = (Buffer.byteLength(html, "utf8") / 1024).toFixed(0);

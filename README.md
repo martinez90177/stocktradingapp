@@ -22,6 +22,8 @@ Runs on Node alone. **No `npm install`, no dependencies, no build step.**
 | `serve.mjs` | Local viewer plus the live lookup box |
 | `publish-site.mjs` | Builds the `site/` folder for hosting |
 | `rules.json` | Your trading rules. **Yours to edit.** |
+| `journal.json` | Your trades and playbooks. **Yours to edit.** |
+| `import-trades.ts` | Imports a thinkorswim statement |
 | `src/vendor/practice-app.html` | The practice terminal |
 | `sessions/` | Recorded real trading days, grows each run |
 | `Setup-Schedule.ps1` | Registers / removes the Windows scheduled task |
@@ -154,6 +156,65 @@ scaling defaults and the axis behaviour. `src/practice.ts` swaps its stylesheet
 and wraps it in the report's chrome; every class name in the app is load-bearing,
 because its script builds panes by writing those classes, so the markup is left
 alone.
+
+## Journal
+
+A **Journal** link in the header opens the trading journal: what you took, what
+it made, and what your habits cost.
+
+### Getting trades in
+
+**Import a thinkorswim statement.** In thinkorswim: Monitor → Account Statement,
+set the date range, gear icon → Export to file → CSV. Then:
+
+```bash
+node import-trades.ts "C:/Users/GamerX/Downloads/AccountStatement.csv"
+```
+
+Add `--dry` to see what it would import without writing.
+
+The export is a list of **executions, not trades** — a buy and a sell are
+separate rows. The importer pairs them FIFO per instrument, so scaling out of
+100 shares in two clips becomes two round trips with their own P&L, a short is
+read from its sell-to-open, and options get their 100x multiplier. Positions
+still open at the end of the file are reported and skipped rather than counted
+as trades. Re-importing an overlapping date range is safe; duplicates are
+dropped.
+
+**Log one by hand.** The form at the bottom of the journal page. It needs the
+local viewer running (`node serve.mjs`), because a plain file has nowhere to
+save; opened as a file the form says so instead of silently dropping the trade.
+P&L is computed server-side from the prices you enter, not taken on trust.
+
+**Practice trades log themselves.** Every round trip closed in the practice
+terminal lands in the journal automatically, flagged as practice.
+
+### What it shows
+
+Net P&L, win rate, profit factor, expectancy, average R, average win and loss,
+max drawdown. An equity curve with the largest drawdown shaded. A calendar
+heat-mapped by daily P&L. Performance by setup, and by mistake.
+
+**Practice trades are excluded from every statistic.** They are stored beside
+real trades and shown in their own block, because a rehearsal P&L blended into a
+real win rate makes the number worse than not having one.
+
+**What the habits cost** totals every trade tagged with a mistake. Habits
+showing a *profit* are listed too, deliberately: a chase that got lucky is still
+a chase, and a positive total is exactly how a bad habit stays invisible.
+
+### R multiple
+
+Profit divided by what was risked to the planned stop. It says whether a trade
+was good *relative to the risk taken* — dollars flatter a big position and
+punish a small one. It is blank on any trade with no planned stop, which
+includes every imported one, since a broker statement does not record what you
+intended.
+
+### Playbooks
+
+Named setups in `journal.json`, each with a checklist. Tag a trade with one and
+the by-setup table tells you which of your setups actually make money.
 
 ## The website
 

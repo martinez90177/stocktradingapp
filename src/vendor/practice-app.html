@@ -532,6 +532,54 @@ function exitPrem(prem,qty,cm,why,underPx){
   const pnl=(prem-p.avgPrem)*100*qty;
   finish(pnl,prem,qty,cm,why,underPx);
 }
+/**
+ * Sends a closed practice trade to the journal.
+ *
+ * Flagged as practice so it is stored beside real trades but excluded from
+ * every real statistic. Best effort: with no server behind the page it is
+ * buffered locally instead of lost, and the journal page drains the buffer.
+ */
+/** Session date plus a minute offset from the 9:30 open, as a local stamp. */
+function stampAt(min){
+  const d=S.replay?S.replay.date:new Date().toISOString().slice(0,10);
+  const t=9*60+30+Math.max(0,Math.round(min||0));
+  const p2=v=>String(v).padStart(2,"0");
+  return d+"T"+p2(Math.floor(t/60))+":"+p2(t%60)+":00";
+}
+function logToJournal(p, exitPrice, pnl, closeMin){
+  try{
+    const t={
+      source:'practice',practice:true,
+      symbol:S.ticker,
+      side:p.kind==='option'?(p.optType==='call'?'long':'short'):p.dir,
+      instrument:p.kind==='option'?'option':'shares',
+      option:p.kind==='option'?{expiry:String(p.exDays)+'DTE',strike:p.strike,type:p.optType}:undefined,
+      // openQty, not qty: finish() has already decremented qty to zero by the
+      // time the round trip is complete.
+      qty:p.openQty||1,
+      entryPrice:p.kind==="option"?p.entryPrem:p.avg,
+      entryTime:stampAt(p.entryMin),
+      exitPrice:exitPrice,exitTime:stampAt(closeMin),
+      // The planned stop is an underlying price. For shares that shares units
+      // with the entry and gives a valid R; for an option the entry is a
+      // premium, so recording it would produce a confidently wrong R. Left null.
+      plannedStop:p.kind==="option"?null:(p.stopU??null),
+      plannedTarget:p.kind==="option"?null:(p.targetU??null),
+      fees:0,setup:null,mistakes:[],rating:null,
+      notes:'Practice replay'+(S.replay?' — '+S.ticker+' '+S.replay.date:'')
+    };
+    fetch('/journal/add',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(t)})
+      .catch(()=>bufferTrade(t));
+  }catch(e){}
+}
+function bufferTrade(t){
+  try{
+    const k='mpPendingTrades';
+    const cur=JSON.parse(localStorage.getItem(k)||'[]');
+    cur.push(t);localStorage.setItem(k,JSON.stringify(cur.slice(-500)));
+  }catch(e){}
+}
+
 function finish(pnl,px,qty,cm,why,underPx){
   const p=S.pos;
   p.realized+=pnl;p.qty-=qty;
@@ -542,6 +590,9 @@ function finish(pnl,px,qty,cm,why,underPx){
   if(p.qty<=0){
     const risk=riskOf(p);
     S.trades.push({...p,total:p.realized,R:risk?p.realized/risk:null,closeMin:cm});
+    // The round trip is complete, so the journal gets it now rather than on a
+    // later screen the user might never open.
+    logToJournal(p,px,p.realized,cm);
     log('Trade closed — net '+sgn(p.realized)+(risk?' ('+(p.realized/risk).toFixed(2)+'R)':''),'hl');
     S.pos=null;
   }
