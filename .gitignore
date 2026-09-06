@@ -2,9 +2,13 @@
 # archive would otherwise add megabytes of HTML to the repo on every run.
 reports/
 site/
-sessions/
 cache/
 logs/
+
+# sessions/ is deliberately NOT ignored. It is the recorded 1-minute history
+# the practice terminal replays, and Yahoo only serves 7 days back, so it
+# cannot be re-fetched once it ages out. Left untracked, the published site
+# would fall back to generated candles.
 
 # Your own records. Tracked would mean your trade history and rules ship
 # with the code; keep them local and let OneDrive sync them.
