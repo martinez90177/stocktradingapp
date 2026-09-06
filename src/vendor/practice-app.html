@@ -51,6 +51,11 @@ canvas{display:block;width:100%;touch-action:none;}
 .badge{font-family:var(--mono);font-size:10.5px;padding:3px 7px;border-radius:5px;min-height:0;
   background:rgba(15,20,28,.8);border:1px solid var(--line2);color:var(--dim);}
 .badge.on{color:var(--text);border-color:var(--acc);}
+.ctsel{font-family:var(--mono);font-size:10.5px;padding:3px 18px 3px 7px;width:auto;min-height:0;
+  border-radius:5px;background-color:rgba(15,20,28,.9);border:1px solid var(--line2);color:var(--text);
+  -webkit-appearance:none;appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+  background-position:calc(100% - 9px) 8px,calc(100% - 5px) 8px;background-size:4px 4px;background-repeat:no-repeat;}
 .fitbtn{position:absolute;right:60px;bottom:26px;font-family:var(--mono);font-size:10.5px;padding:4px 9px;
   min-height:0;background:rgba(109,156,245,.16);border:1px solid var(--acc);color:var(--acc);display:none;}
 .fitbtn.show{display:block;}
@@ -64,10 +69,14 @@ canvas{display:block;width:100%;touch-action:none;}
 .tool svg{width:18px;height:18px;fill:none;stroke:var(--dim);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
 .rail .lbl{flex:0 0 auto;align-self:center;font-size:11px;color:var(--dim);}
 
-.actions{position:sticky;bottom:0;z-index:18;display:grid;grid-template-columns:1fr 44px 1fr 1fr;gap:7px;
+.actions{position:sticky;bottom:0;z-index:18;display:grid;grid-template-columns:46px 1fr 46px 74px;gap:7px;
   padding:9px 12px calc(env(safe-area-inset-bottom) + 9px);background:rgba(8,11,16,.96);
   backdrop-filter:blur(10px);border-top:1px solid var(--line);}
 .actions button{min-height:46px;font-weight:600;font-size:14px;padding:0 4px;}
+.actions .blong{grid-column:1/3;}
+.actions .bshort{grid-column:3/5;}
+.actions select{min-height:46px;padding:0 6px;font-size:12.5px;text-align:center;}
+.actions #back,.actions #auto{font-size:15px;padding:0;}
 .bnext{background:var(--acc);border-color:var(--acc);color:#06090f;}
 .blong{border-color:var(--up);color:var(--up);background:rgba(38,163,122,.10);}
 .bshort{border-color:var(--dn);color:var(--dn);background:rgba(224,82,74,.10);}
@@ -159,15 +168,7 @@ footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-h
 <div class="left">
   <div class="chartbox">
     <canvas id="cv"></canvas>
-    <div class="ov" id="ov">
-      <button class="badge on" data-i="fib">fib</button>
-      <button class="badge on" data-i="or">range</button>
-      <button class="badge" data-i="vwap">vwap</button>
-      <button class="badge" data-i="ema9">ema9</button>
-      <button class="badge" data-i="ema20">ema20</button>
-      <button class="badge on" data-i="vol">vol</button>
-      <button class="badge on" data-i="magnet">magnet</button>
-    </div>
+    <div class="ov" id="ov"></div>
     <button class="fitbtn" id="fit">auto fit</button>
   </div>
 
@@ -185,8 +186,13 @@ footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-h
   </div>
 
   <div class="actions">
+    <button id="back" title="Rewind one bar (left arrow)">◀</button>
     <button class="bnext" id="next">Next bar</button>
-    <button id="auto">▶</button>
+    <button id="auto" title="Play / pause (space)">▶</button>
+    <select id="spd" title="Playback speed">
+      <option value="0.5">0.5x</option><option value="1" selected>1x</option>
+      <option value="2">2x</option><option value="4">4x</option><option value="8">8x</option>
+    </select>
     <button class="blong" id="long">Long</button>
     <button class="bshort" id="short">Short</button>
   </div>
@@ -378,13 +384,20 @@ function init(ticker,regime,vm,seed,replayPick){
     or:null,fib:null,brk:null,brkMin:null,
     mode:'options',optType:'call',strike:null,exDays:0,
     pos:null,trades:[],draw:[],pend:null,log:[],autoTrim:false,
-    ind:{fib:1,or:1,vwap:0,ema9:0,ema20:0,vol:1,magnet:1},
+    // Working orders waiting for price to reach them, and the rewind stack.
+    orders:[],hist:[],pendingJournal:[],
+    // fib starts off. It is derived from the opening range, which is an opinion
+    // about how to trade the day -- useful when you want it, clutter when you
+    // do not. The draw tool puts one wherever you choose instead.
+    ind:{fib:0,or:1,vwap:0,ema9:0,ema20:0,ema50:0,bb:0,rsi:0,vol:1,magnet:1},
+    ctype:'candle',speed:1,oType:'market',
     tool:'cursor',tab:'trade',auto:null,
     // Fewer bars on screen means wider candles and a tighter price range, so
     // bodies read at a glance instead of as a hairline. Zoom out for context.
     view:{right:null,count:window.innerWidth<600?32:54},yMan:null,
     hover:null,cache:{}};
   setRange();
+  renderBadges();
   S.strike=Math.round(price()/cfg(ticker).inc)*cfg(ticker).inc;
   const sessEl=document.getElementById('sess');
   if(sessEl)sessEl.textContent=live?live.date:'generated';
@@ -397,6 +410,35 @@ function init(ticker,regime,vm,seed,replayPick){
   resize();renderAll();
 }
 function log(t,c){S.log.push({t,c});if(S.tab==='tape')pane();}
+
+/* ================= rewind ================= */
+/**
+ * Replay is only useful if you can go back and try the other decision, so the
+ * whole mutable trading state is snapshotted before every step forward.
+ *
+ * Journal writes are deliberately NOT sent at the moment a position closes any
+ * more. A trade you rewind past never happened, and there is no way to retract
+ * a row once it has been posted -- so closed trades queue in pendingJournal and
+ * are flushed at the closing bell, or when you ask for it.
+ */
+function snapshot(){
+  S.hist.push(JSON.stringify({
+    cursor:S.cursor,pos:S.pos,trades:S.trades,orders:S.orders,
+    brk:S.brk,brkMin:S.brkMin,logN:S.log.length,pj:S.pendingJournal.length}));
+  if(S.hist.length>420)S.hist.shift();
+}
+function stepBack(){
+  const raw=S.hist.pop();
+  if(!raw){log('Nothing to rewind — you are at the start of the session.','y');return renderAll();}
+  const h=JSON.parse(raw);
+  S.cursor=h.cursor;S.pos=h.pos;S.trades=h.trades;S.orders=h.orders;
+  S.brk=h.brk;S.brkMin=h.brkMin;
+  S.log.length=h.logN;S.pendingJournal.length=h.pj;
+  S.cache={};
+  if(S.view.right!=null)S.view.right=null;
+  log(lbl(HIST,S.cursor)+' — rewound.','hl');
+  renderAll();
+}
 
 /* ================= helpers ================= */
 const todayStart=()=>HISTN*MPD;
@@ -447,6 +489,7 @@ function stepMinutes(n){
       else if(c<S.or.lo){S.brk='short';S.brkMin=S.cursor;
         log(lbl(HIST,S.cursor)+' — 5m close below range low at '+c.toFixed(2)+'. Downside breakout confirmed.','r');}
     }
+    fillOrders(b,S.cursor);
     if(S.pos)manage(b,S.cursor);
   }
   S.cache={};
@@ -476,15 +519,24 @@ function settleExpiry(){
   log('4:00 close — 0DTE contracts expire. Settling at intrinsic value '+intr.toFixed(2)+'.','y');
   exitPrem(intr,p.qty,MPD,'expiry');
 }
-function enter(bull){
+/**
+ * Opens or adds to a position.
+ *
+ * `fill` is supplied when a working order triggered rather than the user
+ * pressing Long or Short. It carries the price the order filled at and the
+ * size and brackets captured when the order was placed -- not whatever is in
+ * the ticket boxes now, which may have been edited in the meantime.
+ */
+function enter(bull,fill){
   if(S.cursor>=MPD)return;
-  const u=price();
-  const stopU=parseFloat(val('stop')),tgtU=parseFloat(val('tgt'));
+  const u=fill?fill.u:price();
+  const stopU=fill?(fill.stopU==null?NaN:fill.stopU):parseFloat(val('stop'));
+  const tgtU=fill?(fill.targetU==null?NaN:fill.targetU):parseFloat(val('tgt'));
   if(S.mode==='shares'){
     const dir=bull?'long':'short';
-    const qty=Math.max(1,parseInt(val('qty'))||100);
+    const qty=fill?fill.qty:Math.max(1,parseInt(val('qty'))||100);
     if(S.pos&&S.pos.dir!==dir){log('Close the current position before flipping sides.','y');return pane();}
-    if(S.pos){const p=S.pos,t=p.qty+qty;p.avg=(p.avg*p.qty+u*qty)/t;p.qty=t;
+    if(S.pos){const p=S.pos,t=p.qty+qty;p.avg=(p.avg*p.qty+u*qty)/t;p.qty=t;p.openQty=(p.openQty||0)+qty;
       log(lbl(HIST,S.cursor)+' — added '+qty+' shares at '+u.toFixed(2)+', avg '+p.avg.toFixed(2)+'.',bull?'g':'r');}
     else{S.pos=mkPos({kind:'shares',dir,avg:u,entry:u,qty,openQty:qty,stopU:isNaN(stopU)?null:stopU,
       targetU:isNaN(tgtU)?null:tgtU,uEntry:u});
@@ -492,12 +544,12 @@ function enter(bull){
         (isNaN(stopU)?', no stop':', stop '+stopU.toFixed(2))+'.',bull?'g':'r');}
   }else{
     const type=bull?'call':'put';
-    const qty=Math.max(1,parseInt(val('qty'))||1);
+    const qty=fill?fill.qty:Math.max(1,parseInt(val('qty'))||1);
     const K=S.strike,ex=S.exDays;
     if(S.pos&&(S.pos.optType!==type||S.pos.strike!==K||S.pos.exDays!==ex)){
       log('Close the open contract before opening a different one.','y');return pane();}
     const q=quote(K,type,ex,u);
-    if(S.pos){const p=S.pos,t=p.qty+qty;p.avgPrem=(p.avgPrem*p.qty+q.ask*qty)/t;p.qty=t;
+    if(S.pos){const p=S.pos,t=p.qty+qty;p.avgPrem=(p.avgPrem*p.qty+q.ask*qty)/t;p.qty=t;p.openQty=(p.openQty||0)+qty;
       log(lbl(HIST,S.cursor)+' — added '+qty+' '+K+type[0].toUpperCase()+' at '+q.ask.toFixed(2)+
         ', avg '+p.avgPrem.toFixed(2)+'.',bull?'g':'r');}
     else{
@@ -511,6 +563,53 @@ function enter(bull){
   }
   renderAll();
 }
+/* ================= working orders ================= */
+/**
+ * Resting orders, checked once per minute bar.
+ *
+ * A limit fills at its own price -- price had to reach it for the order to
+ * trigger at all. A stop is filled at the worse of its price and the bar open,
+ * because a market that gaps through a stop does not fill you at the stop; that
+ * gap is the whole reason stops disappoint people, and a simulator that hides
+ * it teaches the wrong lesson.
+ */
+function fillOrders(b,cm){
+  if(!S.orders.length)return;
+  const keep=[];
+  for(const o of S.orders){
+    const hit=o.kind==='limit'
+      ?(o.bull?b.l<=o.px:b.h>=o.px)
+      :(o.bull?b.h>=o.px:b.l<=o.px);
+    if(!hit){keep.push(o);continue;}
+    const px=o.kind==='limit'?o.px:(o.bull?Math.max(o.px,b.o):Math.min(o.px,b.o));
+    const slip=o.kind==='stop'&&Math.abs(px-o.px)>0.004;
+    log(lbl(HIST,cm)+' — '+o.kind+' '+(o.bull?'buy':'sell')+' triggered at '+px.toFixed(2)+
+      (slip?' (gapped through '+o.px.toFixed(2)+')':''),slip?'y':'hl');
+    enter(o.bull,{u:px,qty:o.qty,stopU:o.stopU,targetU:o.targetU});
+  }
+  S.orders=keep;
+}
+function placeOrder(bull){
+  const px=parseFloat(val('olim'));
+  if(isNaN(px)){log('Give the order a price first.','y');return;}
+  const u=price();
+  // A buy limit above the market (or a buy stop below it) would fill instantly
+  // on the next bar, which means the user picked the wrong order type.
+  const wrong=S.oType==='limit'?(bull?px>u:px<u):(bull?px<u:px>u);
+  if(wrong){
+    log('A '+(bull?'buy':'sell')+' '+S.oType+' at '+px.toFixed(2)+' is already through the market at '
+      +u.toFixed(2)+'. Use the other order type, or trade at market.','y');return;
+  }
+  const stopU=parseFloat(val('stop')),tgtU=parseFloat(val('tgt'));
+  S.orders.push({id:Date.now()+Math.random(),kind:S.oType,bull,px,
+    qty:Math.max(1,parseInt(val('qty'))||(S.mode==='shares'?100:1)),
+    stopU:isNaN(stopU)?null:stopU,targetU:isNaN(tgtU)?null:tgtU,placedMin:S.cursor});
+  log(lbl(HIST,S.cursor)+' — '+S.oType+' '+(bull?'buy':'sell')+' resting at '+px.toFixed(2)+'.','hl');
+  renderAll();
+}
+function cancelOrder(id){S.orders=S.orders.filter(o=>String(o.id)!==String(id));
+  log('Order cancelled.','y');renderAll();}
+
 function mkPos(o){return {realized:0,hit:{},mfe:0,mae:0,exits:[],entryMin:S.cursor,tfUsed:S.tf,
   afterBrk:!!S.brk,brkDir:S.brk,lagBars:S.brkMin==null?null:Math.round((S.cursor-S.brkMin)/5),...o};}
 function exLabel(d){return d===0?'0DTE':d===1?'1DTE':d+'DTE';}
@@ -554,10 +653,12 @@ function logToJournal(p, exitPrice, pnl, closeMin){
       side:p.kind==='option'?(p.optType==='call'?'long':'short'):p.dir,
       instrument:p.kind==='option'?'option':'shares',
       option:p.kind==='option'?{expiry:String(p.exDays)+'DTE',strike:p.strike,type:p.optType}:undefined,
-      // openQty, not qty: finish() has already decremented qty to zero by the
-      // time the round trip is complete.
-      qty:p.openQty||1,
-      entryPrice:p.kind==="option"?p.entryPrem:p.avg,
+      // closedQty, not qty: finish() has decremented qty to zero by the time
+      // the round trip completes. exitPrice arrives size-weighted across every
+      // scale-out, and the entry is the average paid, so qty x (exit - entry)
+      // reproduces the realized P&L exactly however the trade was scaled.
+      qty:p.closedQty||p.openQty||1,
+      entryPrice:p.kind==="option"?p.avgPrem:p.avg,
       entryTime:stampAt(p.entryMin),
       exitPrice:exitPrice,exitTime:stampAt(closeMin),
       // The planned stop is an underlying price. For shares that shares units
@@ -568,9 +669,28 @@ function logToJournal(p, exitPrice, pnl, closeMin){
       fees:0,setup:null,mistakes:[],rating:null,
       notes:'Practice replay'+(S.replay?' — '+S.ticker+' '+S.replay.date:'')
     };
-    fetch('/journal/add',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(t)})
-      .catch(()=>bufferTrade(t));
+    // Queued, not posted. See snapshot() -- a rewind must be able to unmake a
+    // trade, and a posted row cannot be unmade.
+    S.pendingJournal.push(t);
   }catch(e){}
+}
+/**
+ * Sends every queued trade to the journal, or buffers it when no server is
+ * listening -- which is the normal case on the hosted site, where the page is
+ * static. The journal page reads that buffer back.
+ */
+function flushJournal(reason){
+  const q=S.pendingJournal.splice(0);
+  if(!q.length){log('No closed practice trades to send yet.','y');return;}
+  let posted=0,buffered=0;
+  Promise.all(q.map(t=>
+    fetch('/journal/add',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(t)})
+      .then(r=>{if(!r.ok)throw 0;posted++;})
+      .catch(()=>{buffered++;bufferTrade(t);})
+  )).then(()=>{
+    log(q.length+' trade(s) sent to the journal'+(buffered?' ('+buffered+' saved in this browser -- open the Journal page to take them in)':'')+'.','hl');
+    renderAll();
+  });
 }
 function bufferTrade(t){
   try{
@@ -583,6 +703,13 @@ function bufferTrade(t){
 function finish(pnl,px,qty,cm,why,underPx){
   const p=S.pos;
   p.realized+=pnl;p.qty-=qty;
+  // Every clip that leaves the position is accumulated here. A trade scaled out
+  // in three pieces is still one round trip, and it has one honest exit price:
+  // the size-weighted average of those clips. Recording only the last one and
+  // applying it to the full size -- which is what this used to do -- reports a
+  // P&L that does not reconcile with the realized total.
+  p.closedQty=(p.closedQty||0)+qty;
+  p.exitNotional=(p.exitNotional||0)+px*qty;
   p.exits.push({px,qty,m:cm,why,pnl,under:underPx??price()});
   const unit=p.kind==='option'?' @ '+px.toFixed(2)+' premium':' at '+px.toFixed(2);
   log(lbl(HIST,cm)+' — '+(why==='stop'?'stopped out of ':why==='expiry'?'expired ':'closed ')+qty+
@@ -592,7 +719,7 @@ function finish(pnl,px,qty,cm,why,underPx){
     S.trades.push({...p,total:p.realized,R:risk?p.realized/risk:null,closeMin:cm});
     // The round trip is complete, so the journal gets it now rather than on a
     // later screen the user might never open.
-    logToJournal(p,px,p.realized,cm);
+    logToJournal(p,p.exitNotional/p.closedQty,p.realized,cm);
     log('Trade closed — net '+sgn(p.realized)+(risk?' ('+(p.realized/risk).toFixed(2)+'R)':''),'hl');
     S.pos=null;
   }
@@ -631,7 +758,8 @@ function scale(){
   // just moves the collision rather than fixing it.
   const padL=6,padR=64,padT=8,padB=22,RGAP=G.w<600?48:56;
   const volH=S.ind.vol?Math.round(G.h*.15):0;
-  const ph=G.h-padT-padB-volH-(volH?5:0);
+  const rsiH=S.ind.rsi?Math.round(G.h*.17):0;
+  const ph=G.h-padT-padB-volH-(volH?5:0)-rsiH-(rsiH?5:0);
   let right=S.view.right==null?B.length-1:Math.min(S.view.right,B.length-1);
   const count=Math.max(10,Math.min(S.view.count,B.length));
   const left=Math.max(0,right-count+1);
@@ -646,7 +774,7 @@ function scale(){
     const pd=(hi-lo)*.07||1;lo-=pd;hi+=pd;
   }
   const cw=(G.w-padL-padR-RGAP)/count;
-  G={...G,padL,padR,padT,padB,volH,ph,lo,hi,cw,left,right,count,B,RGAP,
+  G={...G,padL,padR,padT,padB,volH,rsiH,ph,lo,hi,cw,left,right,count,B,RGAP,
     x:i=>padL+(i-left+.5)*cw,
     y:p=>padT+ph*(1-(p-lo)/(hi-lo)),
     ix:x=>left+(x-padL)/cw-.5,
@@ -661,7 +789,7 @@ function tag(t,x,y,c,bg){cx.font='10px ui-monospace,monospace';
 
 function draw(){
   if(!S.mins||!scale())return;
-  const {w,h,padL,padR,padT,ph,volH,cw,B,left,right}=G;
+  const {w,h,padL,padR,padT,ph,volH,rsiH,cw,B,left,right}=G;
   cx.clearRect(0,0,w,h);cx.fillStyle='#0a0e14';cx.fillRect(0,0,w,h);
   cx.font='10px ui-monospace,monospace';
   // price grid
@@ -669,7 +797,7 @@ function draw(){
     ln(padL,y,w-padR,y,'#141b24',1);cx.fillStyle='#5a6472';cx.fillText(p.toFixed(2),w-padR+5,y+3);}
   // axis affordances
   ln(w-padR+.5,padT,w-padR+.5,padT+ph,'#1c2430',1);
-  ln(padL,padT+ph+volH+(volH?5:0)+.5,w-padR,padT+ph+volH+(volH?5:0)+.5,'#1c2430',1);
+  ln(padL,padT+ph+volH+(volH?5:0)+G.rsiH+(G.rsiH?5:0)+.5,w-padR,padT+ph+volH+(volH?5:0)+G.rsiH+(G.rsiH?5:0)+.5,'#1c2430',1);
   // day breaks + time labels
   let prevDay=null;
   for(let i=left;i<=right;i++){const b=B[i];
@@ -711,17 +839,96 @@ function draw(){
   if(S.ind.vwap){let pv=0,vv=0;series(B.map(b=>{const tp=(b.h+b.l+b.c)/3;pv+=tp*b.v;vv+=b.v;return pv/vv;}),'#b48ead');}
   if(S.ind.ema9){const k=2/10;let e=null;series(B.map(b=>e=e===null?b.c:b.c*k+e*(1-k)),'#88c0d0');}
   if(S.ind.ema20){const k=2/21;let e=null;series(B.map(b=>e=e===null?b.c:b.c*k+e*(1-k)),'#ebcb8b');}
+  if(S.ind.ema50){const k=2/51;let e=null;series(B.map(b=>e=e===null?b.c:b.c*k+e*(1-k)),'#a3be8c');}
+  if(S.ind.bb){
+    const N=20,mid=[],up=[],dn=[];
+    for(let i=0;i<B.length;i++){
+      const a=B.slice(Math.max(0,i-N+1),i+1).map(b=>b.c);
+      const m=a.reduce((x,y)=>x+y,0)/a.length;
+      const sd=Math.sqrt(a.reduce((x,y)=>x+(y-m)*(y-m),0)/a.length);
+      mid.push(m);up.push(m+2*sd);dn.push(m-2*sd);
+    }
+    cx.save();cx.fillStyle='rgba(136,192,208,.06)';cx.beginPath();
+    for(let i=Math.max(0,left-1);i<=right;i++){const X=G.x(i),Y=G.y(up[i]);i===Math.max(0,left-1)?cx.moveTo(X,Y):cx.lineTo(X,Y);}
+    for(let i=right;i>=Math.max(0,left-1);i--)cx.lineTo(G.x(i),G.y(dn[i]));
+    cx.closePath();cx.fill();cx.restore();
+    series(up,'rgba(136,192,208,.55)');series(dn,'rgba(136,192,208,.55)');series(mid,'rgba(136,192,208,.30)');
+  }
 
-  const bw=Math.max(cw*.66,1.2);
-  for(let i=left;i<=right;i++){const b=B[i],X=G.x(i),u=b.c>=b.o,col=u?'#26a37a':'#e0524a';
-    ln(X,G.y(b.h),X,G.y(b.l),col,Math.max(1,cw*.12));
-    const yt=G.y(Math.max(b.o,b.c)),yb=G.y(Math.min(b.o,b.c));
-    cx.fillStyle=col;cx.fillRect(X-bw/2,yt,bw,Math.max(yb-yt,1));}
+  const bw=Math.max(cw*.66,1.2),CT=S.ctype;
+  if(CT==='line'||CT==='area'){
+    cx.save();cx.strokeStyle='#6d9cf5';cx.lineWidth=1.7;cx.beginPath();
+    for(let i=left;i<=right;i++){const X=G.x(i),Y=G.y(B[i].c);i===left?cx.moveTo(X,Y):cx.lineTo(X,Y);}
+    cx.stroke();
+    if(CT==='area'){
+      const g=cx.createLinearGradient(0,padT,0,padT+ph);
+      g.addColorStop(0,'rgba(109,156,245,.30)');g.addColorStop(1,'rgba(109,156,245,0)');
+      cx.lineTo(G.x(right),padT+ph);cx.lineTo(G.x(left),padT+ph);cx.closePath();
+      cx.fillStyle=g;cx.fill();
+    }
+    cx.restore();
+  }else{
+    // Heikin Ashi has to be built from the first bar forward: each candle
+    // depends on the one before it, so it cannot be computed for the visible
+    // slice alone without drifting from what the full series would show.
+    let ha=null;
+    if(CT==='heikin'){
+      ha=[];let po=null,pc=null;
+      for(const b of B){
+        const c=(b.o+b.h+b.l+b.c)/4;
+        const o=po===null?(b.o+b.c)/2:(po+pc)/2;
+        ha.push({o,c,h:Math.max(b.h,o,c),l:Math.min(b.l,o,c)});
+        po=o;pc=c;
+      }
+    }
+    for(let i=left;i<=right;i++){
+      const b=ha?ha[i]:B[i],X=G.x(i),u=b.c>=b.o,col=u?'#26a37a':'#e0524a';
+      const yt=G.y(Math.max(b.o,b.c)),yb=G.y(Math.min(b.o,b.c));
+      if(CT==='bar'){
+        ln(X,G.y(b.h),X,G.y(b.l),col,Math.max(1,cw*.14));
+        ln(X-bw/2,G.y(b.o),X,G.y(b.o),col,Math.max(1,cw*.14));
+        ln(X,G.y(b.c),X+bw/2,G.y(b.c),col,Math.max(1,cw*.14));
+      }else{
+        ln(X,G.y(b.h),X,G.y(b.l),col,Math.max(1,cw*.12));
+        if(CT==='hollow'&&u){cx.save();cx.strokeStyle=col;cx.lineWidth=1.3;
+          cx.strokeRect(X-bw/2+.5,yt+.5,Math.max(bw-1,1),Math.max(yb-yt-1,1));cx.restore();}
+        else{cx.fillStyle=col;cx.fillRect(X-bw/2,yt,bw,Math.max(yb-yt,1));}
+      }
+    }
+  }
   if(volH){const vt=padT+ph+5,mx=Math.max(...B.slice(left,right+1).map(b=>b.v));
     for(let i=left;i<=right;i++){const b=B[i],bh=(b.v/mx)*volH;
       cx.fillStyle=b.c>=b.o?'rgba(38,163,122,.36)':'rgba(224,82,74,.36)';
       cx.fillRect(G.x(i)-bw/2,vt+volH-bh,bw,bh);}}
+  if(rsiH){
+    // Wilder smoothing, seeded on the first 14 bars.
+    const NP=14,cl=B.map(b=>b.c),rs=new Array(B.length).fill(null);
+    let ag=0,al=0;
+    for(let i=1;i<B.length;i++){
+      const d=cl[i]-cl[i-1],g=Math.max(0,d),l=Math.max(0,-d);
+      if(i<=NP){ag+=g/NP;al+=l/NP;}
+      else{ag=(ag*(NP-1)+g)/NP;al=(al*(NP-1)+l)/NP;}
+      if(i>=NP)rs[i]=al===0?100:100-100/(1+ag/al);
+    }
+    const rt=padT+ph+volH+(volH?5:0)+5, ry=v=>rt+rsiH*(1-v/100);
+    cx.save();cx.fillStyle='rgba(109,156,245,.05)';
+    cx.fillRect(padL,ry(70),w-padL-padR,ry(30)-ry(70));cx.restore();
+    [30,70].forEach(v=>ln(padL,ry(v),w-padR,ry(v),'#222d3a',1,[3,3]));
+    cx.save();cx.strokeStyle='#b48ead';cx.lineWidth=1.3;cx.beginPath();let on=false;
+    for(let i=Math.max(0,left-1);i<=right;i++){
+      if(rs[i]==null)continue;const X=G.x(i),Y=ry(rs[i]);
+      on?cx.lineTo(X,Y):(cx.moveTo(X,Y),on=true);}
+    cx.stroke();cx.restore();
+    const lastR=rs[right];
+    cx.fillStyle='#7b8695';cx.font='9.5px ui-monospace,monospace';
+    cx.fillText('RSI 14'+(lastR==null?'':'  '+lastR.toFixed(1)),padL+3,rt+10);
+  }
 
+  S.orders.forEach(o=>{
+    const Y=G.y(o.px);if(Y<padT||Y>padT+ph)return;
+    ln(padL,Y,w-padR,Y,o.bull?'rgba(38,163,122,.75)':'rgba(224,82,74,.75)',1,[6,4]);
+    tag(o.kind+' '+(o.bull?'buy':'sell')+' '+o.qty,padL+2,Y-1,o.bull?'#26a37a':'#e0524a');
+  });
   if(S.pos){const p=S.pos;
     if(p.stopU!=null){ln(padL,G.y(p.stopU),w-padR,G.y(p.stopU),'#e0524a',1,[3,3]);
       tag('stop '+p.stopU.toFixed(2),padL+2,G.y(p.stopU)-1,'#e0524a');}
@@ -778,7 +985,7 @@ function shape(d,prev){
 const pts=new Map();let drag=null,pinch=null,lastTapAxis=0;
 function pos(e){const r=cv.getBoundingClientRect();return{mx:e.clientX-r.left,my:e.clientY-r.top};}
 function inYAxis(mx){return mx>G.w-G.padR;}
-function inXAxis(my){return my>G.padT+G.ph+G.volH+2;}
+function inXAxis(my){return my>G.padT+G.ph+G.volH+(G.rsiH||0)+2;}
 function lockY(){if(!S.yMan)S.yMan={lo:G.lo,hi:G.hi};}
 function minAt(x){const bi=Math.round(G.ix(x)),B=G.B;
   const b=B[Math.max(0,Math.min(B.length-1,bi))];return b?b.s:revealed()-1;}
@@ -885,6 +1092,7 @@ function hoverInfo(){const bi=Math.round(G.ix(S.hover.mx)),B=G.B;
 function btns(){
   const over=S.cursor>=MPD;
   $('next').disabled=over;
+  $('back').disabled=!S.hist.length;
   const t=tfMin();
   $('next').textContent=over?'Session over':'Next '+(t==='D'?'day':t+'m');
   if(S.mode==='options'){$('long').textContent='Buy call';$('short').textContent='Buy put';}
@@ -970,6 +1178,23 @@ function paneTrade(){
   <label style="display:flex;gap:8px;align-items:center;margin-top:11px;font-size:12.5px;color:var(--dim)">
     <input type="checkbox" id="atrim" ${S.autoTrim?'checked':''} style="width:auto"> Auto-trim ⅓ at each extension</label>
 
+  <h3 class="sp">Order type</h3>
+  <div class="seg" id="otype" style="margin-bottom:9px">
+    <button data-o="market" class="${S.oType==='market'?'on':''}">Market</button>
+    <button data-o="limit" class="${S.oType==='limit'?'on':''}">Limit</button>
+    <button data-o="stop" class="${S.oType==='stop'?'on':''}">Stop</button>
+  </div>
+  ${S.oType==='market'?'':`<label style="font-size:11.5px;color:var(--dim)"><span style="display:block;margin-bottom:4px">
+    ${S.oType==='limit'?'Limit':'Stop'} price (underlying)</span>
+    <input class="n" id="olim" type="number" inputmode="decimal" step="0.01" value="${S.oPx||''}"></label>
+    <div class="empty" style="margin-top:6px;font-size:12px">Long and Short place the order instead of filling it. ${S.oType==='limit'?
+      'A buy limit rests below the market and fills at your price.':
+      'A buy stop rests above the market and fills at the open if price gaps past it.'}</div>`}
+
+  ${S.orders.length?`<h3 class="sp">Working orders</h3>`+S.orders.map(o=>
+    `<div class="kv"><span class="k">${o.kind} ${o.bull?'buy':'sell'} ${o.qty} @ ${o.px.toFixed(2)}</span>
+     <button class="ocx" data-id="${o.id}" style="min-height:26px;padding:0 9px;font-size:11px">Cancel</button></div>`).join(''):''}
+
   <h3 class="sp">Position</h3>${posHtml}
   <div class="mgmt">
     <button id="t3" ${S.pos?'':'disabled'}>Trim ⅓</button>
@@ -1018,6 +1243,10 @@ function wireTrade(){
     if(q==='t127')$('tgt').value=(bull?S.fib['127.2%']:S.fib['-27.2%']).toFixed(2);
     if(q==='t161')$('tgt').value=(bull?S.fib['161.8%']:S.fib['-61.8%']).toFixed(2);
     $('stop').dispatchEvent(new Event('input'));pane();});
+  $('otype')&&$('otype').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    S.oType=b.dataset.o;pane();});
+  $('olim')&&$('olim').addEventListener('input',e=>{S.oPx=e.target.value;});
+  document.querySelectorAll('.ocx').forEach(b=>b.onclick=()=>cancelOrder(b.dataset.id));
   $('t3')&&($('t3').onclick=()=>trim(1/3));
   $('t2')&&($('t2').onclick=()=>trim(1/2));
   $('tx')&&($('tx').onclick=()=>trim(1));
@@ -1137,7 +1366,44 @@ function paneCoach(){
   return out.join('');
 }
 function paneSetup(){
-  return `<h3>Session</h3>
+  const syms=[...new Set(REPLAY.map(r=>r.symbol))].sort();
+  const dates=REPLAY.filter(r=>r.symbol===S.ticker).map(r=>r.date).sort().reverse();
+  const closed=S.trades.length;
+  const net=S.trades.reduce((a,t)=>a+t.total,0);
+  const wins=S.trades.filter(t=>t.total>0).length;
+  const pend=S.pendingJournal.length;
+  const recorded=REPLAY.length>0;
+
+  return `<h3>Pick a day</h3>
+  ${recorded?`<div class="setup">
+    <select id="rsym">${syms.map(x=>`<option value="${x}"${x===S.ticker?' selected':''}>${x}</option>`).join('')}</select>
+    <select id="rdate">${dates.map(d=>`<option value="${d}"${S.replay&&S.replay.date===d?' selected':''}>${d}</option>`).join('')}</select>
+  </div>
+  <div class="setup">
+    <button id="loadS" style="flex:1;background:var(--acc);border-color:var(--acc);color:#06090f;font-weight:600">Load that day</button>
+    <button id="anyS" style="flex:1">Surprise me</button>
+  </div>
+  <div class="empty" style="margin-bottom:4px">${REPLAY.length} recorded sessions across ${syms.length} symbols. Every candle is a measured 1-minute bar.</div>`
+  :`<div class="empty">No recorded sessions are embedded in this build, so days are generated. Run the tool with replay harvesting on to collect real ones.</div>`}
+
+  <h3 class="sp">Jump to a time</h3>
+  <div class="setup">
+    <input id="jt" class="n" placeholder="10:15" style="flex:1" value="">
+    <button id="jgo">Go</button>
+  </div>
+  <div class="empty" style="margin-bottom:4px">Fast-forwards to that time. You cannot jump backwards — rewind with the ◀ button so positions unwind honestly.</div>
+
+  <h3 class="sp">This session</h3>
+  <div class="kv"><span class="k">Closed trades</span><span>${closed}</span></div>
+  <div class="kv"><span class="k">Net</span><span class="${net>=0?'up':'dn'}">${sgn(net)}</span></div>
+  <div class="kv"><span class="k">Winners</span><span>${closed?wins+' of '+closed+' ('+Math.round(wins/closed*100)+'%)':'—'}</span></div>
+  <div class="kv"><span class="k">Waiting for the journal</span><span>${pend}</span></div>
+  <div class="setup" style="margin-top:10px">
+    <button id="sendJ" style="flex:1" ${pend?'':'disabled'}>Send ${pend} trade${pend===1?'':'s'} to the journal</button>
+  </div>
+  <div class="empty" style="margin-bottom:4px">Closed trades are held until you send them, or until the 4:00 bell, so a rewind can unmake one. A rewind past an entry removes it from this queue.</div>
+
+  <h3 class="sp">Generated day</h3>
   <div class="setup">
     <select id="regime">
       <option value="random">Day type: random (unknown)</option>
@@ -1148,18 +1414,43 @@ function paneSetup(){
       <option value="1.6">High volatility</option></select>
   </div>
   <div class="setup">
-    <button id="newS" style="flex:1;background:var(--acc);border-color:var(--acc);color:#06090f;font-weight:600">New session</button>
-    <button id="replayS" style="flex:1">Replay this one</button>
+    <button id="newS" style="flex:1">Build a synthetic day</button>
+    <button id="replayS" style="flex:1">Restart this one</button>
   </div>
   <div class="setup"><span class="seed">${S.ticker}-${S.seed}</span><button id="cp">Copy code</button></div>
-  <div class="empty">Drag the price axis to stretch vertically, drag the time axis to stretch horizontally, pinch to do both, and double-tap the price axis to snap back to auto. ${HIST} prior sessions of history sit behind today so the daily and 4H views have context.</div>`;
+  <div class="empty">Drag the price axis to stretch vertically, drag the time axis to stretch horizontally, pinch to do both, and double-tap the price axis to snap back to auto.</div>`;
 }
 function wireSetup(){
   $('regime').value=S.regime;$('vm').value=String(S.vm);
-  $('newS').onclick=()=>{stopAuto();init($('tk').value,$('regime').value,parseFloat($('vm').value));};
-  $('anyS')&&($('anyS').onclick=()=>{stopAuto();init(null,S.regime,S.vm,undefined,randomReplay());});
+  $('rsym')&&($('rsym').onchange=()=>{
+    // Dates belong to the chosen symbol, so the list has to follow it.
+    const sym=$('rsym').value,ds=REPLAY.filter(r=>r.symbol===sym).map(r=>r.date).sort().reverse();
+    $('rdate').innerHTML=ds.map(d=>'<option value="'+d+'">'+d+'</option>').join('');
+  });
+  $('loadS')&&($('loadS').onclick=()=>{stopAuto();
+    init($('rsym').value,S.regime,S.vm,undefined,{symbol:$('rsym').value,date:$('rdate').value});});
+  $('anyS')&&($('anyS').onclick=()=>{stopAuto();const p=randomReplay();init(p?p.symbol:S.ticker,S.regime,S.vm,undefined,p);});
+  $('jgo')&&($('jgo').onclick=()=>{
+    const parts=(val('jt')||'').trim().split(':');
+    const mm=parseInt(parts[1],10);
+    let hh=parseInt(parts[0],10);
+    if(parts.length!==2||isNaN(hh)||isNaN(mm)||mm<0||mm>59){
+      log('Give the time as H:MM, for example 10:15.','y');return;}
+    if(hh<9||(hh===9&&mm<30))hh+=12;                 // 1:30 means the afternoon
+    const target=Math.round(hh*60+mm-(9*60+30));
+    if(target<=S.cursor){log('That time has already passed. Use ◀ to rewind.','y');return;}
+    if(target>MPD){log('The session ends at 4:00.','y');return;}
+    stopAuto();
+    let guard=0;
+    while(S.cursor<target&&guard++<MPD+5){snapshot();stepMinutes(1);}
+    S.cache={};S.view.right=null;
+    if(S.cursor>=MPD&&S.pendingJournal.length)flushJournal('close');
+    log(lbl(HIST,S.cursor)+' — jumped forward.','hl');
+    renderAll();});
+  $('sendJ')&&($('sendJ').onclick=()=>flushJournal('manual'));
+  $('newS').onclick=()=>{stopAuto();init($('tk').value,$('regime').value,parseFloat($('vm').value),undefined,null);};
   $('replayS').onclick=()=>{stopAuto();
-    init(S.ticker,S.regime,S.vm,S.seed,S.replay?{symbol:S.ticker,date:S.replay.date}:undefined);};
+    init(S.ticker,S.regime,S.vm,S.seed,S.replay?{symbol:S.ticker,date:S.replay.date}:null);};
   $('cp').onclick=()=>{navigator.clipboard?.writeText(S.ticker+'-'+S.seed);log('Session code copied.','hl');};
 }
 
@@ -1174,8 +1465,20 @@ TFS.forEach(t=>{const b=document.createElement('button');b.className='tf'+(t.k==
     S.tf=t.k;S.cache={};S.view.right=null;S.yMan=null;
     S.view.count=window.innerWidth<600?46:80;renderAll();};
   tfbar.appendChild(b);});
+const INDS=[['fib','auto fib'],['or','range'],['vwap','vwap'],['ema9','ema9'],['ema20','ema20'],
+  ['ema50','ema50'],['bb','boll'],['rsi','rsi'],['vol','vol'],['magnet','magnet']];
+const CTYPES=[['candle','Candles'],['hollow','Hollow'],['heikin','Heikin Ashi'],
+  ['bar','OHLC bars'],['line','Line'],['area','Area']];
+function renderBadges(){
+  $('ov').innerHTML=
+    '<select class="ctsel" id="ctsel" title="Chart type">'+
+      CTYPES.map(([k,l])=>'<option value="'+k+'"'+(S.ctype===k?' selected':'')+'>'+l+'</option>').join('')+
+    '</select>'+
+    INDS.map(([k,l])=>'<button class="badge'+(S.ind[k]?' on':'')+'" data-i="'+k+'">'+l+'</button>').join('');
+  $('ctsel').onchange=e=>{S.ctype=e.target.value;draw();};
+}
 $('ov').addEventListener('click',e=>{const b=e.target.closest('.badge');if(!b)return;
-  const k=b.dataset.i;S.ind[k]=!S.ind[k];b.classList.toggle('on',!!S.ind[k]);draw();});
+  const k=b.dataset.i;S.ind[k]=!S.ind[k];b.classList.toggle('on',!!S.ind[k]);resize();});
 $('rail').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(b.id==='undo'){S.draw.pop();return draw();}
   if(b.id==='clear'){S.draw=[];return draw();}
@@ -1184,18 +1487,26 @@ $('rail').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');S.tab=b.dataset.p;pane();});
-function stepBar(){const t=tfMin();stepMinutes(Math.max(1,t==='D'?MPD-S.cursor:t));
-  if(S.view.right!=null&&S.view.right>=bars().length-2)S.view.right=null;renderAll();}
+function stepBar(){
+  if(S.cursor>=MPD)return;
+  snapshot();
+  const t=tfMin();stepMinutes(Math.max(1,t==='D'?MPD-S.cursor:t));
+  if(S.view.right!=null&&S.view.right>=bars().length-2)S.view.right=null;
+  if(S.cursor>=MPD&&S.pendingJournal.length)flushJournal('close');
+  renderAll();}
 $('next').onclick=stepBar;
-$('long').onclick=()=>enter(true);
-$('short').onclick=()=>enter(false);
+$('back').onclick=()=>{stopAuto();stepBack();};
+$('spd').onchange=e=>{S.speed=parseFloat(e.target.value);if(S.auto){stopAuto();$('auto').click();}};
+$('long').onclick=()=>S.oType==='market'?enter(true):placeOrder(true);
+$('short').onclick=()=>S.oType==='market'?enter(false):placeOrder(false);
 function stopAuto(){if(S.auto){clearInterval(S.auto);S.auto=null;$('auto').textContent='▶';}}
 $('auto').onclick=()=>{if(S.auto)return stopAuto();$('auto').textContent='❚❚';
-  S.auto=setInterval(()=>{if(S.cursor>=MPD)return stopAuto();stepBar();},700);};
+  S.auto=setInterval(()=>{if(S.cursor>=MPD)return stopAuto();stepBar();},Math.round(700/(S.speed||1)));};
 document.addEventListener('keydown',e=>{
   if(/input|select|textarea/i.test(e.target.tagName))return;
   const k=e.key.toLowerCase();
   if(e.key==='ArrowRight'){e.preventDefault();stepBar();}
+  else if(e.key==='ArrowLeft'){e.preventDefault();stopAuto();stepBack();}
   else if(e.key===' '){e.preventDefault();$('auto').click();}
   else if(k==='l'&&!$('long').disabled)enter(true);
   else if(k==='s'&&!$('short').disabled)enter(false);

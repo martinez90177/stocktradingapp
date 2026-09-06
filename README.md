@@ -137,7 +137,41 @@ out, never in the file itself.
 A **Practice** link in the header opens a second page: a bar-by-bar replay
 terminal for rehearsing entries, stops and exits. Step the chart forward one bar
 at a time, draw on it, take shares or options, and manage the position — with a
-Chain, Fib, Tape, Journal and Coach pane alongside.
+Chain, Fib, Tape, Journal, Coach and Session pane alongside.
+
+### Moving through the day
+
+The transport sits under the chart: **◀ rewind**, **next bar**, **play/pause**
+and a **speed** picker from 0.5x to 8x. Arrow keys step, space plays.
+
+Rewind is the point of a replay — you go back and take the other decision. The
+whole trading state is snapshotted before every step, so going back unwinds
+positions, fills, working orders and the tape together. Rewinding past an entry
+means that entry never happened.
+
+That has one consequence worth knowing: **closed trades are no longer sent to
+the journal the moment they close.** A posted row cannot be retracted, and a
+trade you rewind past should not survive in your record. They queue instead, and
+go at the 4:00 bell or when you press **Send to the journal** in the Session
+pane, which shows how many are waiting.
+
+The Session pane also picks the day: **symbol and date** from the recorded
+library, or *Surprise me*. **Jump to a time** fast-forwards to any point in the
+session; it will not jump backwards, because that is what rewind is for.
+
+### Orders
+
+Market, **limit** and **stop**. With limit or stop armed, Long and Short place a
+resting order rather than filling one; working orders are drawn on the chart and
+cancellable from the ticket.
+
+A limit fills at its own price. **A stop fills at the worse of its price and the
+bar open** — a market that gaps through a stop does not fill you at the stop, and
+the log says when that happened. That gap is the whole reason stops disappoint
+people, and a simulator that hides it teaches the wrong lesson.
+
+An order placed on the wrong side of the market is refused with an explanation,
+rather than resting and filling instantly on the next bar.
 
 ### The candles are real
 
@@ -163,6 +197,21 @@ fallen back to the generator.
 Skip the harvest with `--no-replay`.
 
 ### Reading the chart
+
+Six chart types — candles, hollow, **Heikin Ashi**, OHLC bars, line and area —
+from the picker at the top left of the chart. Heikin Ashi is built from the first
+bar forward, because each of its candles depends on the one before it.
+
+Indicator chips sit beside it: EMA 9/20/50, VWAP, Bollinger bands, an **RSI 14
+subpanel**, volume, and magnet snapping for the drawing tools.
+
+**Auto fib is off by default.** It is derived from the opening range, which is an
+opinion about how to trade the day — useful when you want it, clutter when you
+do not. Turn it on with the `auto fib` chip, or draw one exactly where you want
+with the fib tool in the draw rail.
+
+The chips are rendered from state rather than written into the markup, so a
+default and its chip cannot disagree.
 
 The default view shows fewer bars than it used to, because 80 candles across a
 whole session squeezed the bodies to hairlines. Fewer bars means wider candles

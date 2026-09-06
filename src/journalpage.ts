@@ -377,6 +377,15 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
       : ""
   }
 
+  <section id="bufWrap" hidden>
+    <h2 class="sec">Held in this browser <i>&mdash; practice trades that never reached a server</i></h2>
+    <div class="panel">
+      <p id="bufNote"></p>
+      <div id="bufList"></div>
+      <p><button type="button" id="bufClear">Discard them</button></p>
+    </div>
+  </section>
+
   <h2 class="sec">Log a trade</h2>
   <div class="panel">
     <form id="addForm" class="form">
@@ -452,6 +461,67 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
       btn.disabled=false;
     }
   });
+})();
+</script>
+<script>
+/* The practice terminal cannot reach a server when this site is hosted as
+   static files, so it parks closed practice trades in localStorage. Nothing
+   used to read them back, which meant every practice trade taken on the
+   hosted site was written to a key nobody opened. This drains that key: it
+   tries the local viewer first, and shows whatever could not be sent. */
+(function(){
+  var KEY="mpPendingTrades", wrap=document.getElementById("bufWrap");
+  if(!wrap)return;
+  var list=document.getElementById("bufList"), note=document.getElementById("bufNote");
+  var raw=[];
+  try{ raw=JSON.parse(localStorage.getItem(KEY)||"[]"); }catch(e){ raw=[]; }
+  if(!raw.length)return;
+
+  var live=location.protocol==="http:"||location.protocol==="https:";
+  function money(v){ return (v<0?"-$":"$")+Math.abs(v).toFixed(2); }
+  function pnlOf(t){
+    if(t.exitPrice==null||t.entryPrice==null||!t.qty)return null;
+    var m=t.instrument==="option"?100:1;
+    var per=t.side==="short"?(t.entryPrice-t.exitPrice):(t.exitPrice-t.entryPrice);
+    return per*t.qty*m-(t.fees||0);
+  }
+  function render(items){
+    if(!items.length){ wrap.hidden=true; return; }
+    wrap.hidden=false;
+    note.textContent=items.length+" practice trade"+(items.length===1?"":"s")+" are saved in this browser only. "
+      +(live?"They could not be sent to a journal file — this site is static, so there is nothing to write to. "
+            :"This page was opened as a file, so there is nowhere to save. ")
+      +"Open the local viewer (node serve.mjs) on the machine that holds journal.json to take them in.";
+    var rows=items.map(function(t){
+      var p=pnlOf(t);
+      return "<tr><td>"+(t.entryTime||"").replace("T"," ")+"</td><td>"+(t.symbol||"?")+"</td>"
+        +"<td>"+(t.side||"")+" "+(t.qty||"")+(t.instrument==="option"?" contract(s)":" shares")+"</td>"
+        +"<td>"+(t.entryPrice!=null?t.entryPrice.toFixed(2):"—")+"</td>"
+        +"<td>"+(t.exitPrice!=null?t.exitPrice.toFixed(2):"—")+"</td>"
+        +"<td class='"+(p==null?"":p>=0?"pos":"neg")+"'>"+(p==null?"—":money(p))+"</td></tr>";
+    }).join("");
+    list.innerHTML="<table><thead><tr><th>When</th><th>Symbol</th><th>Size</th>"
+      +"<th>In</th><th>Out</th><th>P&amp;L</th></tr></thead><tbody>"+rows+"</tbody></table>";
+  }
+
+  if(!live){ render(raw); }
+  else{
+    // Try the viewer. Whatever it accepts leaves the buffer; the rest stays.
+    Promise.all(raw.map(function(t){
+      return fetch("/journal/add",{method:"POST",headers:{"content-type":"application/json"},
+        body:JSON.stringify(t)}).then(function(r){return r.ok?null:t;}).catch(function(){return t;});
+    })).then(function(res){
+      var left=res.filter(Boolean);
+      try{ localStorage.setItem(KEY,JSON.stringify(left)); }catch(e){}
+      if(left.length<raw.length){ location.reload(); return; }
+      render(left);
+    });
+  }
+  document.getElementById("bufClear").onclick=function(){
+    if(!confirm("Discard "+raw.length+" buffered practice trade(s)? This cannot be undone."))return;
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    wrap.hidden=true;
+  };
 })();
 </script>
 </body></html>`;
