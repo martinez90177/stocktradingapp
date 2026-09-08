@@ -21,5 +21,14 @@
     "moversLimit": 12,
     "moversMinPrice": 3,
     "moversMinDollarVolume": 20000000
+  },
+  "_premarket": "The premarket board: every refreshMinutes from 4:00am ET to the open. limit is how many discovered names are measured on top of the watchlist; minHintPct is the premarket move a screened name needs before it is worth measuring; minPremarketDollarVolume is the turnover it needs before it is shown at all. dataUrl is where the deployed page polls for fresh scans.",
+  "premarket": {
+    "limit": 15,
+    "minHintPct": 2,
+    "minPremarketDollarVolume": 250000,
+    "refreshMinutes": 5,
+    "benchmarks": ["SPY", "QQQ"],
+    "dataUrl": "https://raw.githubusercontent.com/martinez90177/stocktradingapp/market-data/premarket/latest.json"
   }
 }

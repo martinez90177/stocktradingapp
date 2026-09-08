@@ -1352,6 +1352,7 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
   <div class="views">
     <button type="button" class="viewbtn on" data-view="watchlist">Watchlist <i>${ranked.length}</i></button>
     <button type="button" class="viewbtn" data-view="movers">Movers board <i>${input.movers.length}</i></button>
+    <a class="practicebtn" href="premarket.html">Premarket</a>
     <a class="practicebtn" href="journal.html">Journal</a>
     <a class="practicebtn alt" href="practice.html">Practice</a>
     ${input.rules ? `<button type="button" class="rulesbtn" id="rulesOpen">${esc(input.rules.title)}</button>` : ""}

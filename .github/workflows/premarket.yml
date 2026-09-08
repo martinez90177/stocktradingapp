@@ -1,0 +1,90 @@
+name: Premarket scan
+
+# Measures premarket movement and relative strength every five minutes from the
+# 4:00am ET premarket open to the 9:30am open.
+#
+# It does NOT deploy Pages. The site is replaced wholesale on every Pages deploy
+# and `reports/` is gitignored, so a five-minute deploy would have to rebuild the
+# entire morning report each time -- minutes of work and a few hundred Yahoo
+# calls, twelve times an hour. Instead this writes one small JSON to the
+# `market-data` branch, and the already-deployed premarket page polls it.
+#
+# The schedule is deliberately wider than the trading window. GitHub runs cron in
+# UTC only, so a fixed schedule slides by an hour when the US changes clocks;
+# run-premarket.ts checks the real ET clock and exits in seconds when it is
+# outside 4:00am-9:30am. Do not narrow this to the "correct" UTC hours -- it will
+# be wrong for half the year.
+#
+# Note on timing: GitHub's scheduled runs are best-effort and are delayed under
+# load, so treat five minutes as a target rather than a guarantee. The page shows
+# the age of the scan it is displaying and flags it when a refresh goes missing.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 08:00-14:55 UTC covers 4:00am-9:30am ET in both EDT and EST.
+    - cron: "*/5 8-14 * * 1-5"
+
+permissions:
+  contents: write
+
+# A scan that is still running when the next one fires is already stale; the
+# newer measurement is the one worth having.
+concurrency:
+  group: premarket
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Date stamp (ET)
+        id: stamp
+        run: echo "et=$(TZ=America/New_York date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the Yahoo cache
+        # Daily bars do not change during premarket and are cached for six hours,
+        # so restoring this means each symbol's daily history is fetched once a
+        # morning instead of once every five minutes. Without it the scan makes
+        # roughly six hundred Yahoo calls an hour and invites a 429.
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: yahoo-${{ steps.stamp.outputs.et }}-${{ github.run_id }}
+          restore-keys: yahoo-${{ steps.stamp.outputs.et }}-
+
+      - name: Scan
+        run: node run-premarket.ts
+
+      - name: Publish the scan to the data branch
+        # Force-pushed as a single commit from a throwaway repo, so the branch
+        # holds the current scan and nothing else. Sixty-odd commits a morning of
+        # real history would bloat the repository for no benefit.
+        #
+        # A GITHUB_TOKEN push does not trigger workflows, so this cannot loop.
+        run: |
+          if [ ! -f premarket/latest.json ]; then
+            echo "No scan was written (outside the window). Nothing to publish."
+            exit 0
+          fi
+          work="$(mktemp -d)"
+          mkdir -p "$work/premarket"
+          cp premarket/latest.json "$work/premarket/latest.json"
+          cd "$work"
+          git init -q
+          git checkout -q -b market-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Premarket scan $(TZ=America/New_York date '+%Y-%m-%d %H:%M ET')"
+          git push -q --force \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            market-data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -5,6 +5,11 @@ site/
 cache/
 logs/
 
+# The premarket scan output. The premarket workflow publishes it to the
+# market-data branch, where the deployed board polls for it; on main it is just
+# generated output like the reports.
+premarket/
+
 # sessions/ is deliberately NOT ignored. It is the recorded 1-minute history
 # the practice terminal replays, and Yahoo only serves 7 days back, so it
 # cannot be re-fetched once it ages out. Left untracked, the published site

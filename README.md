@@ -19,6 +19,7 @@ machines at 8:20am and 9:25am US Eastern each weekday:
 | Page | What it is |
 |---|---|
 | `/` | The morning report |
+| `/premarket.html` | The premarket board, refreshing every five minutes until the open |
 | `/practice.html` | The practice terminal |
 | `/journal.html` | The journal |
 
@@ -43,6 +44,9 @@ browsing the code.
 | Path | What it is |
 |---|---|
 | `watchlist.json` | The symbols and options. **This is the file you edit.** |
+| `run-premarket.ts` | Entry point for the premarket board |
+| `src/premarket.ts` | The premarket scan and the relative-strength maths |
+| `src/premarketpage.ts` | The board page, which refreshes itself |
 | `reports/latest.html` | Always the newest report. Bookmark this one. |
 | `reports/YYYY-MM-DD_HHMM.html` | Dated archive, newest 40 kept |
 | `logs/run.log` | What the scheduled runs did |
@@ -607,6 +611,97 @@ the stock has not been delivering; well below, and the market is pricing less
 than it has been doing.
 
 Options add up to three requests per symbol. Skip them with `--no-options`.
+
+## Premarket board
+
+`/premarket.html`, rebuilt from a fresh scan every five minutes from the 4:00am
+ET premarket open until 9:30am. It answers one question the morning report
+cannot: which individual names are actually moving before the bell, and which of
+them are moving *on their own* rather than being carried by the tape.
+
+```bash
+node run-premarket.ts              # scan, if inside the premarket window
+node run-premarket.ts --force      # scan regardless of the clock
+node run-premarket.ts --symbols TSLA,AMD
+```
+
+### Why it is not the movers scan
+
+The movers board ranks on `regularMarketChangePercent`, which Yahoo does not
+roll until 9:30. Before the open that field still holds **yesterday's** change,
+so at 7am the movers board is a list of yesterday's movers -- exactly when a
+premarket board is supposed to be earning its keep. This scan ignores that field
+and measures premarket movement from one-minute pre/post bars instead.
+
+### What relative strength means here
+
+A name up 0.4% while SPY is up 0.4% has done nothing on its own. So the board
+reports the **spread**: the name's premarket gap minus the benchmark's. That
+spread is then divided by the name's own 14-day ATR, because one percent out of
+a name that covers one percent a day is a far bigger statement than one percent
+out of one that covers five.
+
+`RS ATR` is that number, and it is what the board ranks on. `RS pt` is the raw
+spread in percentage points, kept alongside it because the ATR-normalised figure
+is easy to over-read on a quiet name.
+
+### The universe
+
+Two sources, measured identically:
+
+- **Your watchlist**, always, and always shown -- a watchlist name that has not
+  traded premarket is information, so it stays on the board marked `untraded`.
+- **Discovered names**, from the regular-hours screens narrowed by the quote's
+  premarket field. Yahoo publishes no premarket screener, so that field picks
+  who is worth measuring and nothing more; every number on the board is then
+  re-measured from bars.
+
+A discovered name has to clear `minPremarketDollarVolume` in actual premarket
+turnover before it is shown. A 9% gap on forty thousand dollars is a spread
+artifact, not a move. Names that fail are listed under **Withheld** with the
+reason rather than disappearing.
+
+### The five-minute cadence
+
+The scan does **not** redeploy the site. Pages replaces the whole site on every
+deploy and `reports/` is gitignored, so a five-minute deploy would have to
+rebuild the entire morning report each time -- minutes of work and hundreds of
+Yahoo calls, twelve times an hour.
+
+Instead `.github/workflows/premarket.yml` writes one small JSON to the
+`market-data` branch, and the already-deployed board polls it. The page shows
+the age of the scan it is displaying, flags it when a refresh goes missing, and
+stops polling once the session opens.
+
+Two things worth knowing:
+
+- **GitHub's scheduled runs are best-effort.** They are delayed under load, so
+  five minutes is a target, not a guarantee. This is why the page shows the age
+  of what it is displaying rather than implying it is live. If you want a hard
+  five minutes, run `run-premarket.ts` from the Windows scheduled task as well --
+  whichever writes last wins, and the workflow keeps the board alive when the
+  PC is off.
+- **The cron is wider than the window on purpose.** GitHub runs cron in UTC
+  only, so a fixed schedule slides by an hour twice a year. `windowState()`
+  checks the real ET clock and exits in seconds outside 4:00am-9:30am. Do not
+  "fix" the cron to the exact UTC hours; it will be wrong for half the year.
+
+Tune it in `watchlist.json`:
+
+```json
+"premarket": {
+  "limit": 15,
+  "minHintPct": 2,
+  "minPremarketDollarVolume": 250000,
+  "refreshMinutes": 5,
+  "benchmarks": ["SPY", "QQQ"],
+  "dataUrl": "https://raw.githubusercontent.com/martinez90177/stocktradingapp/market-data/premarket/latest.json"
+}
+```
+
+Set `limit` to `0` to make the board your watchlist only. `refreshMinutes` must
+match the workflow cron; changing one without the other only changes how often
+the page asks, not how often the number behind it changes.
 
 ## Movers board
 

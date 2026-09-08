@@ -14,6 +14,7 @@ import { renderPractice } from "./src/practice.ts";
 import { loadForEmbed } from "./src/replay.ts";
 import { loadJournal } from "./src/journal.ts";
 import { renderJournal } from "./src/journalpage.ts";
+import { renderPremarketPage } from "./src/premarketpage.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPORTS = join(HERE, "reports");
@@ -47,10 +48,43 @@ await writeFile(
   "utf8",
 );
 
+// The premarket board. It is deployed once and then polls for fresh scans, so
+// this build only has to seed a first paint -- an empty one is fine, and is what
+// happens when the site is rebuilt outside premarket hours.
+const config = JSON.parse(await readFile(join(HERE, "watchlist.json"), "utf8").catch(() => "{}"));
+const pm = config.premarket ?? {};
+const seeded = await readFile(join(HERE, "premarket", "latest.json"), "utf8").catch(() => null);
+const scan = seeded ? JSON.parse(seeded) : {
+  generatedAt: Date.now(),
+  window: "before-premarket",
+  sessionDate: null,
+  benchmarks: [],
+  names: [],
+  skipped: [],
+  screensScanned: 0,
+  notes: ["No scan has been published yet. The board fills in on the next premarket run."],
+};
+
+await writeFile(
+  join(SITE, "premarket.html"),
+  renderPremarketPage(scan, {
+    dataUrl: pm.dataUrl ?? "premarket/latest.json",
+    refreshMinutes: Number(pm.refreshMinutes) || 5,
+    reportHref: "index.html",
+  }),
+  "utf8",
+);
+
+// Also shipped alongside the page, so the board still works from a file:// copy
+// or any host that has no access to the data branch.
+await mkdir(join(SITE, "premarket"), { recursive: true });
+await writeFile(join(SITE, "premarket", "latest.json"), JSON.stringify(scan), "utf8");
+
 // Pages otherwise runs the output through Jekyll, which ignores some files.
 await writeFile(join(SITE, ".nojekyll"), "", "utf8");
 
 const kb = (n) => (n / 1024).toFixed(0) + " KB";
 console.log(`site/index.html     ${kb(Buffer.byteLength(report, "utf8"))}`);
 console.log(`site/practice.html  built`);
+console.log(`site/premarket.html ${seeded ? `seeded with ${scan.names?.length ?? 0} names` : "empty seed"}`);
 console.log(`\nOpen ${join(SITE, "index.html")}`);
