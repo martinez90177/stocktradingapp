@@ -187,9 +187,32 @@ const etTime = (t) => new Intl.DateTimeFormat("en-US", {
   timeZone: "America/New_York", hour: "numeric", minute: "2-digit", hour12: true,
 }).format(new Date(t));
 
+/* Whether *now* is inside the premarket window, read from the viewer's clock in
+   ET. The mirror of windowState() on the server.
+
+   Polling has to be decided here rather than from the scan the page was built
+   with. The Pages build runs the morning report, not this scan, and premarket/
+   is gitignored, so a deployed page is always seeded "before-premarket" --
+   gating on that seed meant the board never polled and never filled in. */
+function clientWindow(){
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York", weekday: "short",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  }).formatToParts(new Date());
+  const g = (t) => { const p = parts.find((x) => x.type === t); return p ? p.value : ""; };
+  const dow = g("weekday");
+  if (dow === "Sat" || dow === "Sun") return "weekend";
+  // hour12:false renders midnight as 24 in some engines; fold it back to 0.
+  const mins = (Number(g("hour")) % 24) * 60 + Number(g("minute"));
+  if (mins < 4 * 60) return "before-premarket";
+  if (mins >= 9 * 60 + 30) return "regular-or-later";
+  return "premarket";
+}
+
 function render(scan, fetchFailed){
   const age = Date.now() - scan.generatedAt;
-  const live = scan.window === "premarket";
+  const now = clientWindow();
+  const live = now === "premarket";
   // Two refresh periods with no new scan means the pipeline stopped, and saying so
   // is the whole point -- a board that quietly keeps showing 7:05am numbers at
   // 9:00am is worse than one that admits it is stale.
@@ -204,9 +227,9 @@ function render(scan, fetchFailed){
 
   const state = live
     ? '<span class="chip live">&#9679; premarket &middot; live</span>'
-    : scan.window === "regular-or-later"
+    : now === "regular-or-later"
       ? '<span class="chip closed">market open &middot; final premarket state</span>'
-      : scan.window === "before-premarket"
+      : now === "before-premarket"
         ? '<span class="chip closed">before 4:00am ET</span>'
         : '<span class="chip closed">weekend</span>';
 
@@ -295,7 +318,7 @@ function schedule(){
   clearInterval(countdown);
   // Polling stops once the session opens: there is no further premarket to read,
   // and the board is then a record of how it ended.
-  if (current.window !== "premarket") return;
+  if (clientWindow() !== "premarket") return;
   nextAt = Date.now() + REFRESH_MS;
   timer = setTimeout(refresh, REFRESH_MS);
   // Painted immediately as well as on the interval, or the chip sits empty for
@@ -311,12 +334,15 @@ function schedule(){
   countdown = setInterval(tick, 1000);
 }
 
+// Paint what the page shipped with, then immediately go and get the real thing.
+// The seed is baked in at deploy time and can be hours old -- or empty -- so it
+// is a first frame, never the answer.
 render(current, false);
-schedule();
+refresh();
 // A phone that slept through several refreshes should catch up on wake rather
 // than waiting out the remainder of a timer that fired while it was suspended.
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && current.window === "premarket" && Date.now() > nextAt) refresh();
+  if (!document.hidden && clientWindow() === "premarket" && Date.now() > nextAt) refresh();
 });
 </script>
 </body></html>`;
