@@ -391,6 +391,15 @@ Minutes that genuinely had no trade are carried flat at the previous close with
 zero volume — stating what happened rather than inventing a price — and any
 session missing more than a dozen minutes is rejected outright.
 
+**Pre-market and after-hours are recorded too**, from 4:00 to 9:29 and from
+4:00 to 7:59 in the afternoon, as 5-minute bars, only where something traded.
+Yahoo hands them out with the regular session (`includePrePost`), so every run
+files them with the day, and a day filed before they were kept is given them
+on the next run while Yahoo still has it. On the page they are the tinted
+candles before 9:30 and after 4:00 -- the `ext hrs` chip, on by default -- and
+the pre-market high and low join the levels. Five-minute rather than
+one-minute bars keep twelve days of seven tickers to about 200 KB.
+
 **Option prices are still modelled**, with Black-Scholes over the real
 underlying, and fills are assumed at the mid. So the chart is real and the
 option side is an approximation of the real chain. The banner on the page says
@@ -407,8 +416,8 @@ bar forward, because each of its candles depends on the one before it.
 
 Indicator chips sit beside it: EMA 9/20/50, VWAP, Bollinger bands, an **RSI 14
 subpanel**, volume, and magnet snapping for the drawing tools. A **levels**
-chip, on by default, draws the prior day's high, low and close and today's open
--- the levels a day is traded against.
+chip, on by default, draws the prior day's high, low and close, the pre-market
+high and low, and today's open -- the levels a day is traded against.
 
 **Auto fib is off by default.** It is derived from the opening range, which is an
 opinion about how to trade the day — useful when you want it, clutter when you

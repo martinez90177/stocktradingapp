@@ -210,7 +210,7 @@ async function main() {
       const recorded = await readdir(SESSIONS).catch(() => [] as string[]);
       const toRecord = [...new Set([...config.symbols.slice(0, 6), ...recorded])];
       const h = await harvest(toRecord, SESSIONS, CACHE, (m) => console.warn(`  ~ ${m}`));
-      console.log(`  replay library: ${h.added} new, ${h.total} sessions total`);
+      console.log(`  replay library: ${h.added} new${h.extended ? `, ${h.extended} given extended hours` : ""}, ${h.total} sessions total`);
     } catch (e) {
       console.warn(`  ~ replay harvest skipped (${(e as Error).message})`);
     }

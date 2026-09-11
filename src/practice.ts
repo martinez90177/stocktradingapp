@@ -9,7 +9,7 @@ import type { RuleBook } from "./types.ts";
  * shown in the Rules tab beside the numbers the simulator enforces.
  */
 export interface PracticeVol { embed: VolEmbed; calibrations: Calibration[]; events?: Events; rulebook?: RuleBook | null }
-import type { ReplaySession } from "./replay.ts";
+import type { ReplaySession, ExtBar } from "./replay.ts";
 
 /**
  * The practice terminal, re-skinned to match the report.
@@ -438,7 +438,7 @@ function bannerFor(reportHref: string, sessions: ReplaySession[], vol?: Practice
 
   const note = sessions.length
     ? `<b>Real candles, modelled options</b>
-       Every candle is a measured 1-minute bar from an actual session &mdash;
+       Every candle is a measured 1-minute bar from an actual session, with the pre-market and after-hours in 5-minute bars &mdash;
        ${sessions.length} recorded ${sessions.length === 1 ? "day" : "days"} across
        ${symbols.length} ${symbols.length === 1 ? "symbol" : "symbols"}
        (${esc(symbols.slice(0, 8).join(", "))}), ${esc(dates[0])} to ${esc(dates[dates.length - 1])}.
@@ -489,7 +489,20 @@ function compactSession(s: ReplaySession) {
     z.push(O - pc, cents(h) - O, O - cents(l), C - O, Math.round(v));
     pc = C;
   }
-  return { symbol: s.symbol, date: s.date, carried: s.carried, p: base, z };
+  // Extended hours the same way, in sixes: the 5-minute slot, then the open
+  // as cents from the previous close (the first one absolute), and the rest.
+  const ext = (rows: ExtBar[]) => {
+    const out: number[] = [];
+    let prev: number | null = null;
+    for (const [m, o, h, l, c, v] of rows) {
+      const O = cents(o), C = cents(c);
+      out.push(m / 5, prev == null ? O : O - prev, cents(h) - O, O - cents(l), C - O, Math.round(v));
+      prev = C;
+    }
+    return out;
+  };
+  const x = s.ext ? { pre: ext(s.ext.pre), post: ext(s.ext.post) } : undefined;
+  return { symbol: s.symbol, date: s.date, carried: s.carried, p: base, z, ...(x ? { x } : {}) };
 }
 
 export async function renderPractice(

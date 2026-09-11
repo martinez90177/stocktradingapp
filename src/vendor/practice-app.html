@@ -714,6 +714,20 @@ function barsOf(r){
   }
   return out;
 }
+/**
+ * A session's extended hours as bar objects, from the raw form ([m,o,h,l,c,v]
+ * rows) or the compact one practice.ts embeds. Null where none were kept.
+ */
+function extOf(r){
+  const obj=rows=>rows.map(([m,o,h,l,c,v])=>({m,o,h,l,c,v}));
+  if(r.ext)return {pre:obj(r.ext.pre||[]),post:obj(r.ext.post||[])};
+  if(!r.x)return null;
+  const dec=z=>{const out=[];let pc=null;
+    for(let i=0;i<z.length;i+=6){const O=pc==null?z[i+1]:pc+z[i+1],H=O+z[i+2],L=O-z[i+3],C=O+z[i+4];
+      out.push({m:z[i]*5,o:O/100,h:H/100,l:L/100,c:C/100,v:z[i+5]});pc=C;}
+    return out;};
+  return {pre:dec(r.x.pre||[]),post:dec(r.x.post||[])};
+}
 /** Turns embedded sessions into the minute array the engine expects. */
 function fromReplay(pick){
   const sess=REPLAY.filter(r=>r.symbol===pick.symbol).sort((a,b)=>a.date.localeCompare(b.date));
@@ -727,7 +741,7 @@ function fromReplay(pick){
     dates.push(new Date(r.date+'T12:00:00Z'));
     barsOf(r).forEach((b,m)=>mins.push({o:b[0],h:b[1],l:b[2],c:b[3],v:b[4],day,m}));
   });
-  return {mins,dates,days:use.length,carried:use[use.length-1].carried,date:use[use.length-1].date};
+  return {mins,dates,days:use.length,carried:use[use.length-1].carried,date:use[use.length-1].date,ext:use.map(extOf)};
 }
 
 /**
@@ -767,7 +781,7 @@ function init(ticker,regime,vm,seed,replayPick){
   // Chart and ticket preferences carry over. Losing RSI, the chart type and the
   // timeframe every time you load a new day was a reset nobody asked for.
   const keep=S&&S.ind?{ind:S.ind,ctype:S.ctype,speed:S.speed,tf:S.tf,mode:S.mode,oType:S.oType,tab:S.tab,setup:S.setup}:null;
-  S={ticker,regime,reg,vm,seed:sd,mins,dates,cursor:OR_MIN,tf:'5m',replay:live,
+  S={ticker,regime,reg,vm,seed:sd,mins,dates,cursor:OR_MIN,tf:'5m',replay:live,ext:live?live.ext:[],
     or:null,fib:null,brk:null,brkMin:null,
     mode:'options',optType:'call',strike:null,exDays:0,
     pos:null,trades:[],draw:[],pend:null,log:[],autoTrim:false,
@@ -776,7 +790,7 @@ function init(ticker,regime,vm,seed,replayPick){
     // fib starts off. It is derived from the opening range, which is an opinion
     // about how to trade the day -- useful when you want it, clutter when you
     // do not. The draw tool puts one wherever you choose instead.
-    ind:{fib:0,or:1,lvl:1,vwap:0,ema9:0,ema20:0,ema50:0,bb:0,rsi:0,vol:1,magnet:1},
+    ind:{fib:0,or:1,lvl:1,ext:1,vwap:0,ema9:0,ema20:0,ema50:0,bb:0,rsi:0,vol:1,magnet:1},
     // The account and the record -- see "your account, your rules" below.
     setup:null,pendingLedger:[],rewinds:0,peakNet:0,belled:false,ended:false,
     sid:ticker+'|'+(live?live.date:'gen'+sd)+'|'+Date.now().toString(36),
@@ -846,18 +860,42 @@ function tfMin(){return TFS.find(t=>t.k===S.tf).m;}
 function lbl(day,m){const h=Math.floor((570+m)/60),mm=(570+m)%60;
   const t=(h>12?h-12:h)+':'+String(mm).padStart(2,'0');
   if(day===HIST)return t;if(S.blind)return dayLbl(day)+' '+t;const d=S.dates[day];return (d.getMonth()+1)+'/'+d.getDate()+' '+t;}
-function tlbl(m){const h=Math.floor((570+m)/60),mm=(570+m)%60;return (h>12?h-12:h)+':'+String(mm).padStart(2,'0');}
+function tlbl(m){return tlblAbs(570+m);}
+/** A minute of the day as a clock time; extended-hours bars get an a or p, since 4:00 happens twice. */
+function tlblAbs(t,ext){const h=Math.floor(t/60),mm=t%60;return (h>12?h-12:h)+':'+String(mm).padStart(2,'0')+(ext?(t<720?'a':'p'):'');}
 function dayLbl(day){if(day===HIST)return 'today';if(S.blind)return day===HISTN?'today':(HISTN-day)+'d ago';const d=S.dates[day];return (d.getMonth()+1)+'/'+d.getDate();}
 
 function bars(){
-  const key=S.tf+'|'+S.cursor;
+  const key=S.tf+'|'+S.cursor+'|'+(S.ind.ext?1:0);
   if(S.cache.key===key)return S.cache.bars;
-  const tm=tfMin(),out=[],end=revealed();let cur=null;
-  for(let i=0;i<end;i++){
-    const b=S.mins[i];
-    const bucket=tm==='D'?b.day+':0':b.day+':'+Math.floor(b.m/tm);
-    if(!cur||cur.key!==bucket)out.push(cur={key:bucket,o:b.o,h:b.h,l:b.l,c:b.c,v:b.v,day:b.day,m:b.m,s:i,e:i+1});
-    else{cur.h=Math.max(cur.h,b.h);cur.l=Math.min(cur.l,b.l);cur.c=b.c;cur.v+=b.v;cur.e=i+1;}
+  const tm=tfMin(),out=[],end=revealed(),isD=tm==='D';
+  const ext=!isD&&S.ind.ext&&S.ext&&S.ext.length;
+  let cur=null;
+  // Extended-hours bars of one segment of one day. They sit between two
+  // regular minutes in the bar order, so each is given a fractional minute
+  // index in the gap after the minute it follows: a mark or drawing keyed by a
+  // whole minute still lands on a regular bar, and a drawing made on an
+  // extended bar finds that bar again.
+  const addExt=(rows,day,seg)=>{
+    if(!rows||!rows.length)return;
+    const base=seg==='pre'?day*MPD-.5:(day+1)*MPD-1,start=seg==='pre'?240:960,n=rows.length,w=tm<5?5:tm;
+    rows.forEach((b,j)=>{
+      const bucket=day+':'+seg+':'+Math.floor(b.m/w),s=base+.5*(j+1)/(n+1);
+      if(!cur||cur.key!==bucket)out.push(cur={key:bucket,o:b.o,h:b.h,l:b.l,c:b.c,v:b.v,day,m:b.m,s,e:s,t:start+b.m,x:seg});
+      else{cur.h=Math.max(cur.h,b.h);cur.l=Math.min(cur.l,b.l);cur.c=b.c;cur.v+=b.v;}
+    });
+  };
+  for(let d=0;d<=HISTN;d++){
+    if(ext)addExt(S.ext[d]&&S.ext[d].pre,d,'pre');
+    const from=d*MPD,to=Math.min(end,from+MPD);
+    for(let i=from;i<to;i++){
+      const b=S.mins[i];
+      const bucket=isD?b.day+':0':b.day+':'+Math.floor(b.m/tm);
+      if(!cur||cur.key!==bucket)out.push(cur={key:bucket,o:b.o,h:b.h,l:b.l,c:b.c,v:b.v,day:b.day,m:b.m,s:i,e:i+1,t:570+b.m});
+      else{cur.h=Math.max(cur.h,b.h);cur.l=Math.min(cur.l,b.l);cur.c=b.c;cur.v+=b.v;cur.e=i+1;}
+    }
+    if(to<from+MPD)break;                       // today, still being revealed
+    if(ext&&d<HISTN)addExt(S.ext[d]&&S.ext[d].post,d,'post');
   }
   S.cache={key,bars:out};return out;
 }
@@ -1262,7 +1300,7 @@ function draw(){
    const isD=tfMin()==='D',cand=[];
    for(let i=left;i<=right;i++){const b=B[i];
      const newDay=!isD&&i>0&&B[i-1].day!==b.day;
-     if(newDay||i%every===0)cand.push({i,newDay,t:isD||newDay?dayLbl(b.day):tlbl(b.m)});}
+     if(newDay||i%every===0)cand.push({i,newDay,t:isD||newDay?dayLbl(b.day):tlblAbs(b.t,!!b.x)});}
    // Dates first. Drawn left to right, an earlier time label could take the
    // space and knock out the date of the day you are actually trading.
    cand.sort((a,b)=>b.newDay-a.newDay);
@@ -1276,6 +1314,11 @@ function draw(){
      cx.fillStyle=c.newDay?'#e9edf5':AXIS;cx.fillText(c.t,X,h-8);}}
   cx.restore();
 
+  // Extended hours are tinted, the way TradingView does it, so 4:00 in the
+  // morning is not mistaken for 4:00 in the afternoon.
+  if(S.ind.ext){cx.save();cx.fillStyle='rgba(123,108,246,.07)';
+    for(let i=left;i<=right;i++)if(B[i].x)cx.fillRect(G.x(i)-cw/2,padT,cw,ph);
+    cx.restore();}
   const todayVis=B.slice(left,right+1).some(b=>b.day===HISTN);
   if(S.ind.or&&S.or&&todayVis){
     cx.save();cx.fillStyle='rgba(109,156,245,.06)';
@@ -1286,14 +1329,22 @@ function draw(){
   // The levels a day is traded against: yesterday's high, low and close, and
   // the open. Drawn only when they are in view, so a stretched scale does not
   // pull the chart flat to fit a level a dollar away.
-  if(S.ind.lvl&&todayVis&&HISTN>0){
-    const s0=todayStart(),pd=S.mins.slice(s0-MPD,s0);
-    if(pd.length){
+  if(S.ind.lvl&&todayVis){
+    const s0=todayStart(),L=[['open',S.mins[s0].o,'#9aa4b4']];
+    if(HISTN>0){
+      const pd=S.mins.slice(s0-MPD,s0);
       let ph_=-Infinity,pl_=Infinity;for(const b of pd){if(b.h>ph_)ph_=b.h;if(b.l<pl_)pl_=b.l;}
-      [['PDH',ph_,'#f5a524'],['PDL',pl_,'#f5a524'],['PDC',pd[pd.length-1].c,'#9aa4b4'],['open',S.mins[s0].o,'#9aa4b4']].forEach(([k,v,c])=>{
-        const y=G.y(v);if(y<padT+4||y>padT+ph-4)return;
-        ln(padL,y,w-padR,y,c,1,[2,4]);tag(k+' '+v.toFixed(2),padL+2,y-1,c);});
+      L.push(['PDH',ph_,'#f5a524'],['PDL',pl_,'#f5a524'],['PDC',pd[pd.length-1].c,'#9aa4b4']);
     }
+    // The pre-market high and low: what the open is measured against.
+    const pre=S.ext&&S.ext[HISTN]&&S.ext[HISTN].pre;
+    if(pre&&pre.length){
+      let h=-Infinity,l=Infinity;for(const b of pre){if(b.h>h)h=b.h;if(b.l<l)l=b.l;}
+      L.push(['PMH',h,'#a99cf7'],['PML',l,'#a99cf7']);
+    }
+    L.forEach(([k,v,c])=>{
+      const y=G.y(v);if(y<padT+4||y>padT+ph-4)return;
+      ln(padL,y,w-padR,y,c,1,[2,4]);tag(k+' '+v.toFixed(2),padL+2,y-1,c);});
   }
   // fib lines with collision-filtered labels drawn in the axis gutter
   if(S.ind.fib&&S.fib&&todayVis){
@@ -1585,7 +1636,8 @@ function headline(){
 }
 function hoverInfo(){const bi=Math.round(G.ix(S.hover.mx)),B=G.B;
   if(bi<0||bi>=B.length)return;const b=B[bi];
-  $('ohlc').innerHTML=`${tfMin()==='D'?dayLbl(b.day):lbl(b.day,b.m)}  O <b>${b.o.toFixed(2)}</b> H <b>${b.h.toFixed(2)}</b> L <b>${b.l.toFixed(2)}</b> C <b>${b.c.toFixed(2)}</b>`;}
+  const when=tfMin()==='D'?dayLbl(b.day):b.x?(b.day===HISTN?'today':dayLbl(b.day))+' '+tlblAbs(b.t,1)+' '+(b.x==='pre'?'pre-mkt':'after-hrs'):lbl(b.day,b.m);
+  $('ohlc').innerHTML=`${when}  O <b>${b.o.toFixed(2)}</b> H <b>${b.h.toFixed(2)}</b> L <b>${b.l.toFixed(2)}</b> C <b>${b.c.toFixed(2)}</b>`;}
 function btns(){
   const over=S.cursor>=MPD;
   $('next').disabled=over;
@@ -2700,7 +2752,7 @@ const TOUR=[
   {t:".sessrow",h:"Pick what to practise",
    b:"The box above switches the ticker. The date picks which recorded day. Restart replays the same day from 9:45; New day loads a different one. Your chart settings carry over."},
   {t:"#cv",h:"The chart",
-   b:"Drag to scroll back in time; pinch, or use the mouse wheel, to zoom. Drag the price scale on the right to stretch it and double-tap it to reset. The shaded band is the opening range: the high and low of the first 15 minutes."},
+   b:"Drag to scroll back in time; pinch, or use the mouse wheel, to zoom. Drag the price scale on the right to stretch it and double-tap it to reset. The shaded band is the opening range: the high and low of the first 15 minutes. The tinted candles before 9:30 are the pre-market, and the dotted lines are the levels the day is traded against: yesterday's high, low and close, the pre-market high and low, and the open."},
   {t:"#tfbar",h:"Timeframe",
    b:"How much time each candle covers. The replay still moves a minute at a time underneath, so you can switch whenever you like."},
   {t:"#ov",h:"Indicators and chart style",
@@ -2873,7 +2925,8 @@ TFS.forEach(t=>{const b=document.createElement('button');b.className='tf'+(t.k==
 const INDS=[
   ['fib','auto fib','Fibonacci levels drawn from the opening range (9:30 to 9:45)'],
   ['or','range','Opening range: the high and low of the first 15 minutes'],
-  ['lvl','levels','Prior day high, low and close, and the open: the levels the day is traded against'],
+  ['lvl','levels','Prior day high, low and close, the pre-market high and low, and the open: the levels the day is traded against'],
+  ['ext','ext hrs','Pre-market from 4:00 and after-hours to 8:00, in 5-minute bars, tinted'],
   ['vwap','vwap','VWAP: the average price paid since the open, weighted by volume'],
   ['ema9','ema9','9-bar exponential moving average: the fastest trend line'],
   ['ema20','ema20','20-bar exponential moving average'],
