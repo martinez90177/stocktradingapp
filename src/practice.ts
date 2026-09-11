@@ -107,18 +107,34 @@ input,select{background:var(--p2);border:1px solid var(--line2);border-radius:8p
 
 .chartbox{position:relative;background:#0b1017}
 canvas{display:block;width:100%;touch-action:none}
-.ov{position:absolute;top:8px;left:10px;display:flex;gap:5px;flex-wrap:wrap;max-width:70%}
-.badge{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:5px;min-height:0;font-weight:500;
-  background:rgba(13,18,32,.85);border:1px solid var(--line2);color:var(--dim)}
-.badge.on{color:var(--text);border-color:var(--acc);background:rgba(123,108,246,.14)}
-.ctsel{font-family:var(--mono);font-size:10px;padding:3px 19px 3px 8px;width:auto;min-height:0;border-radius:5px;
-  background-color:rgba(13,18,32,.9);border:1px solid var(--line2);color:var(--text);
+/* The indicator chips are a strip of their own above the chart, on every
+   screen: floated over the candles they covered the first hour of the day,
+   and at ten-pixel mono they were the hardest thing on the page to read. */
+.ov{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:8px 12px;background:var(--panel);
+  border-top:1px solid var(--line);scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.ov::-webkit-scrollbar{display:none}
+.badge{flex:0 0 auto;font-family:var(--sans);font-size:12.5px;min-height:32px;padding:0 12px;border-radius:8px;font-weight:600;
+  background:transparent;border:1px solid var(--line2);color:var(--dim);display:grid;place-items:center;letter-spacing:.1px}
+.badge:hover{border-color:var(--acc);color:var(--text)}
+.badge.on{color:var(--text);border-color:var(--acc);background:rgba(123,108,246,.18)}
+.ctsel{flex:0 0 auto;font-family:var(--sans);font-size:12.5px;font-weight:600;min-height:32px;padding:0 24px 0 11px;width:auto;border-radius:8px;
+  background-color:var(--p2);border:1px solid var(--line2);color:var(--text);cursor:pointer;
   -webkit-appearance:none;appearance:none;
   background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
-  background-position:calc(100% - 9px) 9px,calc(100% - 5px) 9px;background-size:4px 4px;background-repeat:no-repeat}
-.fitbtn{position:absolute;right:60px;bottom:26px;font-family:var(--mono);font-size:10.5px;padding:4px 9px;
-  min-height:0;background:rgba(123,108,246,.16);border:1px solid var(--acc);color:var(--acc);display:none}
+  background-position:calc(100% - 13px) 50%,calc(100% - 8px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.fitbtn{position:absolute;left:10px;top:10px;font-family:var(--sans);font-size:11.5px;font-weight:600;padding:5px 10px;
+  min-height:0;background:rgba(123,108,246,.2);border:1px solid var(--acc);color:var(--text);display:none;border-radius:7px}
 .fitbtn.show{display:block}
+/* A strip that overflows gets arrows at the edges that scroll it -- the tabs
+   on a phone, the chips, the timeframes -- since a hidden scrollbar is no
+   sign that Session and Rules exist past the edge. */
+.strip{position:relative;min-width:0}
+.strip .sa{position:absolute;top:0;bottom:0;width:34px;min-height:0;padding:0;border:none;border-radius:0;z-index:3;
+  color:var(--acc);font-size:20px;font-weight:700;display:none;cursor:pointer;line-height:1}
+.strip .sa.l{left:0;background:linear-gradient(90deg,var(--sbg) 55%,transparent)}
+.strip .sa.r{right:0;background:linear-gradient(270deg,var(--sbg) 55%,transparent)}
+.strip .sa.show{display:block}
+.strip .sa:active{transform:none}
 
 .rail{display:flex;gap:6px;overflow-x:auto;padding:9px 12px;background:var(--panel);
   border-top:1px solid var(--line);border-bottom:1px solid var(--line);scrollbar-width:none}
@@ -144,7 +160,7 @@ canvas{display:block;width:100%;touch-action:none}
 .bshort{border-color:rgba(244,82,95,.5);color:var(--dn);background:rgba(244,82,95,.1)}
 
 /* ---- panes ------------------------------------------------------- */
-.tabs{display:flex;gap:4px;overflow-x:auto;padding:12px 0 0;scrollbar-width:none}
+.tabs{display:flex;gap:4px;overflow-x:auto;padding:12px 0 0;scrollbar-width:none;scroll-behavior:smooth}
 .tabs::-webkit-scrollbar{display:none}
 .tab{flex:0 0 auto;min-height:34px;padding:0 13px;font-size:12.5px;background:transparent;border:1px solid transparent;
   color:var(--dim);border-radius:8px 8px 0 0;font-weight:600}
@@ -378,11 +394,19 @@ svg.eq{display:block;width:100%;height:auto}
 .hab .w{color:var(--dim2);font-size:11.5px;display:block}
 .recta{width:100%;min-height:64px;background:var(--p2);border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:8px;font-family:var(--mono);font-size:11.5px;margin-top:8px}
 .gr .b i{color:var(--dim2);font-style:italic}
+/* ---- what the day offered ---- */
+.lesson{margin-top:12px;font-size:12.5px;line-height:1.55;color:var(--dim)}
+.lesson b{color:var(--text)} .lesson b.up{color:var(--up)} .lesson b.dn{color:var(--dn)}
+.lesson h5{margin:12px 0 4px;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--acc)}
+.lesson p{margin:0 0 6px}
+.lesson ol{margin:4px 0 6px 18px;padding:0}
+.lesson li{margin:4px 0}
 @media(min-width:900px){
   .wrap{display:grid;grid-template-columns:1fr 350px;gap:16px;align-items:start}
   .right{position:sticky;top:112px}
   .actions{position:static;background:transparent;backdrop-filter:none;border-top:none;padding:11px 0 0}
-  .chartbox{border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+  .chartbox{border-radius:10px 10px 0 0;overflow:hidden;border:1px solid var(--line);border-bottom:none}
+  .ov{border:1px solid var(--line);border-radius:0 0 10px 10px}
   .rail{border-radius:10px;margin-top:10px;border:1px solid var(--line)}
   footer{grid-column:1/-1}
 }
@@ -390,19 +414,6 @@ svg.eq{display:block;width:100%;height:auto}
   .mp-brand h1{font-size:22px}
   .mp-back{margin-left:0}
   .actions{padding-bottom:calc(env(safe-area-inset-bottom) + 10px)}
-  /* Ten indicator chips and a chart-type picker cannot float over a phone-width
-     chart: they wrap to three rows and bury the candles. Below 900px they get
-     their own scrolling strip under the chart instead. */
-  .ov{position:static;max-width:none;flex-wrap:nowrap;overflow-x:auto;gap:6px;
-    padding:8px 12px;background:var(--panel);border-top:1px solid var(--line);
-    scrollbar-width:none;-webkit-overflow-scrolling:touch}
-  .ov::-webkit-scrollbar{display:none}
-  .badge{flex:0 0 auto;min-height:30px;font-size:11px;padding:0 11px;display:grid;place-items:center}
-  .ctsel{flex:0 0 auto;min-height:30px;font-size:11px;padding:0 20px 0 9px;
-    background-position:calc(100% - 9px) 13px,calc(100% - 5px) 13px}
-  /* nothing covers the top-left now, so auto fit leaves the volume bars alone */
-  .fitbtn{right:auto;left:10px;top:10px;bottom:auto}
-  /* nothing overlays the top of the chart on a phone, so the note can sit there */
   .hint{top:10px}
   /* The day now lives in the picker and the timeframe in the bar below, so the
      four-line clock block that wrapped beside the price comes down to the time. */

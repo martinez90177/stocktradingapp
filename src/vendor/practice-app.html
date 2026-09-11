@@ -52,10 +52,16 @@ input,select{background:var(--p2);border:1px solid var(--line2);border-radius:8p
 
 .chartbox{position:relative;background:#0a0e14;}
 canvas{display:block;width:100%;touch-action:none;}
-.ov{position:absolute;top:7px;left:9px;display:flex;gap:5px;flex-wrap:wrap;max-width:70%;}
-.badge{font-family:var(--mono);font-size:10.5px;padding:3px 7px;border-radius:5px;min-height:0;
-  background:rgba(15,20,28,.8);border:1px solid var(--line2);color:var(--dim);}
+.ov{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:8px 12px;background:var(--panel);border-top:1px solid var(--line);scrollbar-width:none;}
+.ov::-webkit-scrollbar{display:none;}
+.badge{flex:0 0 auto;font-size:12.5px;min-height:32px;padding:0 12px;border-radius:8px;font-weight:600;
+  background:transparent;border:1px solid var(--line2);color:var(--dim);display:grid;place-items:center;}
 .badge.on{color:var(--text);border-color:var(--acc);}
+.strip{position:relative;min-width:0;}
+.strip .sa{position:absolute;top:0;bottom:0;width:34px;min-height:0;padding:0;border:none;border-radius:0;z-index:3;color:var(--acc);font-size:20px;font-weight:700;display:none;}
+.strip .sa.l{left:0;background:linear-gradient(90deg,var(--sbg) 55%,transparent);}
+.strip .sa.r{right:0;background:linear-gradient(270deg,var(--sbg) 55%,transparent);}
+.strip .sa.show{display:block;}
 .ctsel{font-family:var(--mono);font-size:10.5px;padding:3px 18px 3px 7px;width:auto;min-height:0;
   border-radius:5px;background-color:rgba(15,20,28,.9);border:1px solid var(--line2);color:var(--text);
   -webkit-appearance:none;appearance:none;
@@ -349,6 +355,13 @@ svg.eq{display:block;width:100%;height:auto}
 .hab .h{font-weight:650;font-size:13px}
 .hab .w{color:var(--dim2);font-size:11.5px;display:block}
 .recta{width:100%;min-height:64px;background:var(--p2);border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:8px;font-family:var(--mono);font-size:11.5px;margin-top:8px}
+/* ---- what the day offered ---- */
+.lesson{margin-top:12px;font-size:12.5px;line-height:1.55;color:var(--dim)}
+.lesson b{color:var(--text)} .lesson b.up{color:var(--up)} .lesson b.dn{color:var(--dn)}
+.lesson h5{margin:12px 0 4px;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--acc)}
+.lesson p{margin:0 0 6px}
+.lesson ol{margin:4px 0 6px 18px;padding:0}
+.lesson li{margin:4px 0}
 </style>
 </head>
 <body>
@@ -362,7 +375,7 @@ svg.eq{display:block;width:100%;height:auto}
   </div>
   <div class="sessrow">
     <select id="sdate" class="ssel" title="Which recorded day to practise"></select>
-    <button id="sRestart" class="sbtn" title="Start this same day again from 9:45">↺ Restart</button>
+    <button id="sRestart" class="sbtn" title="Start this same day again from the 9:30 open">↺ Restart</button>
     <button id="sNew" class="sbtn sprim" title="Load a different recorded day">New day</button>
     <button id="sGuide" class="sbtn sq" title="How this page works" aria-label="How this page works">?</button>
   </div>
@@ -781,7 +794,9 @@ function init(ticker,regime,vm,seed,replayPick){
   // Chart and ticket preferences carry over. Losing RSI, the chart type and the
   // timeframe every time you load a new day was a reset nobody asked for.
   const keep=S&&S.ind?{ind:S.ind,ctype:S.ctype,speed:S.speed,tf:S.tf,mode:S.mode,oType:S.oType,tab:S.tab,setup:S.setup}:null;
-  S={ticker,regime,reg,vm,seed:sd,mins,dates,cursor:OR_MIN,tf:'5m',replay:live,ext:live?live.ext:[],
+  // The day starts at the open, not after it. The first minute is revealed so
+  // there is a price; the opening range forms at 9:45 as the replay gets there.
+  S={ticker,regime,reg,vm,seed:sd,mins,dates,cursor:1,tf:'5m',replay:live,ext:live?live.ext:[],
     or:null,fib:null,brk:null,brkMin:null,
     mode:'options',optType:'call',strike:null,exDays:0,
     pos:null,trades:[],draw:[],pend:null,log:[],autoTrim:false,
@@ -804,14 +819,14 @@ function init(ticker,regime,vm,seed,replayPick){
     view:{right:null,count:window.innerWidth<600?32:54},yMan:null,
     hover:null,cache:{}};
   if(keep)Object.assign(S,keep);
-  setRange();
+  S.or=null;S.fib=null;
   renderBadges();
   renderSessRow();
   S.strike=Math.round(price()/cfg(ticker).inc)*cfg(ticker).inc;
   const sessEl=document.getElementById('sess');
   if(sessEl)sessEl.textContent=live?(S.blind?'blind':live.date):'generated';
   if(live){
-    log('Recorded session — '+ticker+(S.blind?', a blind day: which date it is stays hidden until the bell':' '+live.date)+', real 1-minute bars. Opening range set from 9:30–9:45.','hl');
+    log('Recorded session — '+ticker+(S.blind?', a blind day: which date it is stays hidden until the bell':' '+live.date)+', real 1-minute bars, from the 9:30 open. The opening range forms at 9:45.','hl');
     if(S.repeat&&!S.blind)log('You have traded this day before. The record marks these trades as a repeat.','y');
     if(live.carried)log(live.carried+' minute(s) that day had no trade and are carried flat at the prior close.','y');
   }else{
@@ -845,6 +860,7 @@ function stepBack(){
   S.cursor=h.cursor;S.pos=h.pos;S.trades=h.trades;S.orders=h.orders;
   S.brk=h.brk;S.brkMin=h.brkMin;
   S.log.length=h.logN;S.pendingJournal.length=h.pj;S.pendingLedger.length=h.pl||0;S.peakNet=h.peak||0;
+  setRange();   // gone again if the rewind crossed back over 9:45
   S.rewinds++;   // a fact about the session, not part of the state being unwound
   S.cache={};
   if(S.view.right!=null)S.view.right=null;
@@ -903,7 +919,9 @@ function barIdxForMin(mi){const B=bars();let lo=0,hi=B.length-1,r=B.length-1;
   while(lo<=hi){const md=(lo+hi)>>1;if(B[md].s<=mi){r=md;lo=md+1;}else hi=md-1;}
   const b=B[r];return r+Math.min(1,Math.max(0,(mi-b.s)/Math.max(1,b.e-b.s)));}
 
+/** The opening range and its levels, from the first 15 minutes. Only once they have all been seen. */
 function setRange(){
+  if(S.cursor<OR_MIN){S.or=null;S.fib=null;return;}
   const s=todayStart(),seg=S.mins.slice(s,s+OR_MIN);
   const hi=Math.max(...seg.map(b=>b.h)),lo=Math.min(...seg.map(b=>b.l)),r=hi-lo;
   S.or={hi,lo,r};
@@ -919,7 +937,9 @@ function stepMinutes(n){
     if(S.cursor>=MPD){settleExpiry();return false;}
     S.cursor++;
     const b=S.mins[todayStart()+S.cursor-1];
-    if(!S.brk&&S.cursor>OR_MIN&&S.cursor%5===0){
+    if(S.cursor===OR_MIN&&!S.or){setRange();
+      log('9:45 — opening range set: '+S.or.lo.toFixed(2)+' to '+S.or.hi.toFixed(2)+' ('+S.or.r.toFixed(2)+' wide). A 5-minute close outside it confirms a breakout.','hl');}
+    if(!S.brk&&S.or&&S.cursor>OR_MIN&&S.cursor%5===0){
       const c=b.c;
       if(c>S.or.hi){S.brk='long';S.brkMin=S.cursor;
         log(lbl(HIST,S.cursor)+' — 5m close above range high at '+c.toFixed(2)+'. Upside breakout confirmed.','g');}
@@ -1753,7 +1773,7 @@ function goText(bull,qty){
  */
 function ticketKey(){
   const p=S.pos;
-  return [S.ticker,S.seed,S.replay?S.replay.date:'',S.mode,S.strike,S.exDays,S.oType,S.cursor>=MPD,RULES.on,S.ended,
+  return [S.ticker,S.seed,S.replay?S.replay.date:'',S.mode,S.strike,S.exDays,S.oType,S.cursor>=MPD,RULES.on,S.ended,!!S.or,
     p?[p.kind,p.optType,p.strike,p.exDays,p.dir,p.qty].join(':'):'-',S.orders.length,S.trades.length].join('|');
 }
 /** A new bar: the same ticket, new numbers. */
@@ -1902,11 +1922,12 @@ function paneTrade(){
     <label><span>Target</span><input class="n" id="tgt" type="number" inputmode="decimal" step="0.01" value="${tgtV}"></label>
   </div>
   <div class="chips" id="chips">
-    <button data-q="far" title="The far side of the opening range: its low for an upside trade, its high for a downside one">Stop at range edge</button>
-    <button data-q="mid" title="Halfway through the opening range">Stop mid-range</button>
-    <button data-q="t127" title="The 127.2% extension of the opening range">Target 127%</button>
-    <button data-q="t161" title="The 161.8% extension of the opening range">Target 162%</button>
+    <button data-q="far" title="The far side of the opening range: its low for an upside trade, its high for a downside one" ${S.or?'':'disabled'}>Stop at range edge</button>
+    <button data-q="mid" title="Halfway through the opening range" ${S.or?'':'disabled'}>Stop mid-range</button>
+    <button data-q="t127" title="The 127.2% extension of the opening range" ${S.or?'':'disabled'}>Target 127%</button>
+    <button data-q="t161" title="The 161.8% extension of the opening range" ${S.or?'':'disabled'}>Target 162%</button>
   </div>
+  ${S.or?'':'<div class="meta tight">The range chips wake up at 9:45, once the opening range has formed.</div>'}
   <div class="plan" id="plan"></div>
   <label class="chk"><input type="checkbox" id="atrim" ${S.autoTrim?'checked':''}> Take a third off at each extension (127% and 162%)</label>
 
@@ -2039,6 +2060,7 @@ function wireChain(){
 }
 function paneFib(){
   const c=price();
+  if(!S.fib)return '<div class="empty">The opening range forms at 9:45, from the first 15 minutes. Its levels appear here then.</div>';
   const order=['261.8%','161.8%','127.2%','100%','78.6%','61.8%','50%','38.2%','23.6%','0%','-27.2%','-61.8%','-161.8%'];
   let near=null,nd=1e9;order.forEach(k=>{const d=Math.abs(S.fib[k]-c);if(d<nd){nd=d;near=k;}});
   return `<h3>Levels from the 9:30–9:45 range</h3>`+order.map(k=>{
@@ -2069,8 +2091,9 @@ function paneJournal(){
      <td class="${t.flags&&t.flags.length?'dn':'up'}" title="${(t.flags||[]).map(f=>FLAGS[f]?FLAGS[f][0]:f).join(', ')}">${t.flags&&t.flags.length?t.flags.length+' broken':'kept'}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function paneCoach(){
+  const lesson='<div class="lesson">'+(S.cursor>=MPD?dayLesson():'<h5>What the day offered</h5><p>The day&rsquo;s best trade, and the playbook trade with how to execute it, appear here at the 4:00 bell. Not before: knowing where the move went would make the practice worthless.</p>')+'</div>';
   if(!S.trades.length&&!S.pos)
-    return '<div class="empty">Take a trade and this grades the execution: entry timing against the breakout, stop logic, strike and expiry choice, theta burn, and how much of the move you captured.</div>';
+    return '<div class="empty">Take a trade and this grades the execution: entry timing against the breakout, stop logic, strike and expiry choice, theta burn, and how much of the move you captured.</div>'+lesson;
   const out=[],add=(m,t)=>out.push(`<div class="gr"><span class="m ${m}">${m==='ok'?'✓':m==='bad'?'✕':m==='h'?'•':'!'}</span><div class="b">${t}</div></div>`);
   if(!S.trades.length)add('mid','Position still open — close it and the full grade appears here.');
   S.trades.forEach((t,n)=>{
@@ -2083,6 +2106,7 @@ function paneCoach(){
     // range fade is not late or early against a breakout it never traded.
     const orb=!t.setup||t.setup==='orb';
     if(!orb){}
+    else if(t.entryMin<OR_MIN)add('mid','Entered before 9:45, while the opening range was still forming. There was no range to break yet; that is a different trade from the playbook, and the record should say which.');
     else if(!t.afterBrk)add('bad','You entered before any 5-minute bar closed outside the opening range. That is exactly where fakeouts punish you — the range had not resolved.');
     else if((t.brkDir==='long')!==bull)add('bad','You took the opposite side of the confirmed breakout. Different setup, different playbook.');
     else if(t.lagBars===0)add('ok','Entry on the breakout bar close itself. Textbook timing.');
@@ -2103,7 +2127,7 @@ function paneCoach(){
         `Spread cost on entry was about ${money(spread)} — you paid the ask and would sell the bid. ${spread>Math.abs(t.total)*.35?'That is a large share of this trade\'s result; wider spreads demand bigger moves to be worth taking.':'Reasonable relative to the trade size.'}`);
     }
     if(t.stopU==null)add('bad','No stop on the underlying. Without one there is no R to measure, and with options a stalled move bleeds premium while you wait.');
-    else if(!orb)add('ok',`Stop at ${t.stopU.toFixed(2)} before entry${t.rr0?`, planned reward ${t.rr0.toFixed(1)}x the risk`:''}. The plan had its parts.`);
+    else if(!orb||!S.or)add('ok',`Stop at ${t.stopU.toFixed(2)} before entry${t.rr0?`, planned reward ${t.rr0.toFixed(1)}x the risk`:''}. The plan had its parts.`);
     else{
       const inR=t.stopU<=S.or.hi&&t.stopU>=S.or.lo;
       add(inR?'ok':'mid',inR
@@ -2127,7 +2151,7 @@ function paneCoach(){
   if(names[S.reg])add('h',`Today was generated as <b>${names[S.reg]}</b>. Long options do very different things across those four — trend days pay, chop days bleed theta.`);
   else add('h',dayDesc());
   add('h',disciplineLine());
-  return out.join('');
+  return out.join('')+lesson;
 }
 function paneSetup(){
   const syms=[...new Set(REPLAY.map(r=>r.symbol))].sort();
@@ -2243,7 +2267,7 @@ function wireSetup(){
  * unmake a trade and a record cannot be unmade.
  */
 const RULE_DEF={on:1,start:1000,cap:200,maxLoss:60,maxTrades:3,maxRisk:60,minRR:1.5,fee:.65,
-  needStop:1,needSetup:1,lockLoss:1,cooldown:10,noLate0:1,cash:1,rewind:1,blind:0};
+  needStop:1,needSetup:1,lockLoss:1,cooldown:10,noLate0:1,cash:1,rewind:1,blind:1,v:2};
 function loadJSON(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v&&typeof v==='object'?v:d;}catch(e){return d;}}
 function saveJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 const SAVED_RULES=loadJSON('mpRules',{});
@@ -2256,6 +2280,10 @@ if(!Array.isArray(LEDGER.sessions))LEDGER.sessions=[];
 // now. A browser that already has a record and never wrote its own starting
 // balance keeps the $500 its balance was built on, written down so it stays.
 if(SAVED_RULES.start==null&&(LEDGER.trades.length||LEDGER.sessions.length)){RULES.start=500;saveRules();}
+// Blind days became the default after rules had already been saved with the
+// old default written into them. Switched on once for everyone; the Rules tab
+// still turns it off.
+if(SAVED_RULES.v!==2){RULES.blind=1;RULES.v=2;saveRules();}
 function saveLedger(){saveJSON('mpLedger',LEDGER);}
 function localDay(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 const RULEBOOK=window.MP_RULEBOOK||null;
@@ -2541,7 +2569,7 @@ function dayDesc(){
   const s=todayStart(),bars=S.mins.slice(s,revealed());if(!bars.length)return '';
   let h=-Infinity,l=Infinity;for(const b of bars){if(b.h>h)h=b.h;if(b.l<l)l=b.l;}
   const o=bars[0].o,c=bars[bars.length-1].c,over=S.cursor>=MPD;
-  const where=c>S.or.hi?'above the opening range':c<S.or.lo?'below the opening range':'back inside the opening range';
+  const where=!S.or?'before the opening range has formed':c>S.or.hi?'above the opening range':c<S.or.lo?'below the opening range':'back inside the opening range';
   return S.ticker+' opened at '+o.toFixed(2)+', has a high of '+h.toFixed(2)+' and a low of '+l.toFixed(2)+(over?'':' so far')+', and '+(over?'closed':'is')+' at '+c.toFixed(2)+
     ' ('+(c>=o?'+':'−')+Math.abs((c/o-1)*100).toFixed(2)+'%), '+where+'. A real day: nobody labelled it trend or chop in advance, which is the point.';
 }
@@ -2551,6 +2579,105 @@ function disciplineLine(){
   return 'Discipline today: <b>'+sc+'/100</b> across '+n+' trade'+(n===1?'':'s')+(br?', '+br+' rule'+(br===1?'':'s')+' broken':', every rule kept')+'. Grade the execution, not the outcome.';
 }
 
+/* ---- what the day offered ---- */
+/*
+ * Shown at the bell, never before: the day's biggest move priced as the
+ * at-the-money 0DTE contract -- hindsight, nobody buys the low -- and the
+ * playbook trade a rule-following trader could actually have taken: the
+ * first 5-minute close out of the opening range, with the strike, the price
+ * paid, the stop, the targets, when each was hit, and the result. Then what
+ * you did beside it. A day with no breakout says so: sitting out was the
+ * trade.
+ */
+function optionAt(bull,i,under,atMin){
+  const inc=cfg(S.ticker).inc,type=bull?'call':'put';
+  let K=Math.round(under/inc)*inc,q=quote(K,type,0,under,atMin),fit=q.ask*100+RULES.fee<=RULES.cap;
+  let alt=null;
+  if(!fit&&RULES.on){   // the first strike further out that the cap allows
+    for(let k=1;k<=6&&!alt;k++){const K2=+(K+(bull?1:-1)*k*inc).toFixed(2),q2=quote(K2,type,0,under,atMin);
+      if(q2.ask*100+RULES.fee<=RULES.cap)alt={K:K2,q:q2};}
+  }
+  return {K,type,q,fit,alt};
+}
+function pnlOf(o,under,atMin){const q=quote(o.K,o.type,0,under,atMin);return {sold:q.bid,pnl:(q.bid-o.q.ask)*100-RULES.fee*2,pct:(q.bid/o.q.ask-1)*100};}
+function bestMove(){
+  const s=todayStart(),bars=S.mins.slice(s,s+MPD);if(bars.length<MPD)return null;
+  let lo={c:Infinity,m:0},hi={c:-Infinity,m:0},L={d:0},Sh={d:0};
+  for(let m=OR_MIN;m<=385;m++){const c=bars[m].c;
+    if(c-lo.c>L.d)L={d:c-lo.c,i:lo.m,j:m};
+    if(hi.c-c>Sh.d)Sh={d:hi.c-c,i:hi.m,j:m};
+    if(c<lo.c)lo={c,m};if(c>hi.c)hi={c,m};}
+  return {long:L,short:Sh};
+}
+function playbookTrade(){
+  const s=todayStart(),bars=S.mins.slice(s,s+MPD);if(bars.length<MPD||!S.or)return null;
+  let brk=null;
+  for(let m=OR_MIN+5;m<=MPD;m+=5){const c=bars[m-1].c;if(c>S.or.hi){brk={bull:true,m};break;}if(c<S.or.lo){brk={bull:false,m};break;}}
+  if(!brk)return {none:true};
+  const bull=brk.bull,i=brk.m-1,u0=bars[i].c,stop=bull?S.or.lo:S.or.hi;
+  const t1=bull?S.fib['127.2%']:S.fib['-27.2%'],t2=bull?S.fib['161.8%']:S.fib['-61.8%'];
+  // A breakout bar that closed past the first target already is a chase: the
+  // level had a price and this is above it. The second target is the trade
+  // then, and past that there is no trade.
+  const past1=bull?u0>=t1:u0<=t1,past2=bull?u0>=t2:u0<=t2;
+  let hit1=past1?i:null,hit2=null,stopped=null;
+  for(let m=i+1;m<=384;m++){const b=bars[m];
+    if(bull?b.l<=stop:b.h>=stop){stopped=m;break;}
+    if(hit1==null&&(bull?b.h>=t1:b.l<=t1))hit1=m;
+    if(hit1!=null&&(bull?b.h>=t2:b.l<=t2)){hit2=m;break;}}
+  return {bull,i,u0,stop,t1,t2,hit1,hit2,stopped,lateBrk:brk.m>150,chased:past1,extended:past2};
+}
+const pc=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(0)+'%';
+const mins=n=>n+' minute'+(n===1?'':'s');
+function dayLesson(){
+  const bm=bestMove(),pb=playbookTrade();if(!bm||!pb)return '';
+  const s=todayStart(),bars=S.mins.slice(s,s+MPD),T=m=>tlbl(m+1),P=v=>v.toFixed(2);
+  const out=[];
+  // the playbook trade
+  out.push('<h5>The playbook trade &middot; no hindsight</h5>');
+  if(pb.none)out.push('<p>No 5-minute bar closed outside the opening range ('+P(S.or.lo)+' to '+P(S.or.hi)+') all day. For the breakout playbook that is a <b>no-trade day</b>, and sitting out was the trade. If you traded, it was something else &mdash; and the record should say what.</p>');
+  else{
+    const o=optionAt(pb.bull,pb.i,pb.u0,pb.i+1),side=pb.bull?'above':'below',name=pb.bull?'call':'put';
+    const risk=Math.max(0,o.q.ask-quote(o.K,o.type,0,pb.stop,pb.i+1).bid)*100;
+    const steps=['<b>'+T(pb.i)+'</b> &mdash; the first 5-minute close '+side+' the opening range: '+P(pb.u0)+' against the range '+(pb.bull?'high '+P(S.or.hi):'low '+P(S.or.lo))+'.'+(pb.lateBrk?' Late: the range held until after noon, which is a weaker breakout.':''),
+      'Buy the <b>'+P(o.K)+' '+name+', 0DTE</b>, at <b>'+usd(o.q.ask)+'</b> ('+usd(o.q.ask*100)+' a contract'+(o.fit?', within your cap':', over your '+usd(RULES.cap)+' cap'+(o.alt?' &mdash; the '+P(o.alt.K)+' '+name+' at '+usd(o.alt.q.ask)+' fits':''))+').',
+      'Stop on '+S.ticker+' at the far side of the range, <b>'+P(pb.stop)+'</b>: about <b>'+usd(risk)+'</b> at risk on the premium'+(risk>RULES.maxRisk?', over your '+usd(RULES.maxRisk)+' &mdash; the mid-range stop or a smaller contract brings it inside':'')+'.',
+      'First target the 127% extension, <b>'+P(pb.t1)+'</b>; second the 162%, <b>'+P(pb.t2)+'</b>.'];
+    let result;
+    if(pb.extended)result='The breakout bar closed past <b>both</b> targets already ('+P(pb.u0)+'). That is not an entry, it is someone else&rsquo;s exit: by the rule on chasing, this one is a pass, or a wait for the pullback.';
+    else if(pb.chased){
+      result='The breakout bar closed past the first target already ('+P(pb.u0)+' against '+P(pb.t1)+'), so the first target is gone and the second is the trade &mdash; a worse trade, with the same stop and less reward. ';
+      if(pb.hit2!=null){const r2=pnlOf(o,pb.t2,pb.hit2+1);result+='<b>'+T(pb.hit2)+'</b> &mdash; second target hit. The '+name+' was '+usd(r2.sold)+': <b class="'+(r2.pnl>=0?'up':'dn')+'">'+sgn(r2.pnl)+'</b> after fees ('+pc(r2.pct)+').';}
+      else if(pb.stopped!=null){const r=pnlOf(o,pb.stop,pb.stopped+1);result+='<b>'+T(pb.stopped)+'</b> &mdash; stopped before it got there: <b class="dn">'+sgn(r.pnl)+'</b> after fees. The chase cost exactly what the rule says it costs.';}
+      else{const r=pnlOf(o,bars[384].c,385);result+='It never reached the second target; closed at 3:55 for <b class="'+(r.pnl>=0?'up':'dn')+'">'+sgn(r.pnl)+'</b>.';}
+    }
+    else if(pb.stopped!=null&&pb.hit1==null){const r=pnlOf(o,pb.stop,pb.stopped+1);
+      result='<b>'+T(pb.stopped)+'</b> &mdash; stopped: '+S.ticker+' came back through '+P(pb.stop)+' before either target. The '+name+' sold at '+usd(r.sold)+': <b class="dn">'+sgn(r.pnl)+'</b> after fees ('+pc(r.pct)+'). A losing trade, correctly taken; the stop did its job.';}
+    else if(pb.hit1!=null){const r1=pnlOf(o,pb.t1,pb.hit1+1);
+      result='<b>'+T(pb.hit1)+'</b> &mdash; first target hit, '+mins(pb.hit1-pb.i)+' in. The '+name+' was '+usd(r1.sold)+': <b class="'+(r1.pnl>=0?'up':'dn')+'">'+sgn(r1.pnl)+'</b> on one contract after fees ('+pc(r1.pct)+').';
+      if(pb.hit2!=null){const r2=pnlOf(o,pb.t2,pb.hit2+1);result+=' <b>'+T(pb.hit2)+'</b> &mdash; second target hit too, '+usd(r2.sold)+' (<b class="'+(r2.pnl>=0?'up':'dn')+'">'+sgn(r2.pnl)+'</b>). With one contract, take the first target; with three, a third at each and let the rest run to the stop.';}
+      else if(pb.stopped!=null)result+=' It never reached the second target and was back through the stop by '+T(pb.stopped)+', so anything still held after the first target gave it back.';
+      else result+=' The second target was never reached; the rest would have run to the close.';}
+    else{const r=pnlOf(o,bars[384].c,385);result='Neither target nor stop was hit by 3:55. Closed there at '+usd(r.sold)+': <b class="'+(r.pnl>=0?'up':'dn')+'">'+sgn(r.pnl)+'</b>. A drift, not a breakout &mdash; theta ate the wait.';}
+    steps.push(result);
+    out.push('<ol>'+steps.map(x=>'<li>'+x+'</li>').join('')+'</ol>');
+  }
+  // the biggest move
+  const bl=bm.long,bs=bm.short,pick=bl.d>=bs.d?bl:bs,bull=pick===bl,other=bull?bs:bl;
+  out.push('<h5>What the day offered &middot; hindsight</h5>');
+  if(pick.d>0){
+    const o=optionAt(bull,pick.i,bars[pick.i].c,pick.i+1),r=pnlOf(o,bars[pick.j].c,pick.j+1),name=bull?'call':'put';
+    out.push('<p>The biggest move was <b>'+P(bars[pick.i].c)+' to '+P(bars[pick.j].c)+'</b> ('+(bull?'+':'−')+(pick.d/bars[pick.i].c*100).toFixed(2)+'%), from <b>'+T(pick.i)+'</b> to <b>'+T(pick.j)+'</b>, '+mins(pick.j-pick.i)+'. The at-the-money 0DTE '+name+' ('+P(o.K)+') cost '+usd(o.q.ask)+' at '+T(pick.i)+' and was worth '+usd(r.sold)+' at '+T(pick.j)+': <b class="'+(r.pnl>=0?'up':'dn')+'">'+sgn(r.pnl)+'</b> on one contract, '+pc(r.pct)+'.'+
+      (other.d>0?' The other way, the best '+(bull?'drop':'rally')+' was '+P(other.d)+' from '+T(other.i)+' to '+T(other.j)+'.':'')+
+      ' Nobody buys the low and sells the high; the lesson is <b>where the move was</b>: it started at '+T(pick.i)+(pb.none?'':(pick.i>pb.i?', '+mins(pick.i-pb.i)+' after the breakout':pick.i<pb.i?', before the range had even broken':', on the breakout bar itself'))+', and it ran '+mins(pick.j-pick.i)+'.</p>');
+  }
+  // you
+  const n=S.trades.length,net=S.trades.reduce((a,t)=>a+t.total,0);
+  out.push('<h5>You</h5><p>'+(n?n+' trade'+(n===1?'':'s')+', <b class="'+(net>=0?'up':'dn')+'">'+sgn(net)+'</b> net of fees'+
+    (S.trades.some(t=>t.setup==='orb')?', including the breakout playbook':'')+'. '+(net>=0?'Grade the execution, not the outcome: was it the plan, taken at the level, with the stop honoured?':'A loss taken at the stop, on a real setup, is the cost of doing business. A loss taken anywhere else is the leak.'):
+    'No trades. '+(pb.none?'Right call: the day never set up for the playbook.':'The playbook trade was there at '+T(pb.i)+'. If you saw it and passed, write why in the debrief; if you did not see it, that is what to drill.'))+'</p>');
+  return out.join('');
+}
 /* ---- the rules pane ---- */
 function paneRules(){
   const r=RULES;
@@ -2575,7 +2702,7 @@ function paneRules(){
     c('cash','Cash account: no shorting shares, no margin','')+
     '<h3 class="sp">The replay</h3>'+
     c('rewind','Allow rewind','Off is hardcore: what happened, happened.')+
-    c('blind','Blind days: hide which date it is','No hindsight. Revealed at the bell; starts with the next session.')+
+    c('blind','Blind days: hide which date it is','On by default. No hindsight; the date is revealed at the bell and in the debrief. Takes effect from the next session.')+
     '<div class="setup" style="margin-top:14px"><button id="rSave" style="flex:1;background:var(--acc);border-color:var(--acc);color:#fff">Save rules</button><button id="rDef">Defaults</button></div>'+
     '<div class="setup"><button id="rRec" style="flex:1">Open the record</button></div>'+
     '<div class="empty">Saved in this browser. The account is whatever it was last set to, plus every recorded practice trade since, net of fees. Set it to what you actually have whenever that changes.</div>'+book;
@@ -2608,13 +2735,15 @@ function debrief(){
   const mine=LEDGER.trades.filter(t=>t.sid===S.sid),rec=LEDGER.sessions.find(x=>x.sid===S.sid)||{};
   const net=mine.reduce((a,t)=>a+t.net,0),w=mine.filter(t=>t.net>0).length;
   const flags=[...new Set(mine.flatMap(t=>t.flags))];
-  $('dbfTitle').textContent=S.cursor<MPD?'Day ended at '+tlbl(S.cursor):'The 4:00 bell';
+  // The day is named here even on a blind day: it is over, so the hindsight is free now.
+  $('dbfTitle').textContent=(S.cursor<MPD?'Day ended at '+tlbl(S.cursor):'The 4:00 bell')+' · '+S.ticker+(S.replay?', '+dayName(S.replay.date)+' '+S.replay.date.slice(0,4):'');
   $('dbfSum').innerHTML='<div class="tiles" style="margin:10px 0 0">'+
     tile('Today',sgn(net),tone(net),mine.length?mine.length+' trade'+(mine.length===1?'':'s')+' · '+w+' won':'no trades')+
     tile('Discipline',rec.score==null?'—':rec.score+'/100',rec.score>=90?'up':rec.score<70?'dn':'',flags.length?flags.map(f=>FLAGS[f][0]).join(', '):(mine.length?'every rule kept':'a no-trade day counts'))+
     tile('Account',usd(acctLive()),tone(acctLive()-baseline()),'from '+usd(baseline()))+'</div>'+
     (rec.giveback?'<div class="evwarn" style="margin-top:10px">Up '+usd(rec.peak)+' at the best, closed down. Protect a green day: after a good gain, cut size or stop.</div>':'')+
-    (S.pos?'<div class="empty" style="margin-top:8px">A position is still open; it is not a trade until it closes.</div>':'');
+    (S.pos?'<div class="empty" style="margin-top:8px">A position is still open; it is not a trade until it closes.</div>':'')+
+    (S.cursor>=MPD?'<div class="lesson">'+dayLesson()+'</div>':'');
   $('dbfWell').value='';$('dbfBetter').value='';S.dbfRating=0;paintStars();
   box.hidden=false;
 }
@@ -2634,6 +2763,7 @@ let recFilter='all';
 function openRecord(){const r=$('rec');if(!r)return;renderRecord();r.hidden=false;document.body.style.overflow='hidden';r.scrollTop=0;}
 function closeRecord(){const r=$('rec');if(!r)return;r.hidden=true;document.body.style.overflow='';}
 $('acct').onclick=openRecord;
+window.addEventListener('resize',paintAcct);   // the phone form, if the width changes after the paint
 $('recClose').onclick=closeRecord;
 function recTrades(){
   let ts=LEDGER.trades.slice().sort((a,b)=>a.at<b.at?-1:1);
@@ -2781,9 +2911,9 @@ const TOUR=[
   {t:null,h:"Practise on real trading days",
    b:"Every candle here is a real 1-minute bar from a recorded session. You step through the day, trade calls, puts or shares, and see how it would have gone, with nothing at risk. This tour takes about a minute."},
   {t:".sessrow",h:"Pick what to practise",
-   b:"The box above switches the ticker. The date picks which recorded day. Restart replays the same day from 9:45; New day loads a different one. Your chart settings carry over."},
+   b:"The box above switches the ticker. The date picks which recorded day. Restart replays the same day from the 9:30 open; New day loads a different one. Your chart settings carry over."},
   {t:"#cv",h:"The chart",
-   b:"Drag to scroll back in time; pinch, or use the mouse wheel, to zoom. Drag the price scale on the right to stretch it and double-tap it to reset. The shaded band is the opening range: the high and low of the first 15 minutes. The tinted candles before 9:30 are the pre-market, and the dotted lines are the levels the day is traded against: yesterday's high, low and close, the pre-market high and low, and the open."},
+   b:"Drag to scroll back in time; pinch, or use the mouse wheel, to zoom. Drag the price scale on the right to stretch it and double-tap it to reset. The shaded band that appears at 9:45 is the opening range: the high and low of the first 15 minutes. The tinted candles before 9:30 are the pre-market, and the dotted lines are the levels the day is traded against: yesterday's high, low and close, the pre-market high and low, and the open."},
   {t:"#tfbar",h:"Timeframe",
    b:"How much time each candle covers. The replay still moves a minute at a time underneath, so you can switch whenever you like."},
   {t:"#ov",h:"Indicators and chart style",
@@ -2878,6 +3008,34 @@ window.addEventListener('resize',tourPlace);
 window.addEventListener('scroll',tourPlace,{passive:true});
 $('sGuide')&&($('sGuide').onclick=()=>tourShow(0));
 $('guideOpen')&&($('guideOpen').onclick=()=>tourShow(0));
+
+/* ================= strips that overflow ================= */
+/**
+ * Arrows at the edges of any strip wider than its box: the tabs on a phone,
+ * the indicator chips, the timeframes, the draw rail. Shown only on the side
+ * with more to see, and gone once everything fits.
+ */
+function stripArrows(el){
+  if(!el||el.parentElement.classList.contains('strip'))return;
+  const w=document.createElement('div');w.className='strip';
+  el.parentNode.insertBefore(w,el);w.appendChild(el);
+  const bg=getComputedStyle(el).backgroundColor;
+  w.style.setProperty('--sbg',bg&&bg!=='rgba(0, 0, 0, 0)'?bg:getComputedStyle(document.body).backgroundColor);
+  const mk=(cls,txt,dir)=>{const b=document.createElement('button');b.type='button';b.className='sa '+cls;b.textContent=txt;
+    b.setAttribute('aria-label',dir<0?'Scroll left':'Scroll right');
+    b.onclick=()=>el.scrollBy({left:dir*Math.max(120,el.clientWidth*.6),behavior:'smooth'});w.appendChild(b);return b;};
+  const L=mk('l','‹',-1),R=mk('r','›',1);
+  const upd=()=>{const over=el.scrollWidth-el.clientWidth>4;
+    L.classList.toggle('show',over&&el.scrollLeft>4);
+    R.classList.toggle('show',over&&el.scrollLeft<el.scrollWidth-el.clientWidth-4);};
+  el.addEventListener('scroll',upd,{passive:true});
+  window.addEventListener('resize',upd);
+  new MutationObserver(upd).observe(el,{childList:true,subtree:true,attributes:true});
+  upd();setTimeout(upd,300);
+}
+['tabs','ov','tfbar','rail'].forEach(id=>stripArrows($(id)));
+// A tab picked past the edge scrolls into view.
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)b.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'});});
 
 /* ================= hints ================= */
 /** A short note over the chart: what a tool does as you pick it, or an indicator as it turns on. */

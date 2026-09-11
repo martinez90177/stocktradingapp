@@ -270,7 +270,22 @@ still recorded when it ends; the skips are evidence of discipline.
 
 The bell opens a **debrief**: today's result and discipline score, two lines --
 what would you repeat, what would you not -- and a grade for the execution,
-saved with the session.
+saved with the session. It names the day even on a blind one -- it is over, so
+the hindsight is free now -- and under it is **what the day offered**, which
+also appears in the Coach tab from the bell and never before:
+
+- **The playbook trade, no hindsight:** the first 5-minute close out of the
+  opening range, as steps -- the time and price, which 0DTE contract to buy
+  and what it cost (and whether it fit the cap, or which strike would), the
+  stop at the far side of the range and the dollars at risk, the 127% and
+  162% targets, then what happened: which target was hit when, or the stop,
+  and the result on one contract after fees. A day with no breakout says
+  sitting out was the trade.
+- **What the day offered, hindsight:** the biggest move of the day, priced
+  as the at-the-money 0DTE contract bought at its start and sold at its end,
+  with when it started relative to the breakout and how long it ran. Nobody
+  buys the low; the lesson is where the move was.
+- **You:** your trades beside it.
 
 Tap the account strip for the **track record**: net, win rate, profit factor,
 expectancy, average R, average win and loss, max drawdown, discipline, days
@@ -285,10 +300,10 @@ trade by trade.
 
 ### Blind days and hardcore
 
-Two switches in the Rules tab change the replay itself. **Blind days** hide
-which date is being traded -- the day picker, the time axis and the tape all
-say *blind* -- and reveal it at the bell, so a day you remember cannot be traded
-on memory. **Allow rewind** off is hardcore: what happened, happened, and the
+Two switches in the Rules tab change the replay itself. **Blind days**, on by
+default, hide which date is being traded -- the day picker, the time axis and
+the tape all say *blind* -- and reveal it at the bell and in the debrief, so a
+day you remember cannot be traded on memory. **Allow rewind** off is hardcore: what happened, happened, and the
 back arrow is dead. The record marks trades taken after a rewind, and trades on
 a day already traded before, so the filters can leave them out.
 
@@ -339,6 +354,13 @@ on Aug 27, labelled as inferred.
 
 The transport sits under the chart: **◀ rewind**, **next bar**, **play/pause**
 and a **speed** picker from 0.5x to 8x. Arrow keys step, space plays.
+
+**The day starts at the 9:30 open.** It used to start at 9:45 with the opening
+range already drawn, which skipped the fifteen minutes that decide most days.
+Now the first minute is on screen and the range forms at 9:45 as you get there
+-- the band appears, the tape says how wide it is, and the range chips in the
+plan wake up. Before then there is no range to break, and the Coach says so on
+an entry taken while it was still forming.
 
 Rewind is the point of a replay — you go back and take the other decision. The
 whole trading state is snapshotted before every step, so going back unwinds
@@ -428,8 +450,14 @@ Skip the harvest with `--no-replay`.
 ### Reading the chart
 
 Six chart types — candles, hollow, **Heikin Ashi**, OHLC bars, line and area —
-from the picker at the top left of the chart. Heikin Ashi is built from the first
-bar forward, because each of its candles depends on the one before it.
+from the picker in the strip under the chart. Heikin Ashi is built from the first
+bar forward, because each of its candles depends on the one before it. The
+chips live in that strip on every screen: floated over the candles they
+covered the first hour, and at ten-pixel mono they were the hardest thing on
+the page to read. Any strip wider than its box -- the chips, the timeframes,
+the draw rail, the pane tabs on a phone -- gets **arrows** at the edges that
+scroll it, since a hidden scrollbar is no sign that *Session* and *Rules*
+exist past the edge.
 
 Indicator chips sit beside it: EMA 9/20/50, VWAP, Bollinger bands, an **RSI 14
 subpanel**, volume, and magnet snapping for the drawing tools. A **levels**
