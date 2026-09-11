@@ -155,6 +155,37 @@ terminal for rehearsing entries, stops and exits. Step the chart forward one bar
 at a time, draw on it, take shares or options, and manage the position — with a
 Chain, Fib, Tape, Journal, Coach and Session pane alongside.
 
+### Finding your way
+
+A **guide** walks through the page one control at a time: a spotlight on the
+thing and a card saying what it does. It opens by itself on a first visit, and
+from the **?** button in the header or **How to use this page** after that. The
+dimmed page cannot be clicked while it runs, so the tour cannot place a trade.
+
+Every drawing tool is labelled under its icon (Pointer, Trend, Level, Fib, Box,
+Measure, Erase, Undo, Clear) and has a hover description. Picking a tool, or
+switching an indicator on, shows a short note over the chart saying what it
+does, since a phone has no hover.
+
+### The ticket
+
+The options ticket shows **the call and the put at the chosen strike side by
+side**: what each costs (the ask), its bid, delta, breakeven, and the total for
+the number of contracts. Buy call and Buy put decide the side when you press
+them, so both prices have to be on screen; the old ticket quoted only the call,
+whichever you then bought.
+
+Strike and size have steppers. Expiration is labelled today / next day / a week
+out rather than only 0DTE, 1DTE, 7DTE.
+
+The **exit plan** is a stop and a target on the stock's price. A stop below the
+price only makes sense for an upside trade and above it only for a downside
+one, so the ticket works out from the stop which side you mean and prices the
+risk, the reward and the ratio for that side. The old one always priced a call.
+A stop and target on the same side get a warning, and pressing Buy with a stop
+on the wrong side of the price is refused rather than opening a trade the next
+bar would close.
+
 ### Moving through the day
 
 The transport sits under the chart: **◀ rewind**, **next bar**, **play/pause**

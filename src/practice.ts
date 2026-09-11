@@ -196,6 +196,79 @@ footer{color:var(--dim2);font-size:11px;text-align:center;padding:0 20px 28px;li
 
 .wrap{max-width:1300px;margin:0 auto;padding:0 14px 20px}
 .left{min-width:0}
+/* ---- draw rail: every tool says what it is ---- */
+.tool{width:54px;height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.tool small{font-size:10px;line-height:1;color:var(--dim);font-weight:600;letter-spacing:.1px}
+.tool.on small{color:var(--text)}
+.tool:hover{border-color:var(--acc)}
+
+/* ---- a note over the chart ---- */
+.hint{position:absolute;left:50%;top:40px;transform:translate(-50%,-4px);max-width:calc(100% - 110px);z-index:6;
+  background:rgba(13,18,32,.96);border:1px solid var(--acc);color:var(--text);font-size:12.5px;line-height:1.4;
+  padding:7px 12px;border-radius:9px;text-align:center;opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;
+  box-shadow:0 6px 24px rgba(0,0,0,.45)}
+.hint.show{opacity:1;transform:translate(-50%,0)}
+.hint[hidden]{display:none}
+
+/* ---- guide ---- */
+.sbtn.sq{width:34px;padding:0;font-size:15px;font-weight:700}
+.mp-guide{margin-left:auto;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--acc);border-radius:8px;
+  padding:9px 14px;background:rgba(123,108,246,.14);color:var(--text);font-weight:650;font-size:13px;min-height:0}
+.mp-guide + .mp-back{margin-left:0}
+.tour{position:fixed;inset:0;z-index:100}
+.tour[hidden]{display:none}
+.tour.center{background:rgba(3,5,10,.72)}
+.tour-spot{position:fixed;border-radius:10px;border:2px solid var(--acc);box-shadow:0 0 0 9999px rgba(3,5,10,.72);
+  pointer-events:none;transition:left .2s,top .2s,width .2s,height .2s}
+.tour-card{position:fixed;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:15px 16px 13px;
+  box-shadow:0 18px 50px rgba(0,0,0,.6);transition:left .2s,top .2s}
+.tour-step{font-family:var(--mono);font-size:11px;color:var(--acc);font-weight:600;letter-spacing:.4px}
+.tour-card h4{margin:6px 0;font-size:16px;letter-spacing:-.2px}
+.tour-card p{margin:0;color:#c3cad6;font-size:13.5px;line-height:1.55}
+.tour-nav{display:flex;gap:8px;align-items:center;margin-top:14px}
+.tour-nav button{min-height:36px;padding:0 14px;font-size:13px}
+.tour-skip{margin-right:auto;background:transparent;border-color:transparent;color:var(--dim);padding-left:0}
+.tour-next{background:var(--acc);border-color:var(--acc);color:#fff}
+
+/* ---- ticket ---- */
+h3 i{font-style:normal;text-transform:none;letter-spacing:0;color:var(--dim);font-weight:500;margin-left:4px}
+.seg.exp button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:50px}
+.seg.exp b{font-family:var(--mono);font-size:13px}
+.seg.exp small{font-size:10.5px;color:var(--dim);font-weight:500}
+.seg.exp button.on small{color:var(--text)}
+.stepper{display:grid;grid-template-columns:44px 1fr 44px;gap:6px}
+.stepper button{min-height:42px;font-size:19px;padding:0;font-weight:500;line-height:1}
+.stepper select,.stepper input{min-height:42px;text-align:center;text-align-last:center;font-family:var(--mono);font-size:14px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.oc{border:1px solid var(--line2);border-radius:10px;padding:10px 11px 9px;background:var(--p2);min-width:0}
+.oc.call{border-color:rgba(45,212,167,.38);background:linear-gradient(180deg,rgba(45,212,167,.08),rgba(45,212,167,0) 55%),var(--p2)}
+.oc.put{border-color:rgba(244,82,95,.38);background:linear-gradient(180deg,rgba(244,82,95,.08),rgba(244,82,95,0) 55%),var(--p2)}
+.oc .hd{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
+.oc.call .hd{color:var(--up)}
+.oc.put .hd{color:var(--dn)}
+.oc .hd span{color:var(--dim);font-weight:500;letter-spacing:0;text-transform:none;font-size:11px;white-space:nowrap}
+.oc .ask{font-family:var(--mono);font-size:22px;font-weight:600;margin:6px 0 3px;letter-spacing:-.5px}
+.oc .ask small{font-family:var(--sans);font-size:11px;color:var(--dim);font-weight:500;letter-spacing:0;margin-left:5px}
+.oc .ln{font-family:var(--mono);font-size:11.5px;color:var(--dim);line-height:1.65;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oc .ln b{color:var(--text);font-weight:600}
+.oc .cost{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:11.5px;color:var(--dim)}
+.oc .cost b{display:block;margin-top:2px;color:var(--text);font-family:var(--mono);font-size:14px;font-weight:600}
+.meta{font-size:12px;color:var(--dim);margin-top:9px;line-height:1.55}
+.meta b{color:var(--text);font-weight:600}
+.meta.tight{margin-top:-3px}
+.stepline{display:grid;gap:6px}
+.stepline label{font-size:10.5px;color:var(--dim2);text-transform:uppercase;letter-spacing:.9px;font-weight:600}
+.plan{background:var(--p2);border:1px solid var(--line2);border-radius:9px;padding:10px 12px;margin-top:10px}
+.plan .r{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;padding:3px 0}
+.plan .r span{color:var(--dim)}
+.plan .r b{font-family:var(--mono);font-size:13.5px;font-weight:600}
+.plan .note{margin:6px 0 0;font-size:11.5px;color:var(--dim);line-height:1.5}
+.plan .r + .note{border-top:1px solid var(--line);padding-top:7px}
+.plan .note:first-child{margin-top:0}
+.plan .note.warn{color:var(--fib)}
+.chk{display:flex;gap:9px;align-items:center;margin-top:12px;font-size:12.5px;color:var(--dim);cursor:pointer}
+.chk input{width:auto;min-height:0;accent-color:var(--acc)}
+.posline{font-family:var(--mono);font-size:14.5px;font-weight:600;margin:0 0 6px}
 @media(min-width:900px){
   .wrap{display:grid;grid-template-columns:1fr 350px;gap:16px;align-items:start}
   .right{position:sticky;top:112px}
@@ -220,6 +293,8 @@ footer{color:var(--dim2);font-size:11px;text-align:center;padding:0 20px 28px;li
     background-position:calc(100% - 9px) 13px,calc(100% - 5px) 13px}
   /* nothing covers the top-left now, so auto fit leaves the volume bars alone */
   .fitbtn{right:auto;left:10px;top:10px;bottom:auto}
+  /* nothing overlays the top of the chart on a phone, so the note can sit there */
+  .hint{top:10px}
   /* The day now lives in the picker and the timeframe in the bar below, so the
      four-line clock block that wrapped beside the price comes down to the time. */
   .clkx{display:none}
@@ -263,6 +338,7 @@ function bannerFor(reportHref: string, sessions: ReplaySession[]): string {
       <h1>Practice</h1>
       <p>Bar-by-bar replay for rehearsing entries, stops and exits</p>
     </div>
+    <button type="button" class="mp-guide" id="guideOpen">How to use this page</button>
     <a class="mp-back" href="${reportHref}">&larr; Back to the report</a>
   </div>
   <div class="sim ${sessions.length ? "real" : ""}"><div>${note}</div></div>

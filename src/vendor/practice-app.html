@@ -170,6 +170,79 @@ footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-h
   .rail{border-radius:10px;margin-top:10px;border:1px solid var(--line);}
   footer{grid-column:1/-1;}
 }
+/* ---- draw rail: every tool says what it is ---- */
+.tool{width:54px;height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.tool small{font-size:10px;line-height:1;color:var(--dim);font-weight:600;letter-spacing:.1px}
+.tool.on small{color:var(--text)}
+.tool:hover{border-color:var(--acc)}
+
+/* ---- a note over the chart ---- */
+.hint{position:absolute;left:50%;top:40px;transform:translate(-50%,-4px);max-width:calc(100% - 110px);z-index:6;
+  background:rgba(13,18,32,.96);border:1px solid var(--acc);color:var(--text);font-size:12.5px;line-height:1.4;
+  padding:7px 12px;border-radius:9px;text-align:center;opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;
+  box-shadow:0 6px 24px rgba(0,0,0,.45)}
+.hint.show{opacity:1;transform:translate(-50%,0)}
+.hint[hidden]{display:none}
+
+/* ---- guide ---- */
+.sbtn.sq{width:34px;padding:0;font-size:15px;font-weight:700}
+.mp-guide{margin-left:auto;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--acc);border-radius:8px;
+  padding:9px 14px;background:rgba(123,108,246,.14);color:var(--text);font-weight:650;font-size:13px;min-height:0}
+.mp-guide + .mp-back{margin-left:0}
+.tour{position:fixed;inset:0;z-index:100}
+.tour[hidden]{display:none}
+.tour.center{background:rgba(3,5,10,.72)}
+.tour-spot{position:fixed;border-radius:10px;border:2px solid var(--acc);box-shadow:0 0 0 9999px rgba(3,5,10,.72);
+  pointer-events:none;transition:left .2s,top .2s,width .2s,height .2s}
+.tour-card{position:fixed;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:15px 16px 13px;
+  box-shadow:0 18px 50px rgba(0,0,0,.6);transition:left .2s,top .2s}
+.tour-step{font-family:var(--mono);font-size:11px;color:var(--acc);font-weight:600;letter-spacing:.4px}
+.tour-card h4{margin:6px 0;font-size:16px;letter-spacing:-.2px}
+.tour-card p{margin:0;color:#c3cad6;font-size:13.5px;line-height:1.55}
+.tour-nav{display:flex;gap:8px;align-items:center;margin-top:14px}
+.tour-nav button{min-height:36px;padding:0 14px;font-size:13px}
+.tour-skip{margin-right:auto;background:transparent;border-color:transparent;color:var(--dim);padding-left:0}
+.tour-next{background:var(--acc);border-color:var(--acc);color:#fff}
+
+/* ---- ticket ---- */
+h3 i{font-style:normal;text-transform:none;letter-spacing:0;color:var(--dim);font-weight:500;margin-left:4px}
+.seg.exp button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:50px}
+.seg.exp b{font-family:var(--mono);font-size:13px}
+.seg.exp small{font-size:10.5px;color:var(--dim);font-weight:500}
+.seg.exp button.on small{color:var(--text)}
+.stepper{display:grid;grid-template-columns:44px 1fr 44px;gap:6px}
+.stepper button{min-height:42px;font-size:19px;padding:0;font-weight:500;line-height:1}
+.stepper select,.stepper input{min-height:42px;text-align:center;text-align-last:center;font-family:var(--mono);font-size:14px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.oc{border:1px solid var(--line2);border-radius:10px;padding:10px 11px 9px;background:var(--p2);min-width:0}
+.oc.call{border-color:rgba(45,212,167,.38);background:linear-gradient(180deg,rgba(45,212,167,.08),rgba(45,212,167,0) 55%),var(--p2)}
+.oc.put{border-color:rgba(244,82,95,.38);background:linear-gradient(180deg,rgba(244,82,95,.08),rgba(244,82,95,0) 55%),var(--p2)}
+.oc .hd{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
+.oc.call .hd{color:var(--up)}
+.oc.put .hd{color:var(--dn)}
+.oc .hd span{color:var(--dim);font-weight:500;letter-spacing:0;text-transform:none;font-size:11px;white-space:nowrap}
+.oc .ask{font-family:var(--mono);font-size:22px;font-weight:600;margin:6px 0 3px;letter-spacing:-.5px}
+.oc .ask small{font-family:var(--sans);font-size:11px;color:var(--dim);font-weight:500;letter-spacing:0;margin-left:5px}
+.oc .ln{font-family:var(--mono);font-size:11.5px;color:var(--dim);line-height:1.65;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oc .ln b{color:var(--text);font-weight:600}
+.oc .cost{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:11.5px;color:var(--dim)}
+.oc .cost b{display:block;margin-top:2px;color:var(--text);font-family:var(--mono);font-size:14px;font-weight:600}
+.meta{font-size:12px;color:var(--dim);margin-top:9px;line-height:1.55}
+.meta b{color:var(--text);font-weight:600}
+.meta.tight{margin-top:-3px}
+.stepline{display:grid;gap:6px}
+.stepline label{font-size:10.5px;color:var(--dim2);text-transform:uppercase;letter-spacing:.9px;font-weight:600}
+.plan{background:var(--p2);border:1px solid var(--line2);border-radius:9px;padding:10px 12px;margin-top:10px}
+.plan .r{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;padding:3px 0}
+.plan .r span{color:var(--dim)}
+.plan .r b{font-family:var(--mono);font-size:13.5px;font-weight:600}
+.plan .note{margin:6px 0 0;font-size:11.5px;color:var(--dim);line-height:1.5}
+.plan .r + .note{border-top:1px solid var(--line);padding-top:7px}
+.plan .note:first-child{margin-top:0}
+.plan .note.warn{color:var(--fib)}
+.chk{display:flex;gap:9px;align-items:center;margin-top:12px;font-size:12.5px;color:var(--dim);cursor:pointer}
+.chk input{width:auto;min-height:0;accent-color:var(--acc)}
+.posline{font-family:var(--mono);font-size:14.5px;font-weight:600;margin:0 0 6px}
 </style>
 </head>
 <body>
@@ -185,6 +258,7 @@ footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-h
     <select id="sdate" class="ssel" title="Which recorded day to practise"></select>
     <button id="sRestart" class="sbtn" title="Start this same day again from 9:45">↺ Restart</button>
     <button id="sNew" class="sbtn sprim" title="Load a different recorded day">New day</button>
+    <button id="sGuide" class="sbtn sq" title="How this page works" aria-label="How this page works">?</button>
   </div>
   <div class="ohlc" id="ohlc"></div>
 </div>
@@ -197,19 +271,20 @@ footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-h
     <canvas id="cv"></canvas>
     <div class="ov" id="ov"></div>
     <button class="fitbtn" id="fit">auto fit</button>
+    <div class="hint" id="hint" role="status" aria-live="polite" hidden></div>
   </div>
 
   <div class="rail" id="rail">
     <span class="lbl">draw</span>
-    <button class="tool on" data-t="cursor"><svg viewBox="0 0 24 24"><path d="M5 3l6 16 2.5-6.5L20 10z"/></svg></button>
-    <button class="tool" data-t="trend"><svg viewBox="0 0 24 24"><path d="M4 19L20 5"/><circle cx="4" cy="19" r="1.7"/><circle cx="20" cy="5" r="1.7"/></svg></button>
-    <button class="tool" data-t="hline"><svg viewBox="0 0 24 24"><path d="M3 12h18"/><circle cx="12" cy="12" r="1.7"/></svg></button>
-    <button class="tool" data-t="fib"><svg viewBox="0 0 24 24"><path d="M3 5h18M3 10h18M3 14h18M3 19h18"/></svg></button>
-    <button class="tool" data-t="rect"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1.5"/></svg></button>
-    <button class="tool" data-t="measure"><svg viewBox="0 0 24 24"><path d="M4 20V8M4 8l4 3M4 8l-1 4M20 4v12M20 16l-4-3M20 16l1-4"/></svg></button>
-    <button class="tool" data-t="erase"><svg viewBox="0 0 24 24"><path d="M4 16l8-8 6 6-4 4H8z"/><path d="M3 21h18"/></svg></button>
-    <button class="tool" id="undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h9a6 6 0 010 12H8"/></svg></button>
-    <button class="tool" id="clear"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <button class="tool on" data-t="cursor" title="Pointer: pan the chart and read candles (Esc)" aria-label="Pointer"><svg viewBox="0 0 24 24"><path d="M5 3l6 16 2.5-6.5L20 10z"/></svg><small>Pointer</small></button>
+    <button class="tool" data-t="trend" title="Trend line: drag from one point to another" aria-label="Trend line"><svg viewBox="0 0 24 24"><path d="M4 19L20 5"/><circle cx="4" cy="19" r="1.7"/><circle cx="20" cy="5" r="1.7"/></svg><small>Trend</small></button>
+    <button class="tool" data-t="hline" title="Level: tap a price to mark it with a horizontal line" aria-label="Horizontal level"><svg viewBox="0 0 24 24"><path d="M3 12h18"/><circle cx="12" cy="12" r="1.7"/></svg><small>Level</small></button>
+    <button class="tool" data-t="fib" title="Fib retracement: drag from a swing low to a swing high" aria-label="Fib retracement"><svg viewBox="0 0 24 24"><path d="M3 5h18M3 10h18M3 14h18M3 19h18"/></svg><small>Fib</small></button>
+    <button class="tool" data-t="rect" title="Box: drag to mark a zone" aria-label="Box"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1.5"/></svg><small>Box</small></button>
+    <button class="tool" data-t="measure" title="Measure: drag to see a move in dollars, percent and bars" aria-label="Measure"><svg viewBox="0 0 24 24"><path d="M4 20V8M4 8l4 3M4 8l-1 4M20 4v12M20 16l-4-3M20 16l1-4"/></svg><small>Measure</small></button>
+    <button class="tool" data-t="erase" title="Eraser: tap a drawing to delete it" aria-label="Eraser"><svg viewBox="0 0 24 24"><path d="M4 16l8-8 6 6-4 4H8z"/><path d="M3 21h18"/></svg><small>Erase</small></button>
+    <button class="tool" id="undo" title="Undo the last drawing (U)" aria-label="Undo last drawing"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h9a6 6 0 010 12H8"/></svg><small>Undo</small></button>
+    <button class="tool" id="clear" title="Clear every drawing" aria-label="Clear all drawings"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><small>Clear</small></button>
   </div>
 
   <div class="actions">
@@ -242,6 +317,20 @@ footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-h
   <div class="pane" id="pane"></div>
 </div>
 <footer>Simulated price and simulated option quotes for practice. Not live market data, not financial advice.</footer>
+</div>
+
+<div class="tour" id="tour" hidden>
+  <div class="tour-spot" id="tourSpot"></div>
+  <div class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-labelledby="tourTitle">
+    <div class="tour-step" id="tourStep"></div>
+    <h4 id="tourTitle"></h4>
+    <p id="tourBody"></p>
+    <div class="tour-nav">
+      <button type="button" class="tour-skip" id="tourSkip">Skip tour</button>
+      <button type="button" id="tourBack">Back</button>
+      <button type="button" class="tour-next" id="tourNext">Next</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -576,8 +665,17 @@ function settleExpiry(){
 function enter(bull,fill){
   if(S.cursor>=MPD)return;
   const u=fill?fill.u:price();
-  const stopU=fill?(fill.stopU==null?NaN:fill.stopU):parseFloat(val('stop'));
+  let stopU=fill?(fill.stopU==null?NaN:fill.stopU):parseFloat(val('stop'));
   const tgtU=fill?(fill.targetU==null?NaN:fill.targetU):parseFloat(val('tgt'));
+  // A stop on the wrong side of the price closes the trade on the very next bar.
+  // From the buttons, refuse and say why; from a working order that has already
+  // filled, keep the fill and drop the stop rather than undo the trade.
+  if(!isNaN(stopU)&&(bull?stopU>=u:stopU<=u)){
+    const side=S.mode==='options'?(bull?'call':'put'):(bull?'long':'short');
+    if(!fill){log('A stop at '+stopU.toFixed(2)+' is '+(bull?'above':'below')+' the price ('+u.toFixed(2)+'), so it would close a '+side+' straight away. Move it to the other side of the price, or clear it.','y');return pane();}
+    log('Filled at '+u.toFixed(2)+', already past the stop at '+stopU.toFixed(2)+'. The stop was dropped rather than closing the trade on the spot.','y');
+    stopU=NaN;
+  }
   if(S.mode==='shares'){
     const dir=bull?'long':'short';
     const qty=fill?fill.qty:Math.max(1,parseInt(val('qty'))||100);
@@ -1210,86 +1308,150 @@ function pane(){
   else if(S.tab==='coach')p.innerHTML=paneCoach();
   else{p.innerHTML=paneSetup();wireSetup();}
 }
-function paneTrade(){
-  const u=price();
-  const opt=S.mode==='options';
-  const q=opt?quote(S.strike,S.optType,S.exDays,u):null;
-  const stopV=val('stop'),tgtV=val('tgt');
-  const st=parseFloat(stopV);
-  let riskTxt='—';
-  if(!isNaN(st)){
-    if(opt){const qs=quote(S.strike,S.optType,S.exDays,st);
-      const c=Math.max(1,parseInt(val('qty'))||1);
-      riskTxt=money(Math.max(0,(q.ask-qs.bid))*100*c);}
-    else riskTxt=money(Math.abs(u-st)*(parseInt(val('qty'))||100));
+/* ================= ticket ================= */
+const usd=n=>(n<0?'-$':'$')+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+function setTxt(id,t){const e=$(id);if(e)e.innerHTML=t;}
+function ticketQty(opt){const n=parseInt(val('qty'));return Math.max(1,isNaN(n)?(opt?1:100):n);}
+/**
+ * Risk and reward for the plan in the ticket.
+ *
+ * A stop below the price only makes sense for an upside trade (a call, or a
+ * long) and above it only for a downside one, so the stop -- or failing that
+ * the target -- says which side the figures are for. The old ticket always
+ * priced a call, which quoted a put buyer somebody else's risk.
+ */
+function planHtml(u,qty,opt){
+  const st=parseFloat(val('stop')),tg=parseFloat(val('tgt'));
+  const hasS=!isNaN(st),hasT=!isNaN(tg);
+  if(!hasS&&!hasT)return '<p class="note">Set a stop and a target on '+S.ticker+'&rsquo;s price to see what the trade risks and what it could make.</p>';
+  if(hasS&&hasT&&(st<u)===(tg<u))
+    return '<p class="note warn">The stop and the target are both '+(st<u?'below':'above')+' the price, so one of them is on the wrong side.</p>';
+  const up=hasS?st<u:tg>u;
+  const what=opt?(up?'call':'put'):(up?'long':'short');
+  let risk=null,reward=null;
+  if(opt){
+    const type=up?'call':'put',paid=quote(S.strike,type,S.exDays,u).ask;
+    if(hasS)risk=Math.max(0,paid-quote(S.strike,type,S.exDays,st).bid)*100*qty;
+    if(hasT)reward=(quote(S.strike,type,S.exDays,tg).bid-paid)*100*qty;
+  }else{
+    if(hasS)risk=Math.abs(u-st)*qty;
+    if(hasT)reward=Math.abs(tg-u)*qty;
   }
-  const posHtml=S.pos?posBlock():'<div class="empty">Flat.'+(S.trades.length?' '+S.trades.length+' trade(s) today.':'')+'</div>';
+  let h='';
+  if(risk!=null)h+='<div class="r"><span>Risk if stopped</span><b class="dn">'+usd(-risk)+'</b></div>';
+  if(reward!=null)h+='<div class="r"><span>Reward at target</span><b class="'+(reward>=0?'up':'dn')+'">'+(reward>=0?'+':'')+usd(reward)+'</b></div>';
+  if(risk&&reward!=null&&reward>0)h+='<div class="r"><span>Reward : risk</span><b>'+(reward/risk).toFixed(1)+' : 1</b></div>';
+  h+='<p class="note">For '+(opt?'a '+what+' at the '+S.strike.toFixed(2)+' strike, as if '+S.ticker+' got there now &mdash; time decay makes a later stop cost a little more.':
+    'a '+what+' of '+qty+' shares.')+'</p>';
+  return h;
+}
+/** Updates the numbers in place, so typing a quantity does not rebuild the ticket under the cursor. */
+function refreshTicket(){
+  const u=price(),opt=S.mode==='options',qty=ticketQty(opt);
+  if(opt){
+    const c=quote(S.strike,'call',S.exDays,u),p=quote(S.strike,'put',S.exDays,u);
+    const n=qty+(qty===1?' contract':' contracts');
+    setTxt('costC',n+'<b>'+usd(c.ask*100*qty)+'</b>');
+    setTxt('costP',n+'<b>'+usd(p.ask*100*qty)+'</b>');
+  }else setTxt('notional',qty+(qty===1?' share':' shares')+' at '+u.toFixed(2)+' = <b>'+usd(u*qty)+'</b>');
+  setTxt('plan',planHtml(u,qty,opt));
+}
+function paneTrade(){
+  const u=price(),opt=S.mode==='options',qty=ticketQty(opt);
+  const stopV=val('stop'),tgtV=val('tgt');
+  const inc=cfg(S.ticker).inc;
+  const posHtml=S.pos?posBlock():'<div class="empty">No position.'+(S.trades.length?' '+S.trades.length+' closed trade'+(S.trades.length===1?'':'s')+' this session.':'')+'</div>';
+  let top;
+  if(opt){
+    // Both sides of the strike, side by side. The buttons under the chart decide
+    // call or put at the moment you press them, so the ticket has to show the
+    // price of each -- it used to show only the call, whichever you then bought.
+    const c=quote(S.strike,'call',S.exDays,u),p=quote(S.strike,'put',S.exDays,u);
+    const ks=strikes(u);if(!ks.includes(S.strike))ks.push(S.strike);ks.sort((a,b)=>a-b);
+    const EXP=[[0,'today'],[1,'next day'],[7,'a week out']];
+    top=`
+  <h3>Expiration</h3>
+  <div class="seg exp" id="exch">
+    ${EXP.map(([d,t])=>`<button data-ex="${d}" class="${S.exDays===d?'on':''}"><b>${exLabel(d)}</b><small>${t}</small></button>`).join('')}
+  </div>
+  <h3 class="sp">Strike <i>${S.ticker} is at ${u.toFixed(2)}</i></h3>
+  <div class="stepper">
+    <button id="kDn" title="Lower strike" aria-label="Lower strike">&minus;</button>
+    <select id="strikeSel" aria-label="Strike">
+      ${ks.map(k=>`<option value="${k}" ${k===S.strike?'selected':''}>${k.toFixed(2)}${Math.abs(k-u)<inc/2?' · at the money':''}</option>`).join('')}
+    </select>
+    <button id="kUp" title="Higher strike" aria-label="Higher strike">+</button>
+  </div>
+  <div class="pair">
+    <div class="oc call">
+      <div class="hd">Call<span>if it rises</span></div>
+      <div class="ask">${c.ask.toFixed(2)}<small>ask</small></div>
+      <div class="ln">bid <b>${c.bid.toFixed(2)}</b> · &Delta; <b>${c.delta.toFixed(2)}</b></div>
+      <div class="ln">breakeven <b>${(S.strike+c.ask).toFixed(2)}</b></div>
+      <div class="cost" id="costC"></div>
+    </div>
+    <div class="oc put">
+      <div class="hd">Put<span>if it falls</span></div>
+      <div class="ask">${p.ask.toFixed(2)}<small>ask</small></div>
+      <div class="ln">bid <b>${p.bid.toFixed(2)}</b> · &Delta; <b>${p.delta.toFixed(2)}</b></div>
+      <div class="ln">breakeven <b>${(S.strike-p.ask).toFixed(2)}</b></div>
+      <div class="cost" id="costP"></div>
+    </div>
+  </div>
+  <div class="meta">Buy call and Buy put, under the chart, pay the ask shown. Implied volatility <b>${(c.iv*100).toFixed(0)}%</b> &middot; time decay about <b>${usd(Math.abs(c.thetaHr)*100)}</b> an hour per contract.</div>
+  <h3 class="sp">Contracts</h3>
+  <div class="stepper">
+    <button id="qDn" title="Fewer" aria-label="Fewer contracts">&minus;</button>
+    <input class="n" id="qty" type="number" inputmode="numeric" min="1" value="${qty}" aria-label="Contracts">
+    <button id="qUp" title="More" aria-label="More contracts">+</button>
+  </div>`;
+  }else{
+    top=`
+  <h3>Shares</h3>
+  <div class="stepper">
+    <button id="qDn" title="Fewer" aria-label="Fewer shares">&minus;</button>
+    <input class="n" id="qty" type="number" inputmode="numeric" min="1" value="${qty}" aria-label="Shares">
+    <button id="qUp" title="More" aria-label="More shares">+</button>
+  </div>
+  <div class="meta" id="notional"></div>`;
+  }
   return `
   <div class="seg" id="mode">
     <button data-m="options" class="${opt?'on':''}">Options</button>
     <button data-m="shares" class="${opt?'':'on'}">Shares</button>
   </div>
-  ${opt?`
-  <h3>Contract</h3>
-  <div class="chips" id="exch">
-    ${[0,1,7].map(d=>`<button data-ex="${d}" class="${S.exDays===d?'on':''}">${exLabel(d)}</button>`).join('')}
-  </div>
-  <div class="grid2" style="margin-top:9px">
-    <label><span>Strike</span><select id="strikeSel">
-      ${strikes(u).map(k=>`<option value="${k}" ${k===S.strike?'selected':''}>${k.toFixed(cfg(S.ticker).inc<1?2:2)}${Math.abs(k-u)<cfg(S.ticker).inc/2?' · ATM':''}</option>`).join('')}
-    </select></label>
-    <label><span>Contracts</span><input class="n" id="qty" type="number" inputmode="numeric" value="${val('qty')||1}"></label>
-  </div>
-  <div class="quote">
-    <div style="display:flex;justify-content:space-between;align-items:baseline">
-      <span class="big">${S.strike} ${S.optType==='call'?'C':'P'}</span>
-      <span class="n" style="font-size:13px">bid <b>${q.bid.toFixed(2)}</b> · ask <b>${q.ask.toFixed(2)}</b></span>
-    </div>
-    <div class="greeks">
-      <span>Δ <b>${q.delta.toFixed(2)}</b></span>
-      <span>Θ/hr <b>${q.thetaHr.toFixed(2)}</b></span>
-      <span>Γ <b>${q.gamma.toFixed(3)}</b></span>
-      <span>IV <b>${(q.iv*100).toFixed(0)}%</b></span>
-      <span>BE <b>${(S.optType==='call'?S.strike+q.ask:S.strike-q.ask).toFixed(2)}</b></span>
-    </div>
-    <div class="greeks"><span>Cost for ${parseInt(val('qty'))||1}: <b>${money(q.ask*100*(parseInt(val('qty'))||1))}</b></span></div>
-  </div>`:`
-  <h3>Shares</h3>
-  <div class="grid2"><label><span>Shares</span>
-    <input class="n" id="qty" type="number" inputmode="numeric" value="${val('qty')||100}"></label>
-    <label><span>Notional</span><input class="n" readonly value="${money(u*(parseInt(val('qty'))||100))}"></label></div>`}
+  ${top}
 
-  <h3 class="sp">Risk on ${S.ticker} price</h3>
-  <div class="grid2">
-    <label><span>Stop (underlying)</span><input class="n" id="stop" type="number" inputmode="decimal" step="0.01" value="${stopV}"></label>
-    <label><span>Target (underlying)</span><input class="n" id="tgt" type="number" inputmode="decimal" step="0.01" value="${tgtV}"></label>
+  <h3 class="sp">Order</h3>
+  <div class="seg" id="otype">
+    <button data-o="market" class="${S.oType==='market'?'on':''}" title="Fill now, at the current price">Market</button>
+    <button data-o="limit" class="${S.oType==='limit'?'on':''}" title="Wait for a better price">Limit</button>
+    <button data-o="stop" class="${S.oType==='stop'?'on':''}" title="Wait for a breakout">Stop</button>
   </div>
-  <div class="kv" style="margin-top:7px"><span class="k">Risk if stopped</span><span>${riskTxt}</span></div>
-  <div class="chips" id="chips">
-    <button data-q="far">Stop = far edge</button>
-    <button data-q="mid">Stop = 50%</button>
-    <button data-q="t127">Tgt 127.2%</button>
-    <button data-q="t161">Tgt 161.8%</button>
-  </div>
-  <label style="display:flex;gap:8px;align-items:center;margin-top:11px;font-size:12.5px;color:var(--dim)">
-    <input type="checkbox" id="atrim" ${S.autoTrim?'checked':''} style="width:auto"> Auto-trim ⅓ at each extension</label>
-
-  <h3 class="sp">Order type</h3>
-  <div class="seg" id="otype" style="margin-bottom:9px">
-    <button data-o="market" class="${S.oType==='market'?'on':''}">Market</button>
-    <button data-o="limit" class="${S.oType==='limit'?'on':''}">Limit</button>
-    <button data-o="stop" class="${S.oType==='stop'?'on':''}">Stop</button>
-  </div>
-  ${S.oType==='market'?'':`<label style="font-size:11.5px;color:var(--dim)"><span style="display:block;margin-bottom:4px">
-    ${S.oType==='limit'?'Limit':'Stop'} price (underlying)</span>
-    <input class="n" id="olim" type="number" inputmode="decimal" step="0.01" value="${S.oPx||''}"></label>
-    <div class="empty" style="margin-top:6px;font-size:12px">Long and Short place the order instead of filling it. ${S.oType==='limit'?
-      'A buy limit rests below the market and fills at your price.':
-      'A buy stop rests above the market and fills at the open if price gaps past it.'}</div>`}
+  ${S.oType==='market'?'<div class="meta tight">The buttons under the chart fill straight away.</div>':`
+  <div class="stepline"><label for="olim">${S.oType==='limit'?'Limit':'Stop'} price on ${S.ticker}</label>
+    <input class="n" id="olim" type="number" inputmode="decimal" step="0.01" value="${S.oPx||''}"></div>
+  <div class="meta">The buttons under the chart place the order and it waits. ${S.oType==='limit'?
+    'A limit fills at your price once the stock trades there: below the price for an upside trade, above it for a downside one.':
+    'A stop fills once the stock breaks through: above the price for an upside trade, below it for a downside one. If price gaps past it, you get the worse price.'}</div>`}
 
   ${S.orders.length?`<h3 class="sp">Working orders</h3>`+S.orders.map(o=>
     `<div class="kv"><span class="k">${o.kind} ${o.bull?'buy':'sell'} ${o.qty} @ ${o.px.toFixed(2)}</span>
      <button class="ocx" data-id="${o.id}" style="min-height:26px;padding:0 9px;font-size:11px">Cancel</button></div>`).join(''):''}
+
+  <h3 class="sp">Exit plan <i>on ${S.ticker}&rsquo;s price</i></h3>
+  <div class="grid2">
+    <label><span>Stop</span><input class="n" id="stop" type="number" inputmode="decimal" step="0.01" value="${stopV}"></label>
+    <label><span>Target</span><input class="n" id="tgt" type="number" inputmode="decimal" step="0.01" value="${tgtV}"></label>
+  </div>
+  <div class="chips" id="chips">
+    <button data-q="far" title="The far side of the opening range: its low for an upside trade, its high for a downside one">Stop at range edge</button>
+    <button data-q="mid" title="Halfway through the opening range">Stop mid-range</button>
+    <button data-q="t127" title="The 127.2% extension of the opening range">Target 127%</button>
+    <button data-q="t161" title="The 161.8% extension of the opening range">Target 162%</button>
+  </div>
+  <div class="plan" id="plan"></div>
+  <label class="chk"><input type="checkbox" id="atrim" ${S.autoTrim?'checked':''}> Take a third off at each extension (127% and 162%)</label>
 
   <h3 class="sp">Position</h3>${posHtml}
   <div class="mgmt">
@@ -1302,34 +1464,46 @@ function posBlock(){
   const p=S.pos,u=price();
   if(p.kind==='shares'){
     const per=p.dir==='long'?u-p.avg:p.avg-u,op=per*p.qty,rk=riskOf(p);
-    return `<div class="kv"><span class="k">Side</span><span class="${p.dir==='long'?'up':'dn'}">${p.dir.toUpperCase()} ${p.qty}</span></div>
-    <div class="kv"><span class="k">Average</span><span>${p.avg.toFixed(2)}</span></div>
+    return `<div class="posline ${p.dir==='long'?'up':'dn'}">${p.dir==='long'?'Long':'Short'} ${p.qty} ${S.ticker}</div>
+    <div class="kv"><span class="k">Average price</span><span>${p.avg.toFixed(2)}</span></div>
     <div class="kv"><span class="k">Open P&amp;L</span><span class="${op>=0?'up':'dn'}">${sgn(op)}</span></div>
     <div class="kv"><span class="k">Realized</span><span class="${p.realized>=0?'up':'dn'}">${sgn(p.realized)}</span></div>
     ${rk?`<div class="kv"><span class="k">R multiple</span><span>${((op+p.realized)/rk).toFixed(2)}R</span></div>`:''}`;
   }
   const q=quote(p.strike,p.optType,p.exDays,u);
-  const op=(q.bid-p.avgPrem)*100*p.qty,rk=riskOf(p);
-  return `<div class="kv"><span class="k">Contract</span><span class="${p.optType==='call'?'up':'dn'}">${p.qty}x ${p.strike} ${p.optType.toUpperCase()} ${exLabel(p.exDays)}</span></div>
-   <div class="kv"><span class="k">Avg premium</span><span>${p.avgPrem.toFixed(2)}</span></div>
-   <div class="kv"><span class="k">Mark (bid)</span><span>${q.bid.toFixed(2)}</span></div>
+  const op=(q.bid-p.avgPrem)*100*p.qty,rk=riskOf(p),move=u-p.uEntry;
+  return `<div class="posline ${p.optType==='call'?'up':'dn'}">${p.qty}&times; ${Number(p.strike).toFixed(2)} ${p.optType==='call'?'Call':'Put'} &middot; ${exLabel(p.exDays)}</div>
+   <div class="kv"><span class="k">Paid (average)</span><span>${p.avgPrem.toFixed(2)}</span></div>
+   <div class="kv"><span class="k">Worth now (bid)</span><span>${q.bid.toFixed(2)}</span></div>
    <div class="kv"><span class="k">Open P&amp;L</span><span class="${op>=0?'up':'dn'}">${sgn(op)}</span></div>
    <div class="kv"><span class="k">Realized</span><span class="${p.realized>=0?'up':'dn'}">${sgn(p.realized)}</span></div>
    ${rk?`<div class="kv"><span class="k">R multiple</span><span>${((op+p.realized)/rk).toFixed(2)}R</span></div>`:''}
-   <div class="kv"><span class="k">Δ / Θ per hr</span><span>${q.delta.toFixed(2)} / ${(q.thetaHr*100*p.qty).toFixed(0)}</span></div>
-   <div class="kv"><span class="k">Underlying since entry</span><span class="${u>=p.uEntry?'up':'dn'}">${(u-p.uEntry>=0?'+':'')+(u-p.uEntry).toFixed(2)}</span></div>`;
+   <div class="kv"><span class="k">Delta</span><span>${q.delta.toFixed(2)}</span></div>
+   <div class="kv"><span class="k">Time decay</span><span>${usd(-Math.abs(q.thetaHr)*100*p.qty)}/hr</span></div>
+   <div class="kv"><span class="k">${S.ticker} since entry</span><span class="${move>=0?'up':'dn'}">${(move>=0?'+':'')+move.toFixed(2)}</span></div>`;
 }
 function wireTrade(){
   $('mode')&&$('mode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
     if(S.pos){log('Close the open position before switching instrument.','y');return;}
+    if(b.dataset.m!==S.mode&&$('qty'))$('qty').value='';   // 3 contracts is not 3 shares
     S.mode=b.dataset.m;renderAll();});
   $('exch')&&$('exch').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
     S.exDays=+b.dataset.ex;pane();});
   $('strikeSel')&&($('strikeSel').onchange=e=>{S.strike=parseFloat(e.target.value);pane();draw();});
+  const stepK=d=>{const ks=[...$('strikeSel').options].map(o=>parseFloat(o.value));
+    const i=ks.indexOf(S.strike),j=Math.max(0,Math.min(ks.length-1,i+d));
+    if(i<0||j===i)return;S.strike=ks[j];pane();draw();};
+  $('kDn')&&($('kDn').onclick=()=>stepK(-1));
+  $('kUp')&&($('kUp').onclick=()=>stepK(1));
+  // Contracts move one at a time; shares by 10, or 50 once you are at 100 or more.
+  const stepQ=d=>{const opt=S.mode==='options',q=ticketQty(opt),by=opt?1:(q+(d<0?-1:0)>=100?50:10);
+    $('qty').value=Math.max(1,q+d*by);refreshTicket();};
+  $('qDn')&&($('qDn').onclick=()=>stepQ(-1));
+  $('qUp')&&($('qUp').onclick=()=>stepQ(1));
   ['qty','stop','tgt'].forEach(id=>$(id)&&$(id).addEventListener('input',()=>{
     if(S.pos){const s=parseFloat(val('stop')),t=parseFloat(val('tgt'));
       S.pos.stopU=isNaN(s)?null:s;S.pos.targetU=isNaN(t)?null:t;}
-    draw();}));
+    refreshTicket();draw();}));
   $('atrim')&&($('atrim').onchange=e=>S.autoTrim=e.target.checked);
   $('chips')&&$('chips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!S.fib)return;
     const bull=S.mode==='options'?(S.pos?S.pos.optType==='call':S.brk!=='short'):(S.pos?S.pos.dir==='long':S.brk!=='short');
@@ -1346,6 +1520,7 @@ function wireTrade(){
   $('t3')&&($('t3').onclick=()=>trim(1/3));
   $('t2')&&($('t2').onclick=()=>trim(1/2));
   $('tx')&&($('tx').onclick=()=>trim(1));
+  refreshTicket();
 }
 function paneChain(){
   const u=price();
@@ -1548,6 +1723,129 @@ function wireSetup(){
   $('cp').onclick=()=>{navigator.clipboard?.writeText(S.ticker+'-'+S.seed);log('Session code copied.','hl');};
 }
 
+/* ================= guide ================= */
+/**
+ * A walk through the page, one control at a time: a spotlight on the thing,
+ * and a card saying what it does. Opens by itself on a first visit and from
+ * the ? button after that. Nothing can be clicked through the dimmed page
+ * while it runs, so the tour cannot place a trade by accident.
+ */
+const TOUR=[
+  {t:null,h:"Practise on real trading days",
+   b:"Every candle here is a real 1-minute bar from a recorded session. You step through the day, trade calls, puts or shares, and see how it would have gone, with nothing at risk. This tour takes about a minute."},
+  {t:".sessrow",h:"Pick what to practise",
+   b:"The box above switches the ticker. The date picks which recorded day. Restart replays the same day from 9:45; New day loads a different one. Your chart settings carry over."},
+  {t:"#cv",h:"The chart",
+   b:"Drag to scroll back in time; pinch, or use the mouse wheel, to zoom. Drag the price scale on the right to stretch it and double-tap it to reset. The shaded band is the opening range: the high and low of the first 15 minutes."},
+  {t:"#tfbar",h:"Timeframe",
+   b:"How much time each candle covers. The replay still moves a minute at a time underneath, so you can switch whenever you like."},
+  {t:"#ov",h:"Indicators and chart style",
+   b:"Tap a chip to switch an indicator on or off; a short note explains each one as it turns on. The first box changes the chart style: candles, Heikin Ashi, line and so on."},
+  {t:"#rail",h:"Drawing tools",
+   b:"Pick a tool, then drag on the chart: trend lines, price levels, fib retracements, boxes, and a ruler that measures a move in dollars and percent. Undo and Clear are at the end. Pointer takes you back to panning."},
+  {t:".trow",h:"Move through the day",
+   b:"Next steps forward one candle. The play button runs on its own at the speed beside it. The back arrow rewinds one candle and undoes anything you did in it: that is how you go back and try the other decision."},
+  {t:".srow",h:"Take a trade",
+   b:"Buy call if you think the stock is going up, Buy put if you think it is going down. Switch the ticket to Shares and these become Long and Short."},
+  {t:"#pane",h:"The ticket",tab:"trade",
+   b:"Choose the expiration and strike and see what the call and the put each cost. Set how many contracts, how to enter, and your exit plan: a stop and a target on the stock price, with what that risks and could make. Your open position shows here too."},
+  {t:"#tabs",h:"Everything else",
+   b:"Chain lists every strike. Fib has the levels from the opening range. Tape logs everything that happened. Coach reviews your trades. Session has today's stats, and sends your trades to the journal."},
+  {t:null,h:"Your trades are kept",
+   b:"Closed trades go to your Journal at the 4:00 bell, or when you send them from the Session tab. They are marked as practice, so they never mix with your real results. Open this guide again any time with the ? button."}
+];
+let tourI=-1;
+function tourShow(i){
+  if(i<0)return;
+  if(i>=TOUR.length){tourEnd();return;}
+  stopAuto();
+  tourI=i;
+  const st=TOUR[i];
+  if(st.tab&&S.tab!==st.tab){
+    S.tab=st.tab;
+    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.p===st.tab));
+    pane();
+  }
+  $('tour').hidden=false;
+  $('tourStep').textContent=(i+1)+' of '+TOUR.length;
+  $('tourTitle').textContent=st.h;
+  $('tourBody').textContent=st.b;
+  $('tourBack').disabled=i===0;
+  $('tourNext').textContent=i===TOUR.length-1?'Done':'Next';
+  const el=st.t?document.querySelector(st.t):null;
+  if(el){
+    // Line the target up just under the sticky header instead of centring it:
+    // centred, a phone has no room left for the card above or below the chart.
+    // Targets inside a bar that is actually sticky do not move with the page.
+    const bar=el.closest('.top,.actions');
+    if(!bar||getComputedStyle(bar).position!=='sticky'){
+      const head=document.querySelector('.top'),hh=head?head.getBoundingClientRect().height:0;
+      window.scrollBy(0,el.getBoundingClientRect().top-hh-12);
+    }
+  }
+  requestAnimationFrame(()=>requestAnimationFrame(tourPlace));
+  $('tourNext').focus({preventScroll:true});
+}
+function tourPlace(){
+  if(tourI<0)return;
+  const st=TOUR[tourI],spot=$('tourSpot'),card=$('tourCard'),box=$('tour');
+  const el=st.t?document.querySelector(st.t):null;
+  const vw=document.documentElement.clientWidth,vh=innerHeight,cw=Math.min(360,vw-24);
+  card.style.width=cw+'px';
+  if(!el){
+    box.classList.add('center');spot.style.display='none';
+    card.style.left=((vw-cw)/2)+'px';
+    card.style.top=Math.max(12,(vh-card.offsetHeight)/2)+'px';
+    return;
+  }
+  box.classList.remove('center');
+  const r=el.getBoundingClientRect(),pad=6;
+  const top0=Math.max(4,r.top-pad),bot0=Math.min(vh-4,r.bottom+pad);
+  spot.style.display='block';
+  spot.style.left=Math.max(4,r.left-pad)+'px';
+  spot.style.top=top0+'px';
+  spot.style.width=(Math.min(vw-4,r.right+pad)-Math.max(4,r.left-pad))+'px';
+  spot.style.height=Math.max(0,bot0-top0)+'px';
+  const ch=card.offsetHeight;
+  let top=bot0+10;
+  if(top+ch>vh-10)top=top0-10-ch;          // no room below: above it
+  if(top<10)top=vh-ch-12;                  // no room either side: pinned to the bottom
+  const left=Math.max(12,Math.min(vw-cw-12,r.left+r.width/2-cw/2));
+  card.style.left=left+'px';
+  card.style.top=Math.max(10,top)+'px';
+}
+function tourEnd(){
+  tourI=-1;$('tour').hidden=true;
+  try{localStorage.setItem('mpGuideSeen','1');}catch(e){}
+}
+$('tourNext').onclick=()=>tourShow(tourI+1);
+$('tourBack').onclick=()=>tourShow(tourI-1);
+$('tourSkip').onclick=tourEnd;
+window.addEventListener('resize',tourPlace);
+window.addEventListener('scroll',tourPlace,{passive:true});
+$('sGuide')&&($('sGuide').onclick=()=>tourShow(0));
+$('guideOpen')&&($('guideOpen').onclick=()=>tourShow(0));
+
+/* ================= hints ================= */
+/** A short note over the chart: what a tool does as you pick it, or an indicator as it turns on. */
+let hintT=null;
+function hint(t){
+  const h=$('hint');if(!h||!t)return;
+  h.textContent=t;h.hidden=false;
+  requestAnimationFrame(()=>h.classList.add('show'));
+  clearTimeout(hintT);
+  hintT=setTimeout(()=>{h.classList.remove('show');setTimeout(()=>{if(!h.classList.contains('show'))h.hidden=true;},260);},4200);
+}
+const TOOL_HINT={
+  cursor:'Pointer: drag to pan the chart, hover or touch a candle to read it.',
+  trend:'Trend line: press and drag from one point to another.',
+  hline:'Level: tap the price you want to mark.',
+  fib:'Fib retracement: drag from a swing low to a swing high, or high to low.',
+  rect:'Box: drag across the zone you want to mark.',
+  measure:'Measure: drag to see a move in dollars, percent and bars.',
+  erase:'Eraser: tap a drawing to delete it.'
+};
+
 /* ================= sessions ================= */
 function dayName(d){const x=new Date(d+'T12:00:00Z');
   return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][x.getUTCDay()]+' '+(x.getUTCMonth()+1)+'/'+x.getUTCDate();}
@@ -1600,8 +1898,17 @@ TFS.forEach(t=>{const b=document.createElement('button');b.className='tf'+(t.k==
     S.tf=t.k;S.cache={};S.view.right=null;S.yMan=null;
     S.view.count=window.innerWidth<600?46:80;renderAll();};
   tfbar.appendChild(b);});
-const INDS=[['fib','auto fib'],['or','range'],['vwap','vwap'],['ema9','ema9'],['ema20','ema20'],
-  ['ema50','ema50'],['bb','boll'],['rsi','rsi'],['vol','vol'],['magnet','magnet']];
+const INDS=[
+  ['fib','auto fib','Fibonacci levels drawn from the opening range (9:30 to 9:45)'],
+  ['or','range','Opening range: the high and low of the first 15 minutes'],
+  ['vwap','vwap','VWAP: the average price paid since the open, weighted by volume'],
+  ['ema9','ema9','9-bar exponential moving average: the fastest trend line'],
+  ['ema20','ema20','20-bar exponential moving average'],
+  ['ema50','ema50','50-bar exponential moving average: the slower trend'],
+  ['bb','boll','Bollinger bands: the 20-bar average plus and minus two standard deviations'],
+  ['rsi','rsi','RSI 14: momentum from 0 to 100. Above 70 is stretched, below 30 washed out'],
+  ['vol','vol','Volume bars under the chart'],
+  ['magnet','magnet','Magnet: drawings snap to the nearest open, high, low or close']];
 const CTYPES=[['candle','Candles'],['hollow','Hollow'],['heikin','Heikin Ashi'],
   ['bar','OHLC bars'],['line','Line'],['area','Area']];
 function renderBadges(){
@@ -1609,16 +1916,17 @@ function renderBadges(){
     '<select class="ctsel" id="ctsel" title="Chart type">'+
       CTYPES.map(([k,l])=>'<option value="'+k+'"'+(S.ctype===k?' selected':'')+'>'+l+'</option>').join('')+
     '</select>'+
-    INDS.map(([k,l])=>'<button class="badge'+(S.ind[k]?' on':'')+'" data-i="'+k+'">'+l+'</button>').join('');
+    INDS.map(([k,l,d])=>'<button class="badge'+(S.ind[k]?' on':'')+'" data-i="'+k+'" title="'+d+'" aria-label="'+l+': '+d+'">'+l+'</button>').join('');
   $('ctsel').onchange=e=>{S.ctype=e.target.value;draw();};
 }
 $('ov').addEventListener('click',e=>{const b=e.target.closest('.badge');if(!b)return;
-  const k=b.dataset.i;S.ind[k]=!S.ind[k];b.classList.toggle('on',!!S.ind[k]);resize();});
+  const k=b.dataset.i;S.ind[k]=!S.ind[k];b.classList.toggle('on',!!S.ind[k]);resize();
+  if(S.ind[k]){const e=INDS.find(x=>x[0]===k);if(e)hint(e[2]);}});
 $('rail').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-  if(b.id==='undo'){S.draw.pop();return draw();}
-  if(b.id==='clear'){S.draw=[];return draw();}
+  if(b.id==='undo'){hint(S.draw.length?'Removed the last drawing.':'Nothing to undo.');S.draw.pop();return draw();}
+  if(b.id==='clear'){hint(S.draw.length?'Cleared '+S.draw.length+' drawing'+(S.draw.length===1?'':'s')+'.':'No drawings to clear.');S.draw=[];return draw();}
   document.querySelectorAll('.tool[data-t]').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');S.tool=b.dataset.t;});
+  b.classList.add('on');S.tool=b.dataset.t;hint(TOOL_HINT[S.tool]);});
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');S.tab=b.dataset.p;pane();});
@@ -1638,6 +1946,13 @@ function stopAuto(){if(S.auto){clearInterval(S.auto);S.auto=null;$('auto').textC
 $('auto').onclick=()=>{if(S.auto)return stopAuto();$('auto').textContent='❚❚';
   S.auto=setInterval(()=>{if(S.cursor>=MPD)return stopAuto();stepBar();},Math.round(700/(S.speed||1)));};
 document.addEventListener('keydown',e=>{
+  if(tourI>=0){
+    if(e.key==='Escape')tourEnd();
+    else if(e.key==='ArrowRight')tourShow(tourI+1);
+    else if(e.key==='ArrowLeft')tourShow(tourI-1);
+    if(e.key!=='Enter'&&e.key!==' '&&e.key!=='Tab')e.preventDefault();
+    return;
+  }
   if(/input|select|textarea/i.test(e.target.tagName))return;
   const k=e.key.toLowerCase();
   if(e.key==='ArrowRight'){e.preventDefault();stepBar();}
@@ -1650,6 +1965,8 @@ document.addEventListener('keydown',e=>{
   else if(k==='escape')document.querySelector('.tool[data-t="cursor"]').click();
 });
 (function(){const first=randomReplay();init(first?first.symbol:'SPY','random',1,undefined,first);})();
+(function(){let seen=true;try{seen=!!localStorage.getItem('mpGuideSeen');}catch(e){}
+  if(!seen)setTimeout(()=>tourShow(0),700);})();
 </script>
 </body>
 </html>
