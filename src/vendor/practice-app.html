@@ -267,6 +267,21 @@ button.oc:disabled .go b{display:none}
   .left{position:sticky;top:146px}
   .right{position:static}
 }
+/* ---- percent moves ---- */
+.oc .ask em{display:block;font-family:var(--mono);font-style:normal;font-size:11.5px;font-weight:600;letter-spacing:0;margin-top:2px}
+.oc .ask em.up{color:var(--up)}
+.oc .ask em.dn{color:var(--dn)}
+.kv .pp{font-weight:700;margin-left:4px}
+.posbar{display:flex;justify-content:space-between;align-items:center;gap:10px;max-width:1300px;margin:8px auto 0;
+  padding:7px 11px;border-radius:9px;font-size:13px;border:1px solid var(--line2);background:var(--p2)}
+.posbar[hidden]{display:none}
+.posbar.up{border-color:rgba(45,212,167,.45);background:rgba(45,212,167,.08)}
+.posbar.dn{border-color:rgba(244,82,95,.45);background:rgba(244,82,95,.08)}
+.posbar .pw{font-family:var(--mono);font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.posbar .pv{font-family:var(--mono);white-space:nowrap}
+.posbar.up .pv{color:var(--up)}
+.posbar.dn .pv{color:var(--dn)}
+.posbar .pv b{font-size:14px;margin-right:6px}
 </style>
 </head>
 <body>
@@ -284,6 +299,7 @@ button.oc:disabled .go b{display:none}
     <button id="sNew" class="sbtn sprim" title="Load a different recorded day">New day</button>
     <button id="sGuide" class="sbtn sq" title="How this page works" aria-label="How this page works">?</button>
   </div>
+  <div class="posbar" id="posbar" hidden></div>
   <div class="ohlc" id="ohlc"></div>
 </div>
 
@@ -409,24 +425,123 @@ function bs(S0,K,T,iv,type){
   const vega=S0*npdf(d1)*Math.sqrt(T)/100;
   return {price:Math.max(price,0),delta,gamma,theta,vega};
 }
-function ivFor(K,S0,dte){
-  const base=cfg(S.ticker).iv;
-  const mny=Math.abs(K-S0)/S0;
-  const smile=1+3.2*mny;                       // OTM richer
-  const term=dte===0?1.55:dte<=1?1.25:1;       // 0DTE elevated
-  return base*smile*term;
+/* ================= option pricing ================= */
+/*
+ * The candles are recorded; option prices are modelled, because historical
+ * intraday option quotes are not given away. What decides whether a model is
+ * honest is the volatility it uses, and that part is no longer invented.
+ *
+ * It used to be a constant per ticker, set when this app was written (QQQ 17%,
+ * from when QQQ traded near 500; NVDA 50%; any other ticker 35%), then marked
+ * up 55% for 0DTE with a smile that made every out-of-the-money option dearer.
+ * Against real closing prices on Sep 10 that put NVDA options at about 78%
+ * volatility when the market charged 34%, and TSLA at 90% against 41%.
+ *
+ * Now the level comes from the day being replayed: VXN (Nasdaq-100 options) or
+ * VIX (S&P 500 options), read at the minute on screen -- never ahead of it --
+ * or that morning's opening level where no minute record exists. Each ticker
+ * is scaled by how its own options traded relative to that index, measured
+ * from real trades by tools/calibrate-vol.mjs, with the skew measured the same
+ * way. Nothing here is a guess about a ticker's volatility.
+ */
+const VOLD=window.MP_VOL||{};
+const VCALS=(window.MP_VOLCAL||[]).slice().sort((a,b)=>a.date<b.date?-1:1);
+const ETFS={SPY:1,QQQ:1,IWM:1,DIA:1};
+/**
+ * The calibration to price a ticker with: the latest one measured before the
+ * replayed day, so nothing from after it is used. For days older than the first
+ * measurement, the earliest one is carried back, and the page says so.
+ */
+function calFor(sym){
+  const d=S.replay?S.replay.date:null,have=VCALS.filter(c=>c.symbols&&c.symbols[sym]);
+  if(!have.length)return null;
+  const before=d?have.filter(c=>c.date<d):have;
+  const c=before.length?before[before.length-1]:have[0];
+  return Object.assign({},c.symbols[sym],{date:c.date,refLevel:c.index[c.symbols[sym].index],carried:!before.length&&!!d});
 }
-function Tleft(exDays){
-  const remainToday=Math.max(0,MPD-S.cursor);
-  return (remainToday+exDays*MPD)/YEAR;
+/** A ticker nobody has measured yet is priced like the typical measured stock, and labelled as such. */
+function typicalRatio(idx){
+  const last=VCALS[VCALS.length-1];if(!last)return null;
+  const r=Object.entries(last.symbols).filter(([s,v])=>v.index===idx&&!ETFS[s]).map(([,v])=>v.ratio).sort((a,b)=>a-b);
+  return r.length?r[Math.floor(r.length/2)]:null;
 }
-function quote(K,type,exDays,under){
-  const T=Tleft(exDays), iv=ivFor(K,under,exDays);
+/** The index level at a minute of the replayed day: the last closed minute, never a later one. */
+function indexAt(name,min){
+  const d=S.replay&&S.replay.date,rec=VOLD[name]&&VOLD[name][d];
+  if(rec&&rec.m&&rec.m.length)return {v:rec.m[Math.max(0,Math.min(rec.m.length-1,Math.round(min)-1))],src:'minute'};
+  if(rec&&rec.o!=null)return {v:rec.o,src:'open'};
+  return null;
+}
+function volModel(min){
+  const sym=S.ticker,cal=calFor(sym),name=cal?cal.index:(sym==='SPY'||sym==='IWM'||sym==='DIA'?'VIX':'VXN');
+  const lv=indexAt(name,min),last=VCALS[VCALS.length-1];
+  const ratio=cal?cal.ratio:typicalRatio(name);
+  const level=lv?lv.v:(cal?cal.refLevel:(last&&last.index[name]));
+  if(ratio==null||level==null){
+    // Only reachable in a build with no calibration at all. Say so rather than
+    // quietly inventing a number.
+    return {atm:cfg(sym).iv,skew:0,skewT:1,index:name,level:null,src:'none',cal:null,typical:false};
+  }
+  return {atm:ratio*level/100,skew:cal?cal.skew:0,skewT:cal?cal.skewT:1,index:name,level,
+    src:lv?lv.src:'reference',cal,typical:!cal};
+}
+function ivFor(K,S0,exDays,min){
+  const m=volModel(min),x=Math.log(K/S0);
+  // Skew was measured per unit of log-moneyness at skewT days out. The same
+  // move in strike means less as the time left grows, so it scales with 1/sqrt(T).
+  const Td=Math.max(.25,Math.max(0,MPD-min)/MPD+exDays);
+  const k=m.skew*Math.sqrt(m.skewT/Td);
+  const xc=Math.max(-.06,Math.min(.06,x));      // measured within 2% of spot; held flat past 6%
+  return Math.max(m.atm*.5,Math.min(m.atm*2.5,m.atm+k*xc));
+}
+function Tleft(exDays,min){
+  const at=min==null?S.cursor:min;
+  return (Math.max(0,MPD-at)+exDays*MPD)/YEAR;
+}
+/**
+ * Bid and ask around the model's mid, on the exchange's own ticks: SPY and QQQ
+ * options trade in pennies at any price and run a cent or two wide near the
+ * money; stock options trade in pennies under $3 and nickels above, and run a
+ * little wider. The old spread was 3.6% of the price plus 2.4 cents -- 13 cents
+ * on a $3 QQQ option -- so every practice round trip lost money a real one
+ * would not have.
+ */
+function spreadOf(mid){
+  const etf=!!ETFS[S.ticker],tick=etf||mid<3?.01:.05;
+  const width=Math.max(tick,Math.round((etf?Math.max(.01,mid*.005):Math.max(.02,mid*.012))/tick)*tick);
+  if(mid<tick)return {bid:0,ask:tick};
+  const bid=Math.max(0,Math.floor((mid-width/2)/tick+1e-9)*tick);
+  return {bid:+bid.toFixed(2),ask:+(bid+width).toFixed(2)};
+}
+/** A quote for one contract. `atMin` prices it at another minute of the day; the default is now. */
+function quote(K,type,exDays,under,atMin){
+  const min=atMin==null?S.cursor:atMin;
+  const T=Tleft(exDays,min),iv=ivFor(K,under,exDays,min);
   const g=bs(under,K,T,iv,type);
-  const mid=g.price;
-  const halfSpread=Math.max(.01,mid*.018+.012);
-  return {...g,mid,bid:Math.max(0,mid-halfSpread),ask:mid+halfSpread,iv,T,
-    thetaHr:g.theta*60};
+  const mid=Math.max(0,g.price),sp=spreadOf(mid);
+  return {...g,mid,bid:sp.bid,ask:sp.ask,iv,T,thetaHr:g.theta*60};
+}
+/** The same contract at 9:30, on the day's opening price: what "up or down today" is measured from. */
+function openQuote(K,type,exDays){
+  return quote(K,type,exDays,S.mins[todayStart()].o,0);
+}
+/** "+34.2%" and its colour class, or an empty string when there is nothing to compare. */
+function pctTxt(now,ref){
+  if(!(ref>0))return {t:'',c:''};
+  const p=(now/ref-1)*100;
+  return {t:(p>=0?'+':'−')+Math.abs(p).toFixed(Math.abs(p)>=100?0:1)+'%',c:p>=0?'up':'dn'};
+}
+/** One line saying where the volatility in these prices came from. */
+function volSource(){
+  const m=volModel(S.cursor);
+  if(m.src==='none')return 'No volatility calibration is embedded in this build, so option prices fall back to a fixed estimate.';
+  const lvl=m.level.toFixed(2),pct=(m.atm*100).toFixed(1)+'%';
+  const where=m.src==='minute'?m.index+' at '+lbl(HIST,S.cursor)+' was '+lvl:
+    m.src==='open'?m.index+' opened the day at '+lvl+' (no minute record for this day)':
+    m.index+' '+lvl+' from the last calibration (no record for this day)';
+  const how=m.typical?S.ticker+' has not been measured yet, so it is priced like the typical measured stock':
+    S.ticker+' options trade at '+m.cal.ratio.toFixed(2)+'&times; '+m.index+' (measured '+m.cal.date+(m.cal.carried?', carried back to this earlier day':'')+')';
+  return 'At-the-money volatility <b>'+pct+'</b>: '+where+'; '+how+'.';
 }
 function strikes(under){
   const inc=cfg(S.ticker).inc;
@@ -884,7 +999,9 @@ function finish(pnl,px,qty,cm,why,underPx){
     // The round trip is complete, so the journal gets it now rather than on a
     // later screen the user might never open.
     logToJournal(p,p.exitNotional/p.closedQty,p.realized,cm);
-    log('Trade closed — net '+sgn(p.realized)+(risk?' ('+(p.realized/risk).toFixed(2)+'R)':''),'hl');
+    const paid=p.kind==='option'?p.avgPrem*100*(p.openQty||1):p.avg*(p.openQty||1);
+    log('Trade closed — net '+sgn(p.realized)+(paid>0?' · '+(p.realized>=0?'+':'−')+Math.abs(p.realized/paid*100).toFixed(1)+'% on '+(p.kind==='option'?'the premium paid':'the position'):'')+
+      (risk?' ('+(p.realized/risk).toFixed(2)+'R)':''),'hl');
     S.pos=null;
   }
   renderAll();
@@ -1289,7 +1406,23 @@ function seg(px,py,x1,y1,x2,y2){const dx=x2-x1,dy=y2-y1,L=dx*dx+dy*dy;
 
 /* ================= UI ================= */
 function renderAll(){draw();headline();pane();btns();}
+/**
+ * What you hold and how it is doing, in the header, so it stays in view while
+ * you watch the chart instead of sitting in the ticket below it on a phone.
+ */
+function paintPosBar(){
+  const pb=$('posbar');if(!pb)return;
+  const p=S.pos;if(!p){pb.hidden=true;return;}
+  const u=price();let what,op,pp,dp;
+  if(p.kind==='shares'){const per=p.dir==='long'?u-p.avg:p.avg-u;op=per*p.qty;pp=per/p.avg*100;dp=2;
+    what=(p.dir==='long'?'Long ':'Short ')+p.qty+' '+S.ticker;}
+  else{const q=quote(p.strike,p.optType,p.exDays,u);op=(q.bid-p.avgPrem)*100*p.qty;pp=(q.bid/p.avgPrem-1)*100;dp=1;
+    what=p.qty+'&times; '+Number(p.strike).toFixed(2)+' '+(p.optType==='call'?'Call':'Put')+' &middot; '+exLabel(p.exDays);}
+  pb.hidden=false;pb.className='posbar '+(op>=0?'up':'dn');
+  pb.innerHTML='<span class="pw">'+what+'</span><span class="pv"><b>'+(pp>=0?'+':'−')+Math.abs(pp).toFixed(dp)+'%</b> '+sgn(op)+'</span>';
+}
 function headline(){
+  paintPosBar();
   const b=S.mins[revealed()-1];
   $('px').textContent='$'+b.c.toFixed(2);
   const open=S.mins[todayStart()].o,d=b.c-open;
@@ -1419,8 +1552,9 @@ function tickTicket(){
   setTxt('stkAt',S.ticker+' is at '+u.toFixed(2));
   if(opt){
     const c=quote(S.strike,'call',S.exDays,u),p=quote(S.strike,'put',S.exDays,u);
-    setTxt('askC',c.ask.toFixed(2)+'<small>ask</small>');
-    setTxt('askP',p.ask.toFixed(2)+'<small>ask</small>');
+    const c0=openQuote(S.strike,'call',S.exDays),p0=openQuote(S.strike,'put',S.exDays);
+    setTxt('askC',askHtml(c.ask,c0.ask,'ask'));
+    setTxt('askP',askHtml(p.ask,p0.ask,'ask'));
     setTxt('lnC','bid <b>'+c.bid.toFixed(2)+'</b> · &Delta; <b>'+c.delta.toFixed(2)+'</b>');
     setTxt('lnP','bid <b>'+p.bid.toFixed(2)+'</b> · &Delta; <b>'+p.delta.toFixed(2)+'</b>');
     setTxt('beC','breakeven <b>'+(S.strike+c.ask).toFixed(2)+'</b>');
@@ -1430,14 +1564,20 @@ function tickTicket(){
     if(sel&&document.activeElement!==sel)[...sel.options].forEach(o=>{const k=parseFloat(o.value);
       o.textContent=k.toFixed(2)+(Math.abs(k-u)<inc/2?' · at the money':'');});
   }else{
-    setTxt('askC',u.toFixed(2)+'<small>last</small>');
-    setTxt('askP',u.toFixed(2)+'<small>last</small>');
+    const o0=S.mins[todayStart()].o;
+    setTxt('askC',askHtml(u,o0,'last'));
+    setTxt('askP',askHtml(u,o0,'last'));
   }
   if(S.pos)setTxt('posBox',posBlock());
   refreshTicket();
 }
 function ivLine(c){
-  return 'Implied volatility <b>'+(c.iv*100).toFixed(0)+'%</b> &middot; time decay about <b>'+usd(Math.abs(c.thetaHr)*100)+'</b> an hour per contract.';
+  return volSource()+' Time decay about <b>'+usd(Math.abs(c.thetaHr)*100)+'</b> an hour per contract.';
+}
+/** The price line on a card, with how far it has moved since 9:30. */
+function askHtml(v,ref,label){
+  const pc=pctTxt(v,ref);
+  return v.toFixed(2)+'<small>'+label+'</small>'+(pc.t?'<em class="'+pc.c+'" title="Change since the 9:30 open">'+pc.t+' today</em>':'');
 }
 /** Updates the numbers in place, so typing a quantity does not rebuild the ticket under the cursor. */
 function refreshTicket(){
@@ -1461,6 +1601,7 @@ function paneTrade(){
     // The cards are the buttons. Each shows what that side costs and what
     // tapping it will do, so the price you see is the price you act on.
     const c=quote(S.strike,'call',S.exDays,u),p=quote(S.strike,'put',S.exDays,u);
+    const c0=openQuote(S.strike,'call',S.exDays),p0=openQuote(S.strike,'put',S.exDays);
     const ks=strikes(u);if(!ks.includes(S.strike))ks.push(S.strike);ks.sort((a,b)=>a-b);
     const EXP=[[0,'today'],[1,'next day'],[7,'a week out']];
     top=`
@@ -1486,14 +1627,14 @@ function paneTrade(){
   <div class="pair">
     <button type="button" class="oc call" id="buyC" ${offC} aria-label="Call at the ${S.strike.toFixed(2)} strike">
       <span class="hd">Call<span>if it rises</span></span>
-      <span class="ask" id="askC">${c.ask.toFixed(2)}<small>ask</small></span>
+      <span class="ask" id="askC">${askHtml(c.ask,c0.ask,'ask')}</span>
       <span class="ln" id="lnC">bid <b>${c.bid.toFixed(2)}</b> · &Delta; <b>${c.delta.toFixed(2)}</b></span>
       <span class="ln" id="beC">breakeven <b>${(S.strike+c.ask).toFixed(2)}</b></span>
       <span class="go"><span id="goC"></span><b id="costC"></b></span>
     </button>
     <button type="button" class="oc put" id="buyP" ${offP} aria-label="Put at the ${S.strike.toFixed(2)} strike">
       <span class="hd">Put<span>if it falls</span></span>
-      <span class="ask" id="askP">${p.ask.toFixed(2)}<small>ask</small></span>
+      <span class="ask" id="askP">${askHtml(p.ask,p0.ask,'ask')}</span>
       <span class="ln" id="lnP">bid <b>${p.bid.toFixed(2)}</b> · &Delta; <b>${p.delta.toFixed(2)}</b></span>
       <span class="ln" id="beP">breakeven <b>${(S.strike-p.ask).toFixed(2)}</b></span>
       <span class="go"><span id="goP"></span><b id="costP"></b></span>
@@ -1512,13 +1653,13 @@ function paneTrade(){
   <div class="pair">
     <button type="button" class="oc call" id="buyC" ${offC} aria-label="Go long ${S.ticker}">
       <span class="hd">Long<span>if it rises</span></span>
-      <span class="ask" id="askC">${u.toFixed(2)}<small>last</small></span>
+      <span class="ask" id="askC">${askHtml(u,S.mins[todayStart()].o,'last')}</span>
       <span class="ln">buy now, sell higher</span>
       <span class="go"><span id="goC"></span><b id="costC"></b></span>
     </button>
     <button type="button" class="oc put" id="buyP" ${offP} aria-label="Go short ${S.ticker}">
       <span class="hd">Short<span>if it falls</span></span>
-      <span class="ask" id="askP">${u.toFixed(2)}<small>last</small></span>
+      <span class="ask" id="askP">${askHtml(u,S.mins[todayStart()].o,'last')}</span>
       <span class="ln">sell now, buy back lower</span>
       <span class="go"><span id="goP"></span><b id="costP"></b></span>
     </button>
@@ -1574,19 +1715,19 @@ function paneTrade(){
 function posBlock(){
   const p=S.pos,u=price();
   if(p.kind==='shares'){
-    const per=p.dir==='long'?u-p.avg:p.avg-u,op=per*p.qty,rk=riskOf(p);
+    const per=p.dir==='long'?u-p.avg:p.avg-u,op=per*p.qty,rk=riskOf(p),pp=per/p.avg*100;
     return `<div class="posline ${p.dir==='long'?'up':'dn'}">${p.dir==='long'?'Long':'Short'} ${p.qty} ${S.ticker}</div>
     <div class="kv"><span class="k">Average price</span><span>${p.avg.toFixed(2)}</span></div>
-    <div class="kv"><span class="k">Open P&amp;L</span><span class="${op>=0?'up':'dn'}">${sgn(op)}</span></div>
+    <div class="kv"><span class="k">Open P&amp;L</span><span class="${op>=0?'up':'dn'}">${sgn(op)} <b class="pp">${pp>=0?'+':'−'}${Math.abs(pp).toFixed(2)}%</b></span></div>
     <div class="kv"><span class="k">Realized</span><span class="${p.realized>=0?'up':'dn'}">${sgn(p.realized)}</span></div>
     ${rk?`<div class="kv"><span class="k">R multiple</span><span>${((op+p.realized)/rk).toFixed(2)}R</span></div>`:''}`;
   }
   const q=quote(p.strike,p.optType,p.exDays,u);
-  const op=(q.bid-p.avgPrem)*100*p.qty,rk=riskOf(p),move=u-p.uEntry;
+  const op=(q.bid-p.avgPrem)*100*p.qty,rk=riskOf(p),move=u-p.uEntry,pp=(q.bid/p.avgPrem-1)*100;
   return `<div class="posline ${p.optType==='call'?'up':'dn'}">${p.qty}&times; ${Number(p.strike).toFixed(2)} ${p.optType==='call'?'Call':'Put'} &middot; ${exLabel(p.exDays)}</div>
    <div class="kv"><span class="k">Paid (average)</span><span>${p.avgPrem.toFixed(2)}</span></div>
    <div class="kv"><span class="k">Worth now (bid)</span><span>${q.bid.toFixed(2)}</span></div>
-   <div class="kv"><span class="k">Open P&amp;L</span><span class="${op>=0?'up':'dn'}">${sgn(op)}</span></div>
+   <div class="kv"><span class="k">Open P&amp;L</span><span class="${op>=0?'up':'dn'}">${sgn(op)} <b class="pp">${pp>=0?'+':'−'}${Math.abs(pp).toFixed(1)}%</b></span></div>
    <div class="kv"><span class="k">Realized</span><span class="${p.realized>=0?'up':'dn'}">${sgn(p.realized)}</span></div>
    ${rk?`<div class="kv"><span class="k">R multiple</span><span>${((op+p.realized)/rk).toFixed(2)}R</span></div>`:''}
    <div class="kv"><span class="k">Delta</span><span>${q.delta.toFixed(2)}</span></div>

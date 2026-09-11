@@ -179,6 +179,11 @@ on it. In Shares mode the cards are Long and Short. Size and order type sit
 above the cards, so they are set before you tap; on a keyboard, L and S do the
 same as the two cards.
 
+Each card shows how far that contract has moved since 9:30. An open position
+shows its P&L in dollars **and percent**, in the ticket and in a bar in the
+header that stays in view while you watch the chart; the tape's closing line
+gives the return on the premium paid.
+
 The Chain tab picks a strike and brings you back to the ticket; it does not buy.
 A one-tap buy in a dense table is too easy to hit by accident.
 
@@ -197,6 +202,44 @@ risk, the reward and the ratio for that side. The old one always priced a call.
 A stop and target on the same side get a warning, and pressing Buy with a stop
 on the wrong side of the price is refused rather than opening a trade the next
 bar would close.
+
+### Option prices
+
+The candles are recorded; option prices are modelled, because historical
+intraday option quotes are not free. What makes a model honest is the
+volatility in it, and that is now the market's own, not a guess:
+
+- **The level** comes from the day being replayed: VXN (Nasdaq-100 options) for
+  most tickers, VIX (S&P 500 options) for SPY, read at the minute on screen and
+  never ahead of it. Days recorded before minute data was kept use that
+  morning's opening level. It lives in `volatility/`; every local run adds the
+  new days.
+- **Each ticker** is scaled by how its own options trade against that index,
+  measured from real trades by `node tools/calibrate-vol.mjs` -- QQQ at 0.93x
+  VXN, TSLA at 1.73x, NVDA at 1.45x -- and its skew is measured the same way.
+  The local morning run re-measures every ticker each day, so the scaling
+  follows the market. A ticker never measured is priced like the typical
+  measured stock, and the ticket says so.
+- **Spreads** follow the exchange's ticks: SPY and QQQ a cent or two wide, stock
+  options in pennies under $3 and nickels above. You buy at the ask and sell at
+  the bid.
+
+The ticket says where the volatility came from, e.g. *"VXN at 10:30 was 22.07;
+QQQ options trade at 0.93x VXN (measured 2026-09-10)"*.
+
+What it replaced: a fixed volatility per ticker from when the app was written
+(QQQ 17%, from when QQQ traded near 500; NVDA 50%; any other ticker 35%), marked
+up 55% for 0DTE, with a smile that made every out-of-the-money option dearer.
+On Sep 9 at 9:45 that priced the QQQ 720 call, 0DTE, at $3.48; it is $2.25 on
+the market's volatility.
+
+**How accurate.** Tested against 273 real option trades at the Sep 10 close,
+on expiries the calibration never saw: median error **9%**, against 35% for the
+fixed volatilities (NVDA 83% to 3%, TSLA 68% to 2%, AAPL 69% to 7%, QQQ 24% to
+10%). The weakest are SPY (21%), MSFT (15%, where the old constant happened to
+be close) and out-of-the-money calls two or more days out, which still run a
+little rich. **Earnings are not modelled**: before a report real options are
+dearer than this shows, and cheaper after it.
 
 ### Moving through the day
 

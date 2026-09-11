@@ -1,5 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { FONT_CSS } from "./fonts.ts";
+import type { VolEmbed, Calibration } from "./volindex.ts";
+
+/** Real volatility for the option prices: index levels per replayed day, and the per-ticker calibrations. */
+export interface PracticeVol { embed: VolEmbed; calibrations: Calibration[] }
 import type { ReplaySession } from "./replay.ts";
 
 /**
@@ -285,6 +289,21 @@ button.oc:disabled{opacity:.5;cursor:not-allowed}
 .oc.put .go{background:rgba(244,82,95,.17);color:var(--dn)}
 button.oc:disabled .go{background:rgba(137,148,166,.12);color:var(--dim)}
 button.oc:disabled .go b{display:none}
+/* ---- percent moves ---- */
+.oc .ask em{display:block;font-family:var(--mono);font-style:normal;font-size:11.5px;font-weight:600;letter-spacing:0;margin-top:2px}
+.oc .ask em.up{color:var(--up)}
+.oc .ask em.dn{color:var(--dn)}
+.kv .pp{font-weight:700;margin-left:4px}
+.posbar{display:flex;justify-content:space-between;align-items:center;gap:10px;max-width:1300px;margin:8px auto 0;
+  padding:7px 11px;border-radius:9px;font-size:13px;border:1px solid var(--line2);background:var(--p2)}
+.posbar[hidden]{display:none}
+.posbar.up{border-color:rgba(45,212,167,.45);background:rgba(45,212,167,.08)}
+.posbar.dn{border-color:rgba(244,82,95,.45);background:rgba(244,82,95,.08)}
+.posbar .pw{font-family:var(--mono);font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.posbar .pv{font-family:var(--mono);white-space:nowrap}
+.posbar.up .pv{color:var(--up)}
+.posbar.dn .pv{color:var(--dn)}
+.posbar .pv b{font-size:14px;margin-right:6px}
 @media(min-width:900px){
   .wrap{display:grid;grid-template-columns:1fr 350px;gap:16px;align-items:start}
   .right{position:sticky;top:112px}
@@ -338,7 +357,7 @@ button.oc:disabled .go b{display:none}
  * the option quotes are modelled. Claiming "simulated" over real bars would be
  * as wrong as the reverse.
  */
-function bannerFor(reportHref: string, sessions: ReplaySession[]): string {
+function bannerFor(reportHref: string, sessions: ReplaySession[], vol?: PracticeVol): string {
   const symbols = [...new Set(sessions.map((s) => s.symbol))];
   const dates = sessions.map((s) => s.date).sort();
 
@@ -349,8 +368,10 @@ function bannerFor(reportHref: string, sessions: ReplaySession[]): string {
        ${symbols.length} ${symbols.length === 1 ? "symbol" : "symbols"}
        (${esc(symbols.slice(0, 8).join(", "))}), ${esc(dates[0])} to ${esc(dates[dates.length - 1])}.
        A random one loads each time.
-       <span>Option prices are still modelled with Black-Scholes rather than quoted, and fills are
-       assumed at the mid, so treat the option side as an approximation of the real chain.</span>`
+       <span>Option prices are modelled rather than quoted, but not guessed: the volatility in them is
+       the market&rsquo;s own &mdash; that day&rsquo;s VXN or VIX, minute by minute &mdash; scaled to each
+       ticker by how its options really traded${vol && vol.calibrations.length ? ` (measured ${esc(vol.calibrations[vol.calibrations.length - 1].date)})` : ""}.
+       You buy at the ask and sell at the bid, on realistic spreads.</span>`
     : `<b>Generated prices</b>
        No recorded sessions are embedded yet, so this falls back to a seeded random walk.
        <span>Run the tool once with a network connection to record real sessions; the library
@@ -380,6 +401,7 @@ export async function renderPractice(
   vendorPath: string,
   reportHref = "latest.html",
   sessions: ReplaySession[] = [],
+  vol?: PracticeVol,
 ): Promise<string> {
   const src = await readFile(vendorPath, "utf8");
 
@@ -404,8 +426,9 @@ export async function renderPractice(
 <title>Practice &middot; Market Prep</title>
 <style>${SKIN}</style>
 </head><body>
-${bannerFor(reportHref, sessions)}
+${bannerFor(reportHref, sessions, vol)}
 ${data}
+${vol ? `<script>window.MP_VOL=${JSON.stringify(vol.embed)};window.MP_VOLCAL=${JSON.stringify(vol.calibrations).replace(/</g, "\\u003c")};</script>` : ""}
 ${body}
 </body></html>`;
 }

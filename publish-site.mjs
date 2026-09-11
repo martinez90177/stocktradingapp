@@ -12,6 +12,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderPractice } from "./src/practice.ts";
 import { loadForEmbed } from "./src/replay.ts";
+import { loadVolForEmbed, loadCalibrations } from "./src/volindex.ts";
 import { loadJournal } from "./src/journal.ts";
 import { renderJournal } from "./src/journalpage.ts";
 
@@ -31,12 +32,17 @@ await mkdir(SITE, { recursive: true });
 // The report lands at index.html, so the practice page links back to that name
 // rather than to latest.html.
 await writeFile(join(SITE, "index.html"), report, "utf8");
+const sessions = await loadForEmbed(join(HERE, "sessions"), 30);
 await writeFile(
   join(SITE, "practice.html"),
   await renderPractice(
     join(HERE, "src", "vendor", "practice-app.html"),
     "index.html",
-    await loadForEmbed(join(HERE, "sessions"), 30),
+    sessions,
+    {
+      embed: await loadVolForEmbed(join(HERE, "volatility"), sessions.map((s) => s.date)),
+      calibrations: await loadCalibrations(join(HERE, "volatility")),
+    },
   ),
   "utf8",
 );

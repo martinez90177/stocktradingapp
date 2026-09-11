@@ -9,6 +9,8 @@ import { discoverMovers } from "./src/movers.ts";
 import { loadRules } from "./src/rules.ts";
 import { renderPractice } from "./src/practice.ts";
 import { harvest, loadForEmbed } from "./src/replay.ts";
+import { harvestVol, loadVolForEmbed, loadCalibrations } from "./src/volindex.ts";
+import { execFileSync } from "node:child_process";
 import { loadJournal } from "./src/journal.ts";
 import { renderJournal } from "./src/journalpage.ts";
 
@@ -207,11 +209,30 @@ async function main() {
     } catch (e) {
       console.warn(`  ~ replay harvest skipped (${(e as Error).message})`);
     }
+    // The volatility the practice options are priced on: VXN and VIX for the
+    // days just recorded, and a fresh measurement of how each ticker's options
+    // trade against them. Both extras; neither may sink the run.
+    try {
+      const v = await harvestVol(join(ROOT, "volatility"), CACHE, (m) => console.warn(`  ~ ${m}`));
+      console.log(`  volatility: ${v.added} new index day(s) recorded`);
+    } catch (e) {
+      console.warn(`  ~ volatility harvest skipped (${(e as Error).message})`);
+    }
+    try {
+      const out = execFileSync(process.execPath, [join(ROOT, "tools", "calibrate-vol.mjs")], { encoding: "utf8", timeout: 180000 });
+      console.log(`  calibration: ${out.trim().split("\n").pop()}`);
+    } catch (e) {
+      console.warn(`  ~ calibration skipped (${String((e as Error).message).split("\n")[0]})`);
+    }
   }
 
   try {
     const sessions = await loadForEmbed(SESSIONS, 30);
-    const practice = await renderPractice(join(ROOT, "src", "vendor", "practice-app.html"), "latest.html", sessions);
+    const VOL = join(ROOT, "volatility");
+    const practice = await renderPractice(join(ROOT, "src", "vendor", "practice-app.html"), "latest.html", sessions, {
+      embed: await loadVolForEmbed(VOL, sessions.map((s) => s.date)),
+      calibrations: await loadCalibrations(VOL),
+    });
     await writeFile(join(REPORTS, "practice.html"), practice, "utf8");
   } catch (e) {
     console.warn(`  ~ practice page not written (${(e as Error).message})`);
