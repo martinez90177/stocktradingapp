@@ -219,11 +219,14 @@ limit; tap it for the record. The **Rules** tab holds the numbers, and beneath
 them the whole of Alex's Rules from `rules.json`, so each rule and the number
 that enforces it sit together.
 
-The defaults are Alex's: a **$500** account, at most **$200 of options bought
-a day**, a **$60 daily loss limit**, **three trades a day**, at most **$60 at
-risk to the stop** on any one trade, a **$0.65 fee a contract each way**, and
-**ten minutes off after two straight losses**. All of it is editable and saved
-in the browser.
+The defaults: a **$1,000** account, at most **$200 of options bought a day**,
+a **$60 daily loss limit**, **three trades a day**, at most **$60 at risk to
+the stop** on any one trade, a **$0.65 fee a contract each way**, and **ten
+minutes off after two straight losses**. All of it is editable and saved in
+the browser, and the account can be set to any amount at any time (below).
+The record began when the default was $500; a browser that already has a
+record and never set its own starting balance keeps $500, written into its
+saved rules, so the new default cannot move an existing balance.
 
 With the rules on, a card **refuses** anything outside them and says which
 rule, on the card: *Name the setup first*, *Set a stop first*, *Daily cap used
@@ -254,7 +257,12 @@ trade that is rewound never paid at all. Every P&L on the page is net of them.
 ### The record
 
 Every closed trade and every session is written to a **record** kept in the
-browser, and the account balance is the starting balance plus that record.
+browser, and the account balance is the starting balance plus that record. The
+Rules tab can **set the account to any amount at any time** -- to match what
+the real account actually holds after a deposit, a withdrawal or a real trading
+day -- and put it **back to the starting balance** in one tap. Neither touches
+the record: the balance simply counts from that moment, and the track record
+says when it was last set.
 Trades reach it at the **4:00 bell**, when you press **End the day** in the
 Session tab, or on the way out to another session -- never the moment they
 close, because a rewind must be able to unmake a trade. A day with no trades is

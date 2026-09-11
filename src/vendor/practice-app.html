@@ -2242,15 +2242,20 @@ function wireSetup(){
  * session -- never the moment they close, because a rewind must be able to
  * unmake a trade and a record cannot be unmade.
  */
-const RULE_DEF={on:1,start:500,cap:200,maxLoss:60,maxTrades:3,maxRisk:60,minRR:1.5,fee:.65,
+const RULE_DEF={on:1,start:1000,cap:200,maxLoss:60,maxTrades:3,maxRisk:60,minRR:1.5,fee:.65,
   needStop:1,needSetup:1,lockLoss:1,cooldown:10,noLate0:1,cash:1,rewind:1,blind:0};
 function loadJSON(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v&&typeof v==='object'?v:d;}catch(e){return d;}}
 function saveJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-let RULES=Object.assign({},RULE_DEF,loadJSON('mpRules',{}));
+const SAVED_RULES=loadJSON('mpRules',{});
+let RULES=Object.assign({},RULE_DEF,SAVED_RULES);
 function saveRules(){saveJSON('mpRules',RULES);}
 let LEDGER=loadJSON('mpLedger',{});
 if(!Array.isArray(LEDGER.trades))LEDGER.trades=[];
 if(!Array.isArray(LEDGER.sessions))LEDGER.sessions=[];
+// The default starting balance was $500 when the record began; it is $1,000
+// now. A browser that already has a record and never wrote its own starting
+// balance keeps the $500 its balance was built on, written down so it stays.
+if(SAVED_RULES.start==null&&(LEDGER.trades.length||LEDGER.sessions.length)){RULES.start=500;saveRules();}
 function saveLedger(){saveJSON('mpLedger',LEDGER);}
 function localDay(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 const RULEBOOK=window.MP_RULEBOOK||null;
@@ -2289,8 +2294,25 @@ function dayUse(){
   return {outlay,realized:S.trades.reduce((a,t)=>a+t.total,0),count:S.trades.length+(S.pos?1:0),
     uncommitted:S.trades.filter(t=>!t.sent).reduce((a,t)=>a+t.total,0)};
 }
-/** The balance the record says you have. */
-function balance(){return RULES.start+LEDGER.trades.reduce((a,t)=>a+(t.net||0),0);}
+/**
+ * The balance the record says you have. The account can be set to any amount
+ * at any time without losing the record: a rebase marks the moment, and only
+ * trades after it count from then on. `baseline` is what "since" measures from.
+ */
+function baseline(){return LEDGER.rebase?LEDGER.rebase.amount:RULES.start;}
+function balance(){
+  const rb=LEDGER.rebase;
+  return baseline()+LEDGER.trades.filter(t=>!rb||(t.at||'')>rb.at).reduce((a,t)=>a+(t.net||0),0);
+}
+/** Sets the account to `amount` from now on, keeping every trade in the record. */
+function setBalance(amount,why){
+  if(!(amount>=0))return;
+  commitSession(false);   // trades already closed this session belong to the old balance
+  LEDGER.rebase={amount:+amount.toFixed(2),at:new Date().toISOString()};
+  saveLedger();
+  log('Account set to '+usd(amount)+(why?' ('+why+')':'')+'. The record is kept; the balance counts from here.','hl');
+  renderAll();
+}
 /** The balance right now: the record, plus what this session has closed but not yet written to it. */
 function acctLive(){return balance()+dayUse().uncommitted;}
 function openPnl(){
@@ -2538,7 +2560,11 @@ function paneRules(){
     RULEBOOK.groups.map(g=>'<h5>'+escHtml(g.name)+'</h5>'+g.rules.map(x=>'<p>'+escHtml(x.rule)+(x.why?'<small>'+escHtml(x.why)+'</small>':'')+'</p>').join('')).join('')+'</div>':'';
   return '<div class="seg" id="ron"><button data-v="1" class="'+(r.on?'on':'')+'">Rules on</button><button data-v="0" class="'+(r.on?'':'on')+'">Rules off</button></div>'+
     '<div class="meta tight">'+(r.on?'Every card checks these before it buys. What they refuse, they say why, on the card.':'Nothing is refused. Every breach is still recorded against the trade and the day.')+'</div>'+
-    '<h3 class="sp">The account</h3><div class="grid2">'+f('start','Starting balance',10,'the real one')+f('fee','Fee a contract, each way',.05,'$0.65 at Schwab; $0 at some brokers')+'</div>'+
+    '<h3 class="sp">The account <i>'+usd(acctLive())+' now</i></h3>'+
+    '<div class="grid2"><label class="rf"><span>Set the account to</span><input class="n" id="r_setbal" type="number" inputmode="decimal" step="10" min="0" value="'+Math.round(acctLive())+'"><small>any amount, any time; the record is kept</small></label>'+
+    '<div class="rf"><span>&nbsp;</span><button type="button" id="rSet" style="min-height:42px">Set balance</button></div></div>'+
+    '<div class="setup" style="margin-top:8px"><button type="button" id="rZero" style="flex:1">Back to the starting balance</button></div>'+
+    '<div class="grid2">'+f('start','Starting balance',10,'what "since" measures from')+f('fee','Fee a contract, each way',.05,'$0.65 at Schwab; $0 at some brokers')+'</div>'+
     '<h3 class="sp">The day</h3><div class="grid2">'+f('cap','Options bought a day, max',10,'premium paid, not risk')+f('maxLoss','Daily loss limit',5,'hit it and the day is over')+
       f('maxTrades','Trades a day, max',1,'two or three real setups')+f('cooldown','Minutes off after two losses',1,'stand up and walk away')+'</div>'+
     '<h3 class="sp">The trade</h3><div class="grid2">'+f('maxRisk','Risk a trade, max',5,'to the stop')+f('minRR','Reward : risk, at least',.1,'a warning, not a refusal')+'</div>'+
@@ -2552,7 +2578,7 @@ function paneRules(){
     c('blind','Blind days: hide which date it is','No hindsight. Revealed at the bell; starts with the next session.')+
     '<div class="setup" style="margin-top:14px"><button id="rSave" style="flex:1;background:var(--acc);border-color:var(--acc);color:#fff">Save rules</button><button id="rDef">Defaults</button></div>'+
     '<div class="setup"><button id="rRec" style="flex:1">Open the record</button></div>'+
-    '<div class="empty">Saved in this browser. The account is the starting balance plus every recorded practice trade, net of fees.</div>'+book;
+    '<div class="empty">Saved in this browser. The account is whatever it was last set to, plus every recorded practice trade since, net of fees. Set it to what you actually have whenever that changes.</div>'+book;
 }
 function wireRules(){
   $('ron').onclick=e=>{const b=e.target.closest('button');if(!b)return;RULES.on=+b.dataset.v;saveRules();
@@ -2566,6 +2592,11 @@ function wireRules(){
     saveRules();log('Rules saved.'+(RULES.blind&&!S.blind&&S.replay?' Blind days start with the next session.':''),'hl');renderAll();};
   $('rDef').onclick=()=>{RULES=Object.assign({},RULE_DEF);saveRules();log('Rules back to the defaults.','hl');$('pane').dataset.rules='';renderAll();};
   $('rRec').onclick=openRecord;
+  $('rSet').onclick=()=>{const v=parseFloat(val('r_setbal'));if(isNaN(v)||v<0){log('Give the account a number.','y');return;}
+    if(S.pos&&!confirm('A position is open; its result will count against the new balance. Set the account to '+usd(v)+' anyway?'))return;
+    setBalance(v,'set by hand');$('pane').dataset.rules='';renderAll();};
+  $('rZero').onclick=()=>{if(!confirm('Set the account back to the starting balance of '+usd(RULES.start)+'? Every trade stays in the record.'))return;
+    setBalance(RULES.start,'reset');$('pane').dataset.rules='';renderAll();};
 }
 
 /* ---- the debrief ---- */
@@ -2581,7 +2612,7 @@ function debrief(){
   $('dbfSum').innerHTML='<div class="tiles" style="margin:10px 0 0">'+
     tile('Today',sgn(net),tone(net),mine.length?mine.length+' trade'+(mine.length===1?'':'s')+' · '+w+' won':'no trades')+
     tile('Discipline',rec.score==null?'—':rec.score+'/100',rec.score>=90?'up':rec.score<70?'dn':'',flags.length?flags.map(f=>FLAGS[f][0]).join(', '):(mine.length?'every rule kept':'a no-trade day counts'))+
-    tile('Account',usd(acctLive()),tone(acctLive()-RULES.start),'from $'+RULES.start)+'</div>'+
+    tile('Account',usd(acctLive()),tone(acctLive()-baseline()),'from '+usd(baseline()))+'</div>'+
     (rec.giveback?'<div class="evwarn" style="margin-top:10px">Up '+usd(rec.peak)+' at the best, closed down. Protect a green day: after a good gain, cut size or stop.</div>':'')+
     (S.pos?'<div class="empty" style="margin-top:8px">A position is still open; it is not a trade until it closes.</div>':'');
   $('dbfWell').value='';$('dbfBetter').value='';S.dbfRating=0;paintStars();
@@ -2675,7 +2706,7 @@ function renderRecord(){
   const days=new Set(LEDGER.sessions.map(x=>x.day)).size,streak=streakDays();
   const flagRows=Object.keys(FLAGS).filter(f=>f!=='giveback').map(f=>{const v=ts.filter(t=>(t.flags||[]).includes(f));return v.length?{f,n:v.length,net:v.reduce((a,t)=>a+t.net,0)}:null;}).filter(Boolean).sort((a,b)=>a.net-b.net);
   const gb=LEDGER.sessions.filter(x=>x.giveback).length;
-  $('recTitle').textContent=usd(bal)+' · '+(bal>=RULES.start?'+':'−')+usd(Math.abs(bal-RULES.start)).slice(1)+' since $'+RULES.start;
+  $('recTitle').textContent=usd(bal)+' · '+(bal>=baseline()?'+':'−')+usd(Math.abs(bal-baseline())).slice(1)+' since '+usd(baseline())+(LEDGER.rebase?' (set '+LEDGER.rebase.at.slice(0,10)+')':'');
   const chip=(k,l)=>'<button type="button" class="'+(recFilter===k?'on':'')+'" data-f="'+k+'">'+l+'</button>';
   $('recBody').innerHTML=
     '<div class="rchips" id="recF">'+chip('all','All trades')+chip('rules','Rules on')+chip('clean','No rewind, no repeat')+'</div>'+
@@ -2764,7 +2795,7 @@ const TOUR=[
   {t:"#pane",h:"The ticket",tab:"trade",
    b:"This is where you trade. Choose the expiration, strike and size, then write the plan: which setup this is, and a stop and a target on the stock price. Only then tap the Call card if you think the stock will rise, or the Put card if you think it will fall. Each shows what it costs and what tapping it will do. Your open position sits below. Switch to Shares and the cards become Long and Short."},
   {t:"#acct",h:"Your account, your rules",
-   b:"The account you actually trade -- $500 to start -- under the rules you wrote for it: how much you may buy in a day, the loss that ends the day, the trade count, the most a stop may risk. A card refuses anything outside them and says which rule, on the card. Tap this strip for your track record. The Rules tab changes the numbers."},
+   b:"The account you actually trade -- $1,000 to start, or set it to whatever yours holds -- under the rules you wrote for it: how much you may buy in a day, the loss that ends the day, the trade count, the most a stop may risk. A card refuses anything outside them and says which rule, on the card. Tap this strip for your track record. The Rules tab changes the numbers and the balance."},
   {t:"#tabs",h:"Everything else",
    b:"Chain lists every strike. Fib has the levels from the opening range. Tape logs everything that happened. Coach grades each trade against the rules and the setup. Session has today's stats, ends the day and opens the record. Rules is the account."},
   {t:null,h:"Your trades are kept",
