@@ -38,7 +38,10 @@ export interface ReplaySession {
    * extended hours were kept and past Yahoo's reach for a backfill.
    */
   ext?: { pre: ExtBar[]; post: ExtBar[] };
+  /** Which cleaning the extended bars had. 2 = bad prints dropped and stray wicks clipped. */
+  extv?: number;
 }
+export const EXT_VERSION = 2;
 
 const PRE_START = 4 * 60;
 const POST_START = 16 * 60;
@@ -102,6 +105,35 @@ export function splitSessions(symbol: string, bars: Bar[]): ReplaySession[] {
  * keeps twelve days of seven tickers to about 200 KB on the page; sparse,
  * because a five-minute stretch nobody traded has no price to carry.
  */
+/**
+ * Drops the bad prints in an extended-hours minute series. Off-hours the tape
+ * carries the odd late or odd-lot trade far from the market that nothing
+ * follows: a $196 low on a $223 stock, gone the next minute. Such a bar is far
+ * from the bars before it AND the bars after it; a real move -- an earnings
+ * gap -- agrees with what follows, so it stays. A wick reaching more than
+ * about 1.2% past a bar's own body is clipped to that, since the print behind
+ * it was of the same kind. Left in, one such print sets the pre-market low,
+ * and the chart scales to it all morning.
+ */
+function cleanExt(bs: Bar[]): Bar[] {
+  const med = (xs: number[]) => { const s = xs.slice().sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : null; };
+  const out: Bar[] = [];
+  for (let i = 0; i < bs.length; i++) {
+    const b = bs[i];
+    const prev = med(bs.slice(Math.max(0, i - 6), i).map((x) => x.c));
+    const next = med(bs.slice(i + 1, i + 7).map((x) => x.c));
+    const ref = prev ?? next ?? b.c;
+    const tol = Math.max(ref * 0.012, 0.05);
+    const farPrev = prev != null && Math.abs(b.c - prev) > tol;
+    const farNext = next != null && Math.abs(b.c - next) > tol;
+    if ((prev != null && next != null) ? farPrev && farNext : farPrev || farNext) continue;
+    const o = Math.abs(b.o - b.c) > 2 * tol && prev != null && Math.abs(b.o - prev) > tol ? b.c : b.o;
+    const top = Math.max(o, b.c) + tol, bot = Math.min(o, b.c) - tol;
+    out.push({ ...b, o, h: Math.min(b.h, top), l: Math.max(b.l, bot) });
+  }
+  return out;
+}
+
 export function splitExtended(bars: Bar[]): Map<string, { pre: ExtBar[]; post: ExtBar[] }> {
   const byDate = new Map<string, { pre: Map<number, Bar[]>; post: Map<number, Bar[]> }>();
   for (const b of bars) {
@@ -116,13 +148,21 @@ export function splitExtended(bars: Bar[]): Map<string, { pre: ExtBar[]; post: E
     if (!seg_.has(bucket)) seg_.set(bucket, []);
     seg_.get(bucket)!.push(b);
   }
-  const roll = (m: Map<number, Bar[]>): ExtBar[] =>
-    [...m.entries()].sort((a, b) => a[0] - b[0]).map(([off, bs]) => {
-      bs.sort((a, b) => a.t - b.t);
+  const roll = (m: Map<number, Bar[]>): ExtBar[] => {
+    // Cleaned as one minute series per segment, then bucketed.
+    const minutes = cleanExt([...m.values()].flat().sort((a, b) => a.t - b.t));
+    const buckets = new Map<number, Bar[]>();
+    for (const b of minutes) {
+      const key = Math.floor((etMinutes(b.t) - (etMinutes(b.t) < OPEN_MIN ? PRE_START : POST_START)) / EXT_TF) * EXT_TF;
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key)!.push(b);
+    }
+    return [...buckets.entries()].sort((a, b) => a[0] - b[0]).map(([off, bs]) => {
       let h = -Infinity, l = Infinity, v = 0;
       for (const b of bs) { if (b.h > h) h = b.h; if (b.l < l) l = b.l; v += b.v; }
       return [off, r2(bs[0].o), r2(h), r2(l), r2(bs[bs.length - 1].c), Math.round(v)];
     });
+  };
   const out = new Map<string, { pre: ExtBar[]; post: ExtBar[] }>();
   for (const [d, v] of byDate) out.set(d, { pre: roll(v.pre), post: roll(v.post) });
   return out;
@@ -172,7 +212,7 @@ export async function harvest(
 
       for (const s of sessions) {
         const x = ext.get(s.date);
-        if (x && (x.pre.length || x.post.length)) s.ext = x;
+        if (x && (x.pre.length || x.post.length)) { s.ext = x; s.extv = EXT_VERSION; }
         const file = join(symDir, `${s.date}.json`);
         let have: ReplaySession | null = null;
         try {
@@ -181,9 +221,11 @@ export async function harvest(
           /* new session */
         }
         if (have) {
-          // Filed before extended hours were kept: add them while Yahoo still has them.
-          if (!have.ext && s.ext) {
+          // Filed before extended hours were kept, or before they were cleaned
+          // of bad prints: redo them while Yahoo still has the minutes.
+          if (s.ext && (!have.ext || (have.extv ?? 1) < EXT_VERSION)) {
             have.ext = s.ext;
+            have.extv = EXT_VERSION;
             await writeFile(file, JSON.stringify(have));
             extended++;
           }

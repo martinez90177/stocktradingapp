@@ -408,6 +408,15 @@ candles before 9:30 and after 4:00 -- the `ext hrs` chip, on by default -- and
 the pre-market high and low join the levels. Five-minute rather than
 one-minute bars keep twelve days of seven tickers to about 200 KB.
 
+Off-hours the tape carries **bad prints** -- the odd late or odd-lot trade far
+from the market that nothing follows, a $196.93 low on a $223 stock gone the
+next minute. Left in, one sets the pre-market low and the chart scales to it
+all morning. The recorder drops any extended-hours minute whose close is far
+(1.2%) from both the bars before it and the bars after it -- a real gap, like
+an earnings move, agrees with what follows and stays -- and clips a wick that
+reaches more than 1.2% past its bar's own body. Sessions carry `extv: 2` once
+cleaned, and the next run redoes any that are not.
+
 **Option prices are still modelled**, with Black-Scholes over the real
 underlying, and fills are assumed at the mid. So the chart is real and the
 option side is an approximation of the real chain. The banner on the page says
