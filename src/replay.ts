@@ -82,19 +82,41 @@ export function splitSessions(symbol: string, bars: Bar[]): ReplaySession[] {
 }
 
 /** Files any new sessions into the library and returns how many were added. */
+/**
+ * 1-minute bars reaching `days` back. Yahoo keeps about 30 days of them but
+ * gives out 7 per request, so older weeks are fetched a window at a time. The
+ * older windows are pinned to UTC midnight so a second run on the same day is
+ * served from the cache instead of asking again.
+ */
+export async function fetchMinuteBars(symbol: string, days: number, cacheDir: string | null): Promise<Bar[]> {
+  const newest = await fetchSeries(symbol, { range: "7d", interval: "1m", cacheDir: cacheDir ?? undefined, cacheTtl: 1800 });
+  const byT = new Map<number, Bar>(newest.bars.map((b) => [b.t, b]));
+  const DAY = 86400, anchor = Math.floor(Date.now() / 1000 / DAY) * DAY;
+  // Yahoo refuses a window that starts even slightly more than 30 days back.
+  for (let back = 6; back < Math.min(days, 29); back += 7) {
+    const p2 = anchor - back * DAY, p1 = Math.max(p2 - 7 * DAY, anchor - 29 * DAY);
+    if (p1 >= p2) break;
+    try {
+      const s = await fetchSeries(symbol, { range: "7d", interval: "1m", period1: p1, period2: p2, cacheDir: cacheDir ?? undefined, cacheTtl: 86400 });
+      for (const b of s.bars) if (!byT.has(b.t)) byT.set(b.t, b);
+    } catch {
+      break; // past what Yahoo keeps: stop reaching back
+    }
+  }
+  return [...byT.values()].sort((a, b) => a.t - b.t);
+}
+
 export async function harvest(
   symbols: string[],
   dir: string,
   cacheDir: string | null,
   onWarn?: (m: string) => void,
+  days = 29,
 ): Promise<{ added: number; total: number }> {
   let added = 0;
   for (const symbol of symbols) {
     try {
-      const series = await fetchSeries(symbol, {
-        range: "7d", interval: "1m", cacheDir: cacheDir ?? undefined, cacheTtl: 1800,
-      });
-      const sessions = splitSessions(symbol, series.bars);
+      const sessions = splitSessions(symbol, await fetchMinuteBars(symbol, days, cacheDir));
       const symDir = join(dir, symbol.replace(/[^A-Z0-9_.-]/gi, "_"));
       await mkdir(symDir, { recursive: true });
 
@@ -139,10 +161,13 @@ async function listSessions(dir: string): Promise<{ symbol: string; file: string
 }
 
 /**
- * Picks a spread of sessions to embed: newest first per symbol, interleaved so
- * one busy ticker cannot crowd out the rest.
+ * The newest `perSymbol` sessions of every symbol. Counted per symbol rather
+ * than in total: a total of 30 across seven tickers left about four days each,
+ * which is both a short list to pick from and a thin history behind the day
+ * being traded.
  */
-export async function loadForEmbed(dir: string, limit = 30): Promise<ReplaySession[]> {
+export async function loadForEmbed(dir: string, perSymbol = 12): Promise<ReplaySession[]> {
+  const limit = perSymbol * 1000;
   const all = await listSessions(dir);
   if (all.length === 0) return [];
 
@@ -158,7 +183,7 @@ export async function loadForEmbed(dir: string, limit = 30): Promise<ReplaySessi
   while (picked.length < limit) {
     let took = false;
     for (const files of bySymbol.values()) {
-      if (round < files.length && picked.length < limit) {
+      if (round < files.length && round < perSymbol && picked.length < limit) {
         picked.push(files[round]);
         took = true;
       }

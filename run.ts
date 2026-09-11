@@ -9,7 +9,7 @@ import { discoverMovers } from "./src/movers.ts";
 import { loadRules } from "./src/rules.ts";
 import { renderPractice } from "./src/practice.ts";
 import { harvest, loadForEmbed } from "./src/replay.ts";
-import { harvestVol, loadVolForEmbed, loadCalibrations } from "./src/volindex.ts";
+import { harvestVol, loadVolForEmbed, loadCalibrations, loadEvents, recordEvents } from "./src/volindex.ts";
 import { execFileSync } from "node:child_process";
 import { loadJournal } from "./src/journal.ts";
 import { renderJournal } from "./src/journalpage.ts";
@@ -204,7 +204,12 @@ async function main() {
     // Harvesting is an extra, and it runs after the report is already on disk.
     // A network hiccup here must not throw away a finished run.
     try {
-      const h = await harvest(config.symbols.slice(0, 6), SESSIONS, CACHE, (m) => console.warn(`  ~ ${m}`));
+      // The first six watchlist names, plus every ticker already in the library.
+      // Taking only the first six silently stopped recording TSLA once it moved
+      // down the watchlist -- its days ran out at Sep 4 while the rest carried on.
+      const recorded = await readdir(SESSIONS).catch(() => [] as string[]);
+      const toRecord = [...new Set([...config.symbols.slice(0, 6), ...recorded])];
+      const h = await harvest(toRecord, SESSIONS, CACHE, (m) => console.warn(`  ~ ${m}`));
       console.log(`  replay library: ${h.added} new, ${h.total} sessions total`);
     } catch (e) {
       console.warn(`  ~ replay harvest skipped (${(e as Error).message})`);
@@ -219,6 +224,19 @@ async function main() {
       console.warn(`  ~ volatility harvest skipped (${(e as Error).message})`);
     }
     try {
+      // Upcoming reports, from the calendar the report already fetched, so the
+      // practice page can warn on the days it cannot price honestly.
+      const found: Record<string, number[]> = {};
+      for (const a of analyses) {
+        const d = a.catalysts?.fundamentals?.earningsDates;
+        if (d?.length) found[a.symbol] = d;
+      }
+      const n = await recordEvents(join(ROOT, "volatility"), found);
+      if (n) console.log(`  earnings calendar: ${n} new report date(s) filed`);
+    } catch (e) {
+      console.warn(`  ~ earnings calendar skipped (${(e as Error).message})`);
+    }
+    try {
       const out = execFileSync(process.execPath, [join(ROOT, "tools", "calibrate-vol.mjs")], { encoding: "utf8", timeout: 180000 });
       console.log(`  calibration: ${out.trim().split("\n").pop()}`);
     } catch (e) {
@@ -227,11 +245,12 @@ async function main() {
   }
 
   try {
-    const sessions = await loadForEmbed(SESSIONS, 30);
+    const sessions = await loadForEmbed(SESSIONS, 12);
     const VOL = join(ROOT, "volatility");
     const practice = await renderPractice(join(ROOT, "src", "vendor", "practice-app.html"), "latest.html", sessions, {
       embed: await loadVolForEmbed(VOL, sessions.map((s) => s.date)),
       calibrations: await loadCalibrations(VOL),
+      events: await loadEvents(VOL),
     });
     await writeFile(join(REPORTS, "practice.html"), practice, "utf8");
   } catch (e) {

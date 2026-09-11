@@ -74,6 +74,13 @@ function normalize(json: any, symbol: string): Series {
 interface FetchOpts {
   range: string;
   interval: string;
+  /**
+   * An explicit window in epoch seconds, used instead of `range`. Yahoo keeps
+   * about 30 days of 1-minute bars but hands out at most 7 per request, so
+   * anything older than a week has to be asked for a window at a time.
+   */
+  period1?: number;
+  period2?: number;
   prePost?: boolean;
   cacheDir?: string;
   /** Seconds a cached response stays fresh. 0 disables the cache. */
@@ -81,7 +88,7 @@ interface FetchOpts {
 }
 
 export async function fetchSeries(symbol: string, opts: FetchOpts): Promise<Series> {
-  const key = `${symbol}_${opts.range}_${opts.interval}${opts.prePost ? "_pp" : ""}`
+  const key = `${symbol}_${opts.period1 ? `${opts.period1}-${opts.period2}` : opts.range}_${opts.interval}${opts.prePost ? "_pp" : ""}`
     .replace(/[^a-zA-Z0-9_.-]/g, "_");
   const cacheFile = opts.cacheDir ? join(opts.cacheDir, `${key}.json`) : null;
   const ttl = opts.cacheTtl ?? 0;
@@ -99,7 +106,7 @@ export async function fetchSeries(symbol: string, opts: FetchOpts): Promise<Seri
   }
 
   const qs = new URLSearchParams({
-    range: opts.range,
+    ...(opts.period1 ? { period1: String(opts.period1), period2: String(opts.period2) } : { range: opts.range }),
     interval: opts.interval,
     includePrePost: opts.prePost ? "true" : "false",
     events: "div,split",

@@ -1,9 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { FONT_CSS } from "./fonts.ts";
-import type { VolEmbed, Calibration } from "./volindex.ts";
+import type { VolEmbed, Calibration, Events } from "./volindex.ts";
 
 /** Real volatility for the option prices: index levels per replayed day, and the per-ticker calibrations. */
-export interface PracticeVol { embed: VolEmbed; calibrations: Calibration[] }
+export interface PracticeVol { embed: VolEmbed; calibrations: Calibration[]; events?: Events }
 import type { ReplaySession } from "./replay.ts";
 
 /**
@@ -289,6 +289,9 @@ button.oc:disabled{opacity:.5;cursor:not-allowed}
 .oc.put .go{background:rgba(244,82,95,.17);color:var(--dn)}
 button.oc:disabled .go{background:rgba(137,148,166,.12);color:var(--dim)}
 button.oc:disabled .go b{display:none}
+/* ---- a report the model cannot price ---- */
+.evwarn{display:block;margin-bottom:7px;padding:8px 10px;border-radius:8px;border:1px solid rgba(245,165,36,.4);
+  background:rgba(245,165,36,.1);color:#f5c060;font-weight:600;line-height:1.45}
 /* ---- percent moves ---- */
 .oc .ask em{display:block;font-family:var(--mono);font-style:normal;font-size:11.5px;font-weight:600;letter-spacing:0;margin-top:2px}
 .oc .ask em.up{color:var(--up)}
@@ -397,6 +400,26 @@ const esc = (s: string) =>
  * Builds the practice page from the vendored app: its body and script are
  * carried over untouched, wrapped in the report's chrome and stylesheet.
  */
+/**
+ * The same bars in a little under half the bytes, and exactly the same
+ * numbers: prices become whole cents measured from the previous close, which
+ * is lossless for two-decimal prices, and volume is kept whole. Twelve days
+ * of seven tickers would otherwise add about a megabyte to a page opened on
+ * a phone.
+ */
+function compactSession(s: ReplaySession) {
+  const z: number[] = [];
+  const cents = (n: number) => Math.round(n * 100);
+  const base = cents(s.bars[0][0]);
+  let pc = base;
+  for (const [o, h, l, c, v] of s.bars) {
+    const O = cents(o), C = cents(c);
+    z.push(O - pc, cents(h) - O, O - cents(l), C - O, Math.round(v));
+    pc = C;
+  }
+  return { symbol: s.symbol, date: s.date, carried: s.carried, p: base, z };
+}
+
 export async function renderPractice(
   vendorPath: string,
   reportHref = "latest.html",
@@ -415,7 +438,7 @@ export async function renderPractice(
   // Embedded ahead of the app script, which reads window.MP_SESSIONS on load.
   // JSON.stringify cannot emit "</script>", but a symbol could in principle
   // carry a "<", so the sequence is escaped rather than trusted.
-  const data = `<script>window.MP_SESSIONS=${JSON.stringify(sessions).replace(/</g, "\\u003c")};</script>`;
+  const data = `<script>window.MP_SESSIONS=${JSON.stringify(sessions.map(compactSession)).replace(/</g, "\\u003c")};</script>`;
 
   return `<!doctype html>
 <html lang="en"><head>
@@ -428,7 +451,7 @@ export async function renderPractice(
 </head><body>
 ${bannerFor(reportHref, sessions, vol)}
 ${data}
-${vol ? `<script>window.MP_VOL=${JSON.stringify(vol.embed)};window.MP_VOLCAL=${JSON.stringify(vol.calibrations).replace(/</g, "\\u003c")};</script>` : ""}
+${vol ? `<script>window.MP_VOL=${JSON.stringify(vol.embed)};window.MP_VOLCAL=${JSON.stringify(vol.calibrations).replace(/</g, "\\u003c")};window.MP_EVENTS=${JSON.stringify(vol.events ?? {}).replace(/</g, "\\u003c")};</script>` : ""}
 ${body}
 </body></html>`;
 }

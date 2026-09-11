@@ -15,7 +15,7 @@
 import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { fetchSeries } from "./yahoo.ts";
-import { splitSessions } from "./replay.ts";
+import { splitSessions, fetchMinuteBars } from "./replay.ts";
 
 /** Folder name -> Yahoo symbol. */
 export const VOL_INDEXES: Record<string, string> = { VXN: "^VXN", VIX: "^VIX" };
@@ -41,9 +41,9 @@ export interface Calibration {
 }
 
 /**
- * Files new days of VXN and VIX. Minute records only reach back seven days on
- * Yahoo, like the stocks, so this runs with every harvest; daily levels reach
- * back months and cover the older sessions.
+ * Files new days of VXN and VIX. Yahoo keeps about 30 days of minute records,
+ * like the stocks, so this runs with every harvest; daily levels reach back
+ * months and cover anything older.
  */
 export async function harvestVol(
   dir: string,
@@ -57,10 +57,12 @@ export async function harvestVol(
 
   for (const [name, sym] of Object.entries(VOL_INDEXES)) {
     try {
-      const minute = await fetchSeries(sym, { range: "7d", interval: "1m", cacheDir: cacheDir ?? undefined, cacheTtl: 1800 });
+      // The same 30-day reach as the stocks, so a backfilled day is priced on
+      // its own minute-by-minute volatility rather than just its opening level.
+      const bars = await fetchMinuteBars(sym, 29, cacheDir);
       const sub = join(dir, name);
       await mkdir(sub, { recursive: true });
-      for (const s of splitSessions(name, minute.bars)) {
+      for (const s of splitSessions(name, bars)) {
         const file = join(sub, `${s.date}.json`);
         try { await readFile(file); continue; } catch { /* new day */ }
         await writeFile(file, JSON.stringify({ date: s.date, m: s.bars.map((b) => b[3]) }));
@@ -100,6 +102,40 @@ export async function loadVolForEmbed(dir: string, dates: string[]): Promise<Vol
     }
   }
   return out;
+}
+
+/**
+ * Earnings reports, which the volatility model cannot price: before a report a
+ * ticker's options carry a premium for the move, and no index level captures
+ * it. The practice page warns on any contract whose life spans one rather than
+ * pretend. `timing` is "amc" (after the close), "bmo" (before the open), or
+ * "unknown" when the calendar does not say.
+ */
+export interface EarningsEvent { date: string; timing: "amc" | "bmo" | "unknown"; source: string }
+export type Events = Record<string, EarningsEvent[]>;
+
+export async function loadEvents(dir: string): Promise<Events> {
+  try { return JSON.parse(await readFile(join(dir, "events.json"), "utf8")); } catch { return {}; }
+}
+
+/** Files report dates the earnings calendar gives, keeping everything already known. */
+export async function recordEvents(dir: string, found: Record<string, number[]>): Promise<number> {
+  const ev = await loadEvents(dir);
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" });
+  let added = 0;
+  for (const [sym, times] of Object.entries(found)) {
+    for (const t of times) {
+      const date = fmt.format(new Date(t));
+      ev[sym] = ev[sym] ?? [];
+      if (ev[sym].some((e) => e.date === date)) continue;
+      ev[sym].push({ date, timing: "unknown", source: "Yahoo earnings calendar" });
+      added++;
+    }
+    ev[sym]?.sort((a, b) => (a.date < b.date ? -1 : 1));
+  }
+  await mkdir(dir, { recursive: true });
+  await writeFile(join(dir, "events.json"), JSON.stringify(ev, null, 2) + "\n");
+  return added;
 }
 
 /** Every calibration measured so far, newest last. */

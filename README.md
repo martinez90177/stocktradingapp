@@ -239,7 +239,12 @@ fixed volatilities (NVDA 83% to 3%, TSLA 68% to 2%, AAPL 69% to 7%, QQQ 24% to
 10%). The weakest are SPY (21%), MSFT (15%, where the old constant happened to
 be close) and out-of-the-money calls two or more days out, which still run a
 little rich. **Earnings are not modelled**: before a report real options are
-dearer than this shows, and cheaper after it.
+dearer than this shows, and cheaper after it. So the ticket **warns** on any
+contract whose life spans a report -- a 1DTE or 7DTE on NVDA on Aug 26, say, but
+not that day's 0DTE, which expired before the after-close report. Report dates
+live in `volatility/events.json`: the daily run files upcoming ones from the
+earnings calendar, and NVDA's Aug 26 report is there from the +6.0% gap it left
+on Aug 27, labelled as inferred.
 
 ### Moving through the day
 
@@ -281,10 +286,25 @@ Each replay is an **actual recorded trading day**, minute by minute, measured
 from the market — not a random walk. A random one loads each time; the ticker
 picker chooses which symbol, and **New session** rerolls the day.
 
-Yahoo only serves seven days of 1-minute history, so no single fetch can build a
-deep library. Instead every run files whatever it can see into `sessions/`, and
-the library **grows by a day per symbol per run**. After a month of weekday runs
-you have a few hundred real sessions to practise on.
+Yahoo keeps about **30 days** of 1-minute history but hands out at most seven
+days per request, so every run asks for the whole 30 a week at a time and files
+any day it does not have into `sessions/`. The library **keeps growing by a day
+per ticker per run**, and a week the computer was off fills itself in, as long
+as it is within those 30 days. As of Sep 10 every practice ticker has **20
+recorded days**, back to Aug 13.
+
+The page embeds the newest **12 days per ticker** -- counted per ticker, because
+a total of 30 across seven tickers had left about four days each. So the day
+picker offers twelve, and the newest day has eleven real days of history behind
+it for the daily and 4H views. The oldest one or two are labelled thin or no
+history. The bars are embedded as whole cents from the previous close, which is
+exact for two-decimal prices and about half the size: twelve days of seven
+tickers make a 900 KB page instead of 1.5 MB. Decoding was checked against the
+recorded files, value for value.
+
+Recorded: every ticker already in the library plus the first six on the
+watchlist. It used to be the first six only, which quietly stopped recording
+TSLA at Sep 4 once it sat eighth on the watchlist.
 
 Minutes that genuinely had no trade are carried flat at the previous close with
 zero volume — stating what happened rather than inventing a price — and any

@@ -267,6 +267,9 @@ button.oc:disabled .go b{display:none}
   .left{position:sticky;top:146px}
   .right{position:static}
 }
+/* ---- a report the model cannot price ---- */
+.evwarn{display:block;margin-bottom:7px;padding:8px 10px;border-radius:8px;border:1px solid rgba(245,165,36,.4);
+  background:rgba(245,165,36,.1);color:#f5c060;font-weight:600;line-height:1.45}
 /* ---- percent moves ---- */
 .oc .ask em{display:block;font-family:var(--mono);font-style:normal;font-size:11.5px;font-weight:600;letter-spacing:0;margin-top:2px}
 .oc .ask em.up{color:var(--up)}
@@ -531,6 +534,26 @@ function pctTxt(now,ref){
   const p=(now/ref-1)*100;
   return {t:(p>=0?'+':'−')+Math.abs(p).toFixed(Math.abs(p)>=100?0:1)+'%',c:p>=0?'up':'dn'};
 }
+/* Earnings reports this model cannot price -- see volatility/events.json. */
+const EVENTS=window.MP_EVENTS||{};
+function addTradingDays(d,n){const x=new Date(d+'T12:00:00Z');let k=0;
+  while(k<n){x.setUTCDate(x.getUTCDate()+1);if(x.getUTCDay()%6)k++;}return x.toISOString().slice(0,10);}
+/**
+ * A warning when a report falls inside the contract's life. Real options
+ * carry a premium for the move until the report is out; this model has none,
+ * so it shows them far too cheap. A 0DTE on the afternoon of an after-close
+ * report expires first and is not affected.
+ */
+function eventNote(exDays){
+  const d=S.replay&&S.replay.date;if(!d)return '';
+  const exp=addTradingDays(d,exDays);
+  const ev=(EVENTS[S.ticker]||[]).find(e=>e.timing==='amc'?(e.date>=d&&e.date<exp):
+    e.timing==='bmo'?(e.date>d&&e.date<=exp):(e.date>=d&&e.date<=exp));
+  if(!ev)return '';
+  const when=ev.timing==='amc'?'after the close on ':ev.timing==='bmo'?'before the open on ':'on ';
+  return '<span class="evwarn">'+S.ticker+' reports earnings '+when+ev.date+', before this '+exLabel(exDays)+
+    ' contract expires. Real options were priced for that move and cost far more than shown here; this model has no earnings premium.</span> ';
+}
 /** One line saying where the volatility in these prices came from. */
 function volSource(){
   const m=volModel(S.cursor);
@@ -540,7 +563,7 @@ function volSource(){
     m.src==='open'?m.index+' opened the day at '+lvl+' (no minute record for this day)':
     m.index+' '+lvl+' from the last calibration (no record for this day)';
   const how=m.typical?S.ticker+' has not been measured yet, so it is priced like the typical measured stock':
-    S.ticker+' options trade at '+m.cal.ratio.toFixed(2)+'&times; '+m.index+' (measured '+m.cal.date+(m.cal.carried?', carried back to this earlier day':'')+')';
+    S.ticker+' options trade at '+m.cal.ratio.toFixed(2)+'&times; '+m.index+' ('+(m.cal.date===(S.replay&&S.replay.date)?'measured at this day&rsquo;s close':'measured '+m.cal.date+(m.cal.carried?', carried back to this earlier day':''))+')';
   return 'At-the-money volatility <b>'+pct+'</b>: '+where+'; '+how+'.';
 }
 function strikes(under){
@@ -594,6 +617,19 @@ function build(ticker,regime,vm,seed){
 const REPLAY=window.MP_SESSIONS||[];
 let HISTN=HIST;
 
+/**
+ * A session's bars, from either form: plain [o,h,l,c,v] rows, or the compact
+ * form practice.ts embeds -- whole cents from the previous close, in fives.
+ */
+function barsOf(r){
+  if(r.bars)return r.bars;
+  const out=[],z=r.z;let pc=r.p;
+  for(let i=0;i<z.length;i+=5){
+    const O=pc+z[i],H=O+z[i+1],L=O-z[i+2],C=O+z[i+3];
+    out.push([O/100,H/100,L/100,C/100,z[i+4]]);pc=C;
+  }
+  return out;
+}
 /** Turns embedded sessions into the minute array the engine expects. */
 function fromReplay(pick){
   const sess=REPLAY.filter(r=>r.symbol===pick.symbol).sort((a,b)=>a.date.localeCompare(b.date));
@@ -605,7 +641,7 @@ function fromReplay(pick){
   const mins=[],dates=[];
   use.forEach((r,day)=>{
     dates.push(new Date(r.date+'T12:00:00Z'));
-    r.bars.forEach((b,m)=>mins.push({o:b[0],h:b[1],l:b[2],c:b[3],v:b[4],day,m}));
+    barsOf(r).forEach((b,m)=>mins.push({o:b[0],h:b[1],l:b[2],c:b[3],v:b[4],day,m}));
   });
   return {mins,dates,days:use.length,carried:use[use.length-1].carried,date:use[use.length-1].date};
 }
@@ -1572,7 +1608,7 @@ function tickTicket(){
   refreshTicket();
 }
 function ivLine(c){
-  return volSource()+' Time decay about <b>'+usd(Math.abs(c.thetaHr)*100)+'</b> an hour per contract.';
+  return eventNote(S.exDays)+volSource()+' Time decay about <b>'+usd(Math.abs(c.thetaHr)*100)+'</b> an hour per contract.';
 }
 /** The price line on a card, with how far it has moved since 9:30. */
 function askHtml(v,ref,label){
