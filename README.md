@@ -464,10 +464,19 @@ subpanel**, volume, and magnet snapping for the drawing tools. A **levels**
 chip, on by default, draws the prior day's high, low and close, the pre-market
 high and low, and today's open -- the levels a day is traded against.
 
-**Auto fib is off by default.** It is derived from the opening range, which is an
-opinion about how to trade the day — useful when you want it, clutter when you
-do not. Turn it on with the `auto fib` chip, or draw one exactly where you want
-with the fib tool in the draw rail.
+**Auto fib follows the last swing on the chart.** A high becomes a pivot once
+price has come off it by more than a threshold (0.3% of the price, or three
+typical bars, whichever is larger), a low once price has bounced that much --
+the way a ZigZag finds swings. The levels run from the last confirmed pivot to
+the extreme since, so they extend live as the leg runs, or across the leg
+before it while the new one has not gone anywhere; the swing itself is drawn
+faintly between its two dots. Before the day has a swing at all it uses the
+day's range so far, and before that yesterday's; the Fib tab says which, with
+the two ends and the threshold. It used to be the first fifteen minutes, fixed
+for the day, which is one idea about a day and not the chart's. Off by default
+-- turn it on with the `auto fib` chip, or draw one exactly where you want with
+the fib tool. The opening-range levels are still in the Fib tab and behind the
+`range` chip and the plan's range chips.
 
 The chips are rendered from state rather than written into the markup, so a
 default and its chip cannot disagree.

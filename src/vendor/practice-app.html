@@ -802,9 +802,9 @@ function init(ticker,regime,vm,seed,replayPick){
     pos:null,trades:[],draw:[],pend:null,log:[],autoTrim:false,
     // Working orders waiting for price to reach them, and the rewind stack.
     orders:[],hist:[],pendingJournal:[],
-    // fib starts off. It is derived from the opening range, which is an opinion
-    // about how to trade the day -- useful when you want it, clutter when you
-    // do not. The draw tool puts one wherever you choose instead.
+    // fib starts off: it follows the last swing (see autoFib), useful when you
+    // want it and clutter when you do not. The draw tool puts one wherever you
+    // choose instead.
     ind:{fib:0,or:1,lvl:1,ext:1,vwap:0,ema9:0,ema20:0,ema50:0,bb:0,rsi:0,vol:1,magnet:1},
     // The account and the record -- see "your account, your rules" below.
     setup:null,pendingLedger:[],rewinds:0,peakNet:0,belled:false,ended:false,
@@ -862,7 +862,7 @@ function stepBack(){
   S.log.length=h.logN;S.pendingJournal.length=h.pj;S.pendingLedger.length=h.pl||0;S.peakNet=h.peak||0;
   setRange();   // gone again if the rewind crossed back over 9:45
   S.rewinds++;   // a fact about the session, not part of the state being unwound
-  S.cache={};
+  S.cache={};S.afibK=null;
   if(S.view.right!=null)S.view.right=null;
   log(lbl(HIST,S.cursor)+' — rewound.','hl');
   renderAll();
@@ -929,6 +929,48 @@ function setRange(){
   F['127.2%']=hi+r*.272;F['161.8%']=hi+r*.618;F['261.8%']=hi+r*1.618;
   F['-27.2%']=lo-r*.272;F['-61.8%']=lo-r*.618;F['-161.8%']=lo-r*1.618;
   S.fib=F;
+}
+
+/* ================= auto fib ================= */
+/*
+ * The fib the chart draws by itself follows the last swing on it, the way a
+ * ZigZag finds swings: a high is a pivot once price has come off it by more
+ * than the threshold, a low once price has bounced that much. The levels run
+ * from the last confirmed pivot to the extreme since -- so they extend live
+ * as the leg runs -- or, before the leg has gone anywhere, across the leg
+ * before it. Before the day has a swing at all it uses the day's range so
+ * far, and before that yesterday's. It used to be the first fifteen minutes,
+ * fixed for the day, which is one idea about a day and not the chart's.
+ */
+function autoFib(){
+  const s=todayStart(),bs=S.mins.slice(s,revealed()),px=price();
+  const ranges=bs.map(b=>b.h-b.l).sort((a,b)=>a-b),med=ranges.length?ranges[ranges.length>>1]:0;
+  const thr=Math.max(px*.003,med*3);
+  const piv=[];let dir=0,hi={i:0,p:-Infinity},lo={i:0,p:Infinity},A=null;
+  bs.forEach((b,i)=>{
+    if(b.h>hi.p)hi={i,p:b.h};if(b.l<lo.p)lo={i,p:b.l};
+    if(dir>=0&&hi.p-b.l>=thr){piv.push({...hi,t:'H'});dir=-1;lo={i,p:b.l};hi={i,p:-Infinity};}
+    else if(dir<=0&&b.h-lo.p>=thr){piv.push({...lo,t:'L'});dir=1;hi={i,p:b.h};lo={i,p:Infinity};}
+  });
+  const cur=dir>0?hi:dir<0?lo:null,last=piv[piv.length-1];
+  let a,b,src='swing';
+  if(last&&cur&&Math.abs(cur.p-last.p)>=thr/2){a=last;b=cur;}
+  else if(piv.length>=2){a=piv[piv.length-2];b=last;}
+  else if(bs.length>=5&&hi.p-lo.p>=thr/2&&isFinite(hi.p)&&isFinite(lo.p)){src='day';const H={...hi},L={...lo};a=H.i<L.i?H:L;b=H.i<L.i?L:H;}
+  else if(bs.length>=5&&piv.length===1&&cur){a=last;b=cur;}
+  else if(HISTN>0){src='prior';const pd=S.mins.slice(s-MPD,s);let H={i:-MPD,p:-Infinity},L={i:-MPD,p:Infinity};
+    pd.forEach((x,i)=>{if(x.h>H.p)H={i:i-MPD,p:x.h};if(x.l<L.p)L={i:i-MPD,p:x.l};});a=H.i<L.i?H:L;b=H.i<L.i?L:H;}
+  else return null;
+  const r=b.p-a.p,up=r>0,lv={};
+  LV.forEach(p=>lv[(p*100).toFixed(1).replace('.0','')+'%']=b.p-r*p);
+  lv['127.2%']=b.p+r*.272;lv['161.8%']=b.p+r*.618;lv['261.8%']=b.p+r*1.618;
+  return {a:{m:s+a.i,p:a.p},b:{m:s+b.i,p:b.p},up,lv,src,thr,live:src==='swing'&&b===cur};
+}
+/** The auto fib for the bars on screen, computed once per revealed minute. */
+function getAutoFib(){
+  const k=revealed();
+  if(S.afibK!==k||S.afib===undefined){S.afib=autoFib();S.afibK=k;}
+  return S.afib;
 }
 
 /* ================= engine ================= */
@@ -1366,22 +1408,27 @@ function draw(){
       const y=G.y(v);if(y<padT+4||y>padT+ph-4)return;
       ln(padL,y,w-padR,y,c,1,[2,4]);tag(k+' '+v.toFixed(2),padL+2,y-1,c);});
   }
-  // fib lines with collision-filtered labels drawn in the axis gutter
-  if(S.ind.fib&&S.fib&&todayVis){
-    const prio=['100%','0%','161.8%','127.2%','50%','-27.2%','-61.8%','61.8%','38.2%','261.8%','-161.8%','78.6%','23.6%'];
+  // auto fib: the last swing's levels, labelled in the axis gutter, with the
+  // swing itself drawn faintly from its start to its end
+  const AF=S.ind.fib&&todayVis?getAutoFib():null;
+  if(AF){
+    const prio=['0%','100%','161.8%','127.2%','50%','61.8%','38.2%','261.8%','78.6%','23.6%'];
+    const x0=G.x(barIdxForMin(AF.a.m)),x1=G.x(barIdxForMin(AF.b.m));
+    ln(x0,G.y(AF.a.p),x1,G.y(AF.b.p),'rgba(180,143,173,.45)',1.2,[4,3]);
+    [[x0,AF.a.p],[x1,AF.b.p]].forEach(([X,p])=>{cx.beginPath();cx.arc(X,G.y(p),3,0,6.284);cx.fillStyle='#b48ead';cx.fill();});
     const placed=[];
     prio.forEach(k=>{
-      const v=S.fib[k];if(v==null)return;
+      const v=AF.lv[k];if(v==null)return;
       const y=G.y(v);if(y<padT+6||y>padT+ph-4)return;
-      const isExt=k.includes('127')||k.includes('161')||k.includes('261')||k.startsWith('-');
+      const isExt=k.includes('127')||k.includes('161')||k.includes('261');
       const edge=k==='0%'||k==='100%';
-      if(!edge)ln(padL,y,w-padR,y,isExt?'rgba(201,162,39,.45)':'rgba(90,100,114,.4)',1,isExt?[2,3]:[4,4]);
+      ln(Math.max(padL,Math.min(x0,x1)),y,w-padR,y,edge?'rgba(180,143,173,.55)':isExt?'rgba(201,162,39,.45)':'rgba(120,130,150,.42)',1,isExt?[2,3]:edge?[]:[4,4]);
       if(placed.some(p=>Math.abs(p-y)<F+6))return;
       placed.push(y);
       cx.save();cx.font=cfont(F-1,600);cx.textBaseline='middle';
       const t=k;const tw=cx.measureText(t).width+10;
       cx.fillStyle='rgba(10,14,20,.92)';cx.fillRect(w-padR-tw-2,y-(F+6)/2,tw,F+6);
-      cx.fillStyle=edge?'#8fb3ff':isExt?'#e0b73a':'#aab3c0';
+      cx.fillStyle=edge?'#c9a6c3':isExt?'#e0b73a':'#aab3c0';
       cx.fillText(t,w-padR-tw+3,y+.5);cx.restore();
     });
   }
@@ -2060,10 +2107,21 @@ function wireChain(){
 }
 function paneFib(){
   const c=price();
-  if(!S.fib)return '<div class="empty">The opening range forms at 9:45, from the first 15 minutes. Its levels appear here then.</div>';
+  const AF=getAutoFib();let auto='';
+  if(AF){
+    const aorder=['261.8%','161.8%','127.2%','0%','23.6%','38.2%','50%','61.8%','78.6%','100%'];
+    let an=null,ad=1e9;aorder.forEach(k=>{const d=Math.abs(AF.lv[k]-c);if(d<ad){ad=d;an=k;}});
+    const when=m=>{const d=Math.floor(m/MPD),mm=m-d*MPD;return (d===HISTN?'':dayLbl(d)+' ')+tlbl(mm+1);};
+    const what=AF.src==='swing'?(AF.up?'the last swing up':'the last swing down')+(AF.live?', still running':''):AF.src==='day'?'the day\'s range so far':'yesterday\'s range';
+    auto=`<h3>Auto fib <i>${what}</i></h3>
+    <div class="empty" style="margin-bottom:8px">From ${AF.a.p.toFixed(2)} at ${when(AF.a.m)} to ${AF.b.p.toFixed(2)} at ${when(AF.b.m)}, ${Math.abs(AF.b.p-AF.a.p).toFixed(2)} (${(Math.abs(AF.b.p/AF.a.p-1)*100).toFixed(2)}%). 0% is the end of the move; the retracements are where a pullback may hold, the extensions where a continuation may reach. A pivot confirms once price turns ${AF.thr.toFixed(2)} against it.</div>`+
+    aorder.map(k=>{const ext=k.includes('127')||k.includes('161')||k.includes('261'),edge=k==='0%'||k==='100%',dist=((AF.lv[k]-c)/c*100).toFixed(2);
+      return `<div class="fibrow ${ext?'ext':''} ${edge?'edge':''} ${k===an?'near':''}"><span class="k">${k}${edge?`<small>${k==='0%'?'end of the move':'start of the move'}</small>`:''}</span><span>${AF.lv[k].toFixed(2)}<small>${dist>0?'+':''}${dist}%</small></span></div>`;}).join('');
+  }
+  if(!S.fib)return auto+'<h3 class="sp">Opening range</h3><div class="empty">Forms at 9:45, from the first 15 minutes. Its levels appear here then.</div>';
   const order=['261.8%','161.8%','127.2%','100%','78.6%','61.8%','50%','38.2%','23.6%','0%','-27.2%','-61.8%','-161.8%'];
   let near=null,nd=1e9;order.forEach(k=>{const d=Math.abs(S.fib[k]-c);if(d<nd){nd=d;near=k;}});
-  return `<h3>Levels from the 9:30–9:45 range</h3>`+order.map(k=>{
+  return auto+`<h3 class="${auto?'sp':''}">Levels from the 9:30–9:45 range</h3>`+order.map(k=>{
     const ext=k.includes('127')||k.includes('161')||k.includes('261')||k.startsWith('-');
     const edge=k==='0%'||k==='100%';const dist=((S.fib[k]-c)/c*100).toFixed(2);
     return `<div class="fibrow ${ext?'ext':''} ${edge?'edge':''} ${k===near?'near':''}">
@@ -3112,7 +3170,7 @@ TFS.forEach(t=>{const b=document.createElement('button');b.className='tf'+(t.k==
     S.view.count=window.innerWidth<600?46:80;renderAll();};
   tfbar.appendChild(b);});
 const INDS=[
-  ['fib','auto fib','Fibonacci levels drawn from the opening range (9:30 to 9:45)'],
+  ['fib','auto fib','Fib retracements and extensions of the last swing on the chart, following it as it runs'],
   ['or','range','Opening range: the high and low of the first 15 minutes'],
   ['lvl','levels','Prior day high, low and close, the pre-market high and low, and the open: the levels the day is traded against'],
   ['ext','ext hrs','Pre-market from 4:00 and after-hours to 8:00, in 5-minute bars, tinted'],
