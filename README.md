@@ -169,11 +169,23 @@ does, since a phone has no hover.
 
 ### The ticket
 
-The options ticket shows **the call and the put at the chosen strike side by
-side**: what each costs (the ask), its bid, delta, breakeven, and the total for
-the number of contracts. Buy call and Buy put decide the side when you press
-them, so both prices have to be on screen; the old ticket quoted only the call,
-whichever you then bought.
+**The ticket is where you trade.** The call and the put at the chosen strike sit
+side by side as cards, and **tapping a card buys it** -- there are no separate
+Buy buttons. Each card shows what that side costs (the ask), its bid, delta and
+breakeven, and on its action line exactly what the tap will do: *Buy 3 calls*,
+*Limit order · 3 calls*, *Add 1 call*. A side you cannot take right now -- a put
+while you hold a call, anything after the bell -- is greyed out with the reason
+on it. In Shares mode the cards are Long and Short. Size and order type sit
+above the cards, so they are set before you tap; on a keyboard, L and S do the
+same as the two cards.
+
+The Chain tab picks a strike and brings you back to the ticket; it does not buy.
+A one-tap buy in a dense table is too easy to hit by accident.
+
+During a replay the ticket's numbers update in place and it is rebuilt only when
+what it shows changes shape -- a new position, strike or order type. It used to
+rebuild on every bar, which would swallow a tap that landed mid-rebuild and
+threw away whatever was being typed in the stop box.
 
 Strike and size have steppers. Expiration is labelled today / next day / a week
 out rather than only 0DTE, 1DTE, 7DTE.
@@ -208,8 +220,8 @@ session; it will not jump backwards, because that is what rewind is for.
 
 ### Orders
 
-Market, **limit** and **stop**. With limit or stop armed, Long and Short place a
-resting order rather than filling one; working orders are drawn on the chart and
+Market, **limit** and **stop**. With limit or stop armed, tapping a card in the
+ticket places a resting order rather than filling one; working orders are drawn on the chart and
 cancellable from the ticket.
 
 A limit fills at its own price. **A stop fills at the worse of its price and the

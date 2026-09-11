@@ -219,9 +219,9 @@ footer{color:var(--dim2);font-size:11px;text-align:center;padding:0 20px 28px;li
 .tour[hidden]{display:none}
 .tour.center{background:rgba(3,5,10,.72)}
 .tour-spot{position:fixed;border-radius:10px;border:2px solid var(--acc);box-shadow:0 0 0 9999px rgba(3,5,10,.72);
-  pointer-events:none;transition:left .2s,top .2s,width .2s,height .2s}
+  pointer-events:none}
 .tour-card{position:fixed;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:15px 16px 13px;
-  box-shadow:0 18px 50px rgba(0,0,0,.6);transition:left .2s,top .2s}
+  box-shadow:0 18px 50px rgba(0,0,0,.6)}
 .tour-step{font-family:var(--mono);font-size:11px;color:var(--acc);font-weight:600;letter-spacing:.4px}
 .tour-card h4{margin:6px 0;font-size:16px;letter-spacing:-.2px}
 .tour-card p{margin:0;color:#c3cad6;font-size:13.5px;line-height:1.55}
@@ -269,6 +269,22 @@ h3 i{font-style:normal;text-transform:none;letter-spacing:0;color:var(--dim);fon
 .chk{display:flex;gap:9px;align-items:center;margin-top:12px;font-size:12.5px;color:var(--dim);cursor:pointer}
 .chk input{width:auto;min-height:0;accent-color:var(--acc)}
 .posline{font-family:var(--mono);font-size:14.5px;font-weight:600;margin:0 0 6px}
+/* ---- the side cards are the buy buttons ---- */
+button.oc{display:block;width:100%;text-align:left;font-weight:400;min-height:0;color:var(--text);cursor:pointer;
+  transition:border-color .15s,box-shadow .15s,transform .08s}
+button.oc > span{display:block}
+button.oc > .hd{display:flex}
+.oc.call:hover:not(:disabled){border-color:var(--up);box-shadow:0 0 0 1px var(--up)}
+.oc.put:hover:not(:disabled){border-color:var(--dn);box-shadow:0 0 0 1px var(--dn)}
+.oc.call:focus-visible{outline:2px solid var(--up);outline-offset:2px}
+.oc.put:focus-visible{outline:2px solid var(--dn);outline-offset:2px}
+button.oc:disabled{opacity:.5;cursor:not-allowed}
+.oc .go{margin-top:9px;padding:8px 10px 9px;border-radius:8px;font-size:12px;font-weight:700;line-height:1.3}
+.oc .go b{display:block;margin-top:2px;font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text)}
+.oc.call .go{background:rgba(45,212,167,.17);color:var(--up)}
+.oc.put .go{background:rgba(244,82,95,.17);color:var(--dn)}
+button.oc:disabled .go{background:rgba(137,148,166,.12);color:var(--dim)}
+button.oc:disabled .go b{display:none}
 @media(min-width:900px){
   .wrap{display:grid;grid-template-columns:1fr 350px;gap:16px;align-items:start}
   .right{position:sticky;top:112px}
@@ -304,6 +320,14 @@ h3 i{font-style:normal;text-transform:none;letter-spacing:0;color:var(--dim);fon
   .chg{font-size:11px;padding:2px 6px;white-space:nowrap}
   .ssel{flex:1 1 auto}
   .ohlc{font-size:12px}
+}
+/* On a desktop the chart stays pinned while the ticket scrolls beside it. The
+   buy cards sit under the size and order settings, below the fold on a laptop,
+   and scrolling down to them used to take the chart out of view. Only where the
+   window is tall enough to hold the whole chart column. */
+@media(min-width:900px) and (min-height:760px){
+  .left{position:sticky;top:146px}
+  .right{position:static}
 }
 @media(prefers-reduced-motion:reduce){button:active:not(:disabled){transform:none}}
 `;

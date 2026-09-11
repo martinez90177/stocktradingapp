@@ -193,9 +193,9 @@ footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-h
 .tour[hidden]{display:none}
 .tour.center{background:rgba(3,5,10,.72)}
 .tour-spot{position:fixed;border-radius:10px;border:2px solid var(--acc);box-shadow:0 0 0 9999px rgba(3,5,10,.72);
-  pointer-events:none;transition:left .2s,top .2s,width .2s,height .2s}
+  pointer-events:none}
 .tour-card{position:fixed;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:15px 16px 13px;
-  box-shadow:0 18px 50px rgba(0,0,0,.6);transition:left .2s,top .2s}
+  box-shadow:0 18px 50px rgba(0,0,0,.6)}
 .tour-step{font-family:var(--mono);font-size:11px;color:var(--acc);font-weight:600;letter-spacing:.4px}
 .tour-card h4{margin:6px 0;font-size:16px;letter-spacing:-.2px}
 .tour-card p{margin:0;color:#c3cad6;font-size:13.5px;line-height:1.55}
@@ -243,6 +243,30 @@ h3 i{font-style:normal;text-transform:none;letter-spacing:0;color:var(--dim);fon
 .chk{display:flex;gap:9px;align-items:center;margin-top:12px;font-size:12.5px;color:var(--dim);cursor:pointer}
 .chk input{width:auto;min-height:0;accent-color:var(--acc)}
 .posline{font-family:var(--mono);font-size:14.5px;font-weight:600;margin:0 0 6px}
+/* ---- the side cards are the buy buttons ---- */
+button.oc{display:block;width:100%;text-align:left;font-weight:400;min-height:0;color:var(--text);cursor:pointer;
+  transition:border-color .15s,box-shadow .15s,transform .08s}
+button.oc > span{display:block}
+button.oc > .hd{display:flex}
+.oc.call:hover:not(:disabled){border-color:var(--up);box-shadow:0 0 0 1px var(--up)}
+.oc.put:hover:not(:disabled){border-color:var(--dn);box-shadow:0 0 0 1px var(--dn)}
+.oc.call:focus-visible{outline:2px solid var(--up);outline-offset:2px}
+.oc.put:focus-visible{outline:2px solid var(--dn);outline-offset:2px}
+button.oc:disabled{opacity:.5;cursor:not-allowed}
+.oc .go{margin-top:9px;padding:8px 10px 9px;border-radius:8px;font-size:12px;font-weight:700;line-height:1.3}
+.oc .go b{display:block;margin-top:2px;font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text)}
+.oc.call .go{background:rgba(45,212,167,.17);color:var(--up)}
+.oc.put .go{background:rgba(244,82,95,.17);color:var(--dn)}
+button.oc:disabled .go{background:rgba(137,148,166,.12);color:var(--dim)}
+button.oc:disabled .go b{display:none}
+/* On a desktop the chart stays pinned while the ticket scrolls beside it. The
+   buy cards sit under the size and order settings, below the fold on a laptop,
+   and scrolling down to them used to take the chart out of view. Only where the
+   window is tall enough to hold the whole chart column. */
+@media(min-width:900px) and (min-height:760px){
+  .left{position:sticky;top:146px}
+  .right{position:static}
+}
 </style>
 </head>
 <body>
@@ -296,10 +320,6 @@ h3 i{font-style:normal;text-transform:none;letter-spacing:0;color:var(--dim);fon
         <option value="0.5">0.5x</option><option value="1" selected>1x</option>
         <option value="2">2x</option><option value="4">4x</option><option value="8">8x</option>
       </select>
-    </div>
-    <div class="srow">
-      <button class="blong" id="long">Long</button>
-      <button class="bshort" id="short">Short</button>
     </div>
   </div>
 </div>
@@ -1289,16 +1309,16 @@ function btns(){
   $('back').disabled=!S.hist.length;
   const t=tfMin();
   $('next').textContent=over?'Session over':'Next '+(t==='D'?'day':t+'m');
-  if(S.mode==='options'){$('long').textContent='Buy call';$('short').textContent='Buy put';}
-  else{$('long').textContent='Long';$('short').textContent='Short';}
-  const lockOpt=S.pos&&S.pos.kind==='option';
-  $('long').disabled=over||(S.pos&&(S.pos.kind==='shares'?S.pos.dir==='short':S.pos.optType==='put'));
-  $('short').disabled=over||(S.pos&&(S.pos.kind==='shares'?S.pos.dir==='long':S.pos.optType==='call'));
 }
 
 function pane(){
   const p=$('pane');
-  if(S.tab==='trade'){p.innerHTML=paneTrade();wireTrade();}
+  if(S.tab==='trade'){
+    // Same ticket as last time? Then only the numbers move. See ticketKey().
+    const k=ticketKey();
+    if(p.dataset.tk===k&&$('buyC')){tickTicket();return;}
+    p.dataset.tk=k;p.innerHTML=paneTrade();wireTrade();
+  }
   else if(S.tab==='chain'){p.innerHTML=paneChain();wireChain();}
   else if(S.tab==='fib')p.innerHTML=paneFib();
   else if(S.tab==='tape'){p.innerHTML='<div class="tape scroll" id="tp">'+
@@ -1345,15 +1365,88 @@ function planHtml(u,qty,opt){
     'a '+what+' of '+qty+' shares.')+'</p>';
   return h;
 }
+/**
+ * What stops a buy on one side, if anything: the rules enter() applies, stated
+ * on the card before the tap instead of in the tape after it. Returns a short
+ * reason for the card and a full one for the tape, or null.
+ */
+function buyBlock(bull){
+  if(S.cursor>=MPD)return {s:'Session over',l:'The session is over. Restart or load a new day.'};
+  const p=S.pos;if(!p)return null;
+  if(S.mode==='options'){
+    const type=bull?'call':'put';
+    if(p.kind!=='option')return {s:'Holding shares',l:'Close the share position first.'};
+    if(p.optType!==type)return {s:'You hold a '+p.optType,l:'You hold a '+p.optType+'. Close it before buying a '+type+'.'};
+    if(p.strike!==S.strike||p.exDays!==S.exDays)return {s:'Other contract open',
+      l:'You hold the '+Number(p.strike).toFixed(2)+' '+p.optType+' '+exLabel(p.exDays)+'. Close it, or set the ticket back to that contract to add to it.'};
+    return null;
+  }
+  const dir=bull?'long':'short';
+  if(p.kind!=='shares')return {s:'Holding an option',l:'Close the option position first.'};
+  if(p.dir!==dir)return {s:'You are '+p.dir,l:'You are '+p.dir+'. Close it before going '+dir+'.'};
+  return null;
+}
+/** The way into a trade: the cards in the ticket, or the L and S keys. */
+function buy(bull){
+  const why=buyBlock(bull);
+  if(why){log(why.l,'y');return;}
+  S.oType==='market'?enter(bull):placeOrder(bull);
+}
+/** The action line on a card: what tapping it will do, at this size and order type. */
+function goText(bull,qty){
+  const why=buyBlock(bull);if(why)return why.s;
+  const opt=S.mode==='options',adding=!!S.pos;
+  const what=opt?(qty+' '+(bull?'call':'put')+(qty===1?'':'s')):(qty+(qty===1?' share':' shares'));
+  if(S.oType==='limit')return 'Limit order · '+what;
+  if(S.oType==='stop')return 'Stop order · '+what;
+  return (adding?'Add ':opt||bull?'Buy ':'Short ')+what;
+}
+/**
+ * What the ticket looks like, as opposed to the numbers in it. The ticket is
+ * rebuilt only when this changes. It used to be rebuilt on every bar of a
+ * replay, which was harmless while the buy buttons lived outside it; with the
+ * cards as the buttons, a tap landing mid-rebuild was swallowed, and whatever
+ * was being typed in the stop or target box was thrown away.
+ */
+function ticketKey(){
+  const p=S.pos;
+  return [S.ticker,S.seed,S.replay?S.replay.date:'',S.mode,S.strike,S.exDays,S.oType,S.cursor>=MPD,
+    p?[p.kind,p.optType,p.strike,p.exDays,p.dir,p.qty].join(':'):'-',S.orders.length,S.trades.length].join('|');
+}
+/** A new bar: the same ticket, new numbers. */
+function tickTicket(){
+  const u=price(),opt=S.mode==='options',inc=cfg(S.ticker).inc;
+  setTxt('stkAt',S.ticker+' is at '+u.toFixed(2));
+  if(opt){
+    const c=quote(S.strike,'call',S.exDays,u),p=quote(S.strike,'put',S.exDays,u);
+    setTxt('askC',c.ask.toFixed(2)+'<small>ask</small>');
+    setTxt('askP',p.ask.toFixed(2)+'<small>ask</small>');
+    setTxt('lnC','bid <b>'+c.bid.toFixed(2)+'</b> · &Delta; <b>'+c.delta.toFixed(2)+'</b>');
+    setTxt('lnP','bid <b>'+p.bid.toFixed(2)+'</b> · &Delta; <b>'+p.delta.toFixed(2)+'</b>');
+    setTxt('beC','breakeven <b>'+(S.strike+c.ask).toFixed(2)+'</b>');
+    setTxt('beP','breakeven <b>'+(S.strike-p.ask).toFixed(2)+'</b>');
+    setTxt('ivl',ivLine(c));
+    const sel=$('strikeSel');
+    if(sel&&document.activeElement!==sel)[...sel.options].forEach(o=>{const k=parseFloat(o.value);
+      o.textContent=k.toFixed(2)+(Math.abs(k-u)<inc/2?' · at the money':'');});
+  }else{
+    setTxt('askC',u.toFixed(2)+'<small>last</small>');
+    setTxt('askP',u.toFixed(2)+'<small>last</small>');
+  }
+  if(S.pos)setTxt('posBox',posBlock());
+  refreshTicket();
+}
+function ivLine(c){
+  return 'Implied volatility <b>'+(c.iv*100).toFixed(0)+'%</b> &middot; time decay about <b>'+usd(Math.abs(c.thetaHr)*100)+'</b> an hour per contract.';
+}
 /** Updates the numbers in place, so typing a quantity does not rebuild the ticket under the cursor. */
 function refreshTicket(){
   const u=price(),opt=S.mode==='options',qty=ticketQty(opt);
   if(opt){
     const c=quote(S.strike,'call',S.exDays,u),p=quote(S.strike,'put',S.exDays,u);
-    const n=qty+(qty===1?' contract':' contracts');
-    setTxt('costC',n+'<b>'+usd(c.ask*100*qty)+'</b>');
-    setTxt('costP',n+'<b>'+usd(p.ask*100*qty)+'</b>');
-  }else setTxt('notional',qty+(qty===1?' share':' shares')+' at '+u.toFixed(2)+' = <b>'+usd(u*qty)+'</b>');
+    setTxt('costC',usd(c.ask*100*qty));setTxt('costP',usd(p.ask*100*qty));
+  }else{setTxt('costC',usd(u*qty));setTxt('costP',usd(u*qty));}
+  setTxt('goC',goText(true,qty));setTxt('goP',goText(false,qty));
   setTxt('plan',planHtml(u,qty,opt));
 }
 function paneTrade(){
@@ -1361,11 +1454,12 @@ function paneTrade(){
   const stopV=val('stop'),tgtV=val('tgt');
   const inc=cfg(S.ticker).inc;
   const posHtml=S.pos?posBlock():'<div class="empty">No position.'+(S.trades.length?' '+S.trades.length+' closed trade'+(S.trades.length===1?'':'s')+' this session.':'')+'</div>';
-  let top;
+  const offC=buyBlock(true)?'disabled':'',offP=buyBlock(false)?'disabled':'';
+  const sides=opt?'Call or Put':'Long or Short';
+  let top,pair;
   if(opt){
-    // Both sides of the strike, side by side. The buttons under the chart decide
-    // call or put at the moment you press them, so the ticket has to show the
-    // price of each -- it used to show only the call, whichever you then bought.
+    // The cards are the buttons. Each shows what that side costs and what
+    // tapping it will do, so the price you see is the price you act on.
     const c=quote(S.strike,'call',S.exDays,u),p=quote(S.strike,'put',S.exDays,u);
     const ks=strikes(u);if(!ks.includes(S.strike))ks.push(S.strike);ks.sort((a,b)=>a-b);
     const EXP=[[0,'today'],[1,'next day'],[7,'a week out']];
@@ -1374,7 +1468,7 @@ function paneTrade(){
   <div class="seg exp" id="exch">
     ${EXP.map(([d,t])=>`<button data-ex="${d}" class="${S.exDays===d?'on':''}"><b>${exLabel(d)}</b><small>${t}</small></button>`).join('')}
   </div>
-  <h3 class="sp">Strike <i>${S.ticker} is at ${u.toFixed(2)}</i></h3>
+  <h3 class="sp">Strike <i id="stkAt">${S.ticker} is at ${u.toFixed(2)}</i></h3>
   <div class="stepper">
     <button id="kDn" title="Lower strike" aria-label="Lower strike">&minus;</button>
     <select id="strikeSel" aria-label="Strike">
@@ -1382,29 +1476,30 @@ function paneTrade(){
     </select>
     <button id="kUp" title="Higher strike" aria-label="Higher strike">+</button>
   </div>
-  <div class="pair">
-    <div class="oc call">
-      <div class="hd">Call<span>if it rises</span></div>
-      <div class="ask">${c.ask.toFixed(2)}<small>ask</small></div>
-      <div class="ln">bid <b>${c.bid.toFixed(2)}</b> · &Delta; <b>${c.delta.toFixed(2)}</b></div>
-      <div class="ln">breakeven <b>${(S.strike+c.ask).toFixed(2)}</b></div>
-      <div class="cost" id="costC"></div>
-    </div>
-    <div class="oc put">
-      <div class="hd">Put<span>if it falls</span></div>
-      <div class="ask">${p.ask.toFixed(2)}<small>ask</small></div>
-      <div class="ln">bid <b>${p.bid.toFixed(2)}</b> · &Delta; <b>${p.delta.toFixed(2)}</b></div>
-      <div class="ln">breakeven <b>${(S.strike-p.ask).toFixed(2)}</b></div>
-      <div class="cost" id="costP"></div>
-    </div>
-  </div>
-  <div class="meta">Buy call and Buy put, under the chart, pay the ask shown. Implied volatility <b>${(c.iv*100).toFixed(0)}%</b> &middot; time decay about <b>${usd(Math.abs(c.thetaHr)*100)}</b> an hour per contract.</div>
   <h3 class="sp">Contracts</h3>
   <div class="stepper">
     <button id="qDn" title="Fewer" aria-label="Fewer contracts">&minus;</button>
     <input class="n" id="qty" type="number" inputmode="numeric" min="1" value="${qty}" aria-label="Contracts">
     <button id="qUp" title="More" aria-label="More contracts">+</button>
   </div>`;
+    pair=`
+  <div class="pair">
+    <button type="button" class="oc call" id="buyC" ${offC} aria-label="Call at the ${S.strike.toFixed(2)} strike">
+      <span class="hd">Call<span>if it rises</span></span>
+      <span class="ask" id="askC">${c.ask.toFixed(2)}<small>ask</small></span>
+      <span class="ln" id="lnC">bid <b>${c.bid.toFixed(2)}</b> · &Delta; <b>${c.delta.toFixed(2)}</b></span>
+      <span class="ln" id="beC">breakeven <b>${(S.strike+c.ask).toFixed(2)}</b></span>
+      <span class="go"><span id="goC"></span><b id="costC"></b></span>
+    </button>
+    <button type="button" class="oc put" id="buyP" ${offP} aria-label="Put at the ${S.strike.toFixed(2)} strike">
+      <span class="hd">Put<span>if it falls</span></span>
+      <span class="ask" id="askP">${p.ask.toFixed(2)}<small>ask</small></span>
+      <span class="ln" id="lnP">bid <b>${p.bid.toFixed(2)}</b> · &Delta; <b>${p.delta.toFixed(2)}</b></span>
+      <span class="ln" id="beP">breakeven <b>${(S.strike-p.ask).toFixed(2)}</b></span>
+      <span class="go"><span id="goP"></span><b id="costP"></b></span>
+    </button>
+  </div>
+  <div class="meta" id="ivl">${ivLine(c)}</div>`;
   }else{
     top=`
   <h3>Shares</h3>
@@ -1412,8 +1507,22 @@ function paneTrade(){
     <button id="qDn" title="Fewer" aria-label="Fewer shares">&minus;</button>
     <input class="n" id="qty" type="number" inputmode="numeric" min="1" value="${qty}" aria-label="Shares">
     <button id="qUp" title="More" aria-label="More shares">+</button>
-  </div>
-  <div class="meta" id="notional"></div>`;
+  </div>`;
+    pair=`
+  <div class="pair">
+    <button type="button" class="oc call" id="buyC" ${offC} aria-label="Go long ${S.ticker}">
+      <span class="hd">Long<span>if it rises</span></span>
+      <span class="ask" id="askC">${u.toFixed(2)}<small>last</small></span>
+      <span class="ln">buy now, sell higher</span>
+      <span class="go"><span id="goC"></span><b id="costC"></b></span>
+    </button>
+    <button type="button" class="oc put" id="buyP" ${offP} aria-label="Go short ${S.ticker}">
+      <span class="hd">Short<span>if it falls</span></span>
+      <span class="ask" id="askP">${u.toFixed(2)}<small>last</small></span>
+      <span class="ln">sell now, buy back lower</span>
+      <span class="go"><span id="goP"></span><b id="costP"></b></span>
+    </button>
+  </div>`;
   }
   return `
   <div class="seg" id="mode">
@@ -1428,12 +1537,14 @@ function paneTrade(){
     <button data-o="limit" class="${S.oType==='limit'?'on':''}" title="Wait for a better price">Limit</button>
     <button data-o="stop" class="${S.oType==='stop'?'on':''}" title="Wait for a breakout">Stop</button>
   </div>
-  ${S.oType==='market'?'<div class="meta tight">The buttons under the chart fill straight away.</div>':`
+  ${S.oType==='market'?`<div class="meta tight">Tapping ${sides} below fills straight away.</div>`:`
   <div class="stepline"><label for="olim">${S.oType==='limit'?'Limit':'Stop'} price on ${S.ticker}</label>
     <input class="n" id="olim" type="number" inputmode="decimal" step="0.01" value="${S.oPx||''}"></div>
-  <div class="meta">The buttons under the chart place the order and it waits. ${S.oType==='limit'?
+  <div class="meta">Tapping ${sides} below places the order and it waits. ${S.oType==='limit'?
     'A limit fills at your price once the stock trades there: below the price for an upside trade, above it for a downside one.':
     'A stop fills once the stock breaks through: above the price for an upside trade, below it for a downside one. If price gaps past it, you get the worse price.'}</div>`}
+
+  ${pair}
 
   ${S.orders.length?`<h3 class="sp">Working orders</h3>`+S.orders.map(o=>
     `<div class="kv"><span class="k">${o.kind} ${o.bull?'buy':'sell'} ${o.qty} @ ${o.px.toFixed(2)}</span>
@@ -1453,7 +1564,7 @@ function paneTrade(){
   <div class="plan" id="plan"></div>
   <label class="chk"><input type="checkbox" id="atrim" ${S.autoTrim?'checked':''}> Take a third off at each extension (127% and 162%)</label>
 
-  <h3 class="sp">Position</h3>${posHtml}
+  <h3 class="sp">Position</h3><div id="posBox">${posHtml}</div>
   <div class="mgmt">
     <button id="t3" ${S.pos?'':'disabled'}>Trim ⅓</button>
     <button id="t2" ${S.pos?'':'disabled'}>Trim ½</button>
@@ -1520,6 +1631,8 @@ function wireTrade(){
   $('t3')&&($('t3').onclick=()=>trim(1/3));
   $('t2')&&($('t2').onclick=()=>trim(1/2));
   $('tx')&&($('tx').onclick=()=>trim(1));
+  $('buyC')&&($('buyC').onclick=()=>buy(true));
+  $('buyP')&&($('buyP').onclick=()=>buy(false));
   refreshTicket();
 }
 function paneChain(){
@@ -1745,10 +1858,8 @@ const TOUR=[
    b:"Pick a tool, then drag on the chart: trend lines, price levels, fib retracements, boxes, and a ruler that measures a move in dollars and percent. Undo and Clear are at the end. Pointer takes you back to panning."},
   {t:".trow",h:"Move through the day",
    b:"Next steps forward one candle. The play button runs on its own at the speed beside it. The back arrow rewinds one candle and undoes anything you did in it: that is how you go back and try the other decision."},
-  {t:".srow",h:"Take a trade",
-   b:"Buy call if you think the stock is going up, Buy put if you think it is going down. Switch the ticket to Shares and these become Long and Short."},
   {t:"#pane",h:"The ticket",tab:"trade",
-   b:"Choose the expiration and strike and see what the call and the put each cost. Set how many contracts, how to enter, and your exit plan: a stop and a target on the stock price, with what that risks and could make. Your open position shows here too."},
+   b:"This is where you trade. Choose the expiration, strike and number of contracts, then tap the Call card if you think the stock will rise or the Put card if you think it will fall; each shows what it costs. Under them is your exit plan, a stop and a target on the stock price, and your open position. Switch to Shares and the cards become Long and Short."},
   {t:"#tabs",h:"Everything else",
    b:"Chain lists every strike. Fib has the levels from the opening range. Tape logs everything that happened. Coach reviews your trades. Session has today's stats, and sends your trades to the journal."},
   {t:null,h:"Your trades are kept",
@@ -1783,7 +1894,13 @@ function tourShow(i){
       window.scrollBy(0,el.getBoundingClientRect().top-hh-12);
     }
   }
+  // Placed straight away -- measuring forces layout, so the numbers are already
+  // right -- and again on the next frames and a beat later, in case a font or
+  // the scroll settles after. Relying on the frame alone left the spotlight on
+  // the previous step wherever frames were being held back.
+  tourPlace();
   requestAnimationFrame(()=>requestAnimationFrame(tourPlace));
+  setTimeout(tourPlace,80);
   $('tourNext').focus({preventScroll:true});
 }
 function tourPlace(){
@@ -1940,8 +2057,6 @@ function stepBar(){
 $('next').onclick=stepBar;
 $('back').onclick=()=>{stopAuto();stepBack();};
 $('spd').onchange=e=>{S.speed=parseFloat(e.target.value);if(S.auto){stopAuto();$('auto').click();}};
-$('long').onclick=()=>S.oType==='market'?enter(true):placeOrder(true);
-$('short').onclick=()=>S.oType==='market'?enter(false):placeOrder(false);
 function stopAuto(){if(S.auto){clearInterval(S.auto);S.auto=null;$('auto').textContent='▶';}}
 $('auto').onclick=()=>{if(S.auto)return stopAuto();$('auto').textContent='❚❚';
   S.auto=setInterval(()=>{if(S.cursor>=MPD)return stopAuto();stepBar();},Math.round(700/(S.speed||1)));};
@@ -1958,8 +2073,8 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowRight'){e.preventDefault();stepBar();}
   else if(e.key==='ArrowLeft'){e.preventDefault();stopAuto();stepBack();}
   else if(e.key===' '){e.preventDefault();$('auto').click();}
-  else if(k==='l'&&!$('long').disabled)enter(true);
-  else if(k==='s'&&!$('short').disabled)enter(false);
+  else if(k==='l')buy(true);
+  else if(k==='s')buy(false);
   else if(k==='x'&&S.pos)trim(1);
   else if(k==='u'){S.draw.pop();draw();}
   else if(k==='escape')document.querySelector('.tool[data-t="cursor"]').click();
