@@ -4,6 +4,67 @@
       "date": "2026-08-26",
       "timing": "amc",
       "source": "Inferred: NVDA opened +6.0% on Aug 27 against a typical overnight move of 0.63%, four weeks after its quarter ended Jul 31, when it reports."
+    },
+    {
+      "date": "2026-11-17",
+      "timing": "unknown",
+      "source": "Yahoo earnings calendar"
+    }
+  ],
+  "AAPL": [
+    {
+      "date": "2026-10-29",
+      "timing": "unknown",
+      "source": "Yahoo earnings calendar"
+    }
+  ],
+  "AMZN": [
+    {
+      "date": "2026-10-29",
+      "timing": "unknown",
+      "source": "Yahoo earnings calendar"
+    }
+  ],
+  "META": [
+    {
+      "date": "2026-10-28",
+      "timing": "unknown",
+      "source": "Yahoo earnings calendar"
+    }
+  ],
+  "TSLA": [
+    {
+      "date": "2026-10-21",
+      "timing": "unknown",
+      "source": "Yahoo earnings calendar"
+    }
+  ],
+  "MSFT": [
+    {
+      "date": "2026-10-28",
+      "timing": "unknown",
+      "source": "Yahoo earnings calendar"
+    }
+  ],
+  "GOOGL": [
+    {
+      "date": "2026-10-28",
+      "timing": "unknown",
+      "source": "Yahoo earnings calendar"
+    }
+  ],
+  "AMD": [
+    {
+      "date": "2026-11-03",
+      "timing": "unknown",
+      "source": "Yahoo earnings calendar"
+    }
+  ],
+  "MU": [
+    {
+      "date": "2026-09-30",
+      "timing": "unknown",
+      "source": "Yahoo earnings calendar"
     }
   ]
 }

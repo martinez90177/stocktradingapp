@@ -20,3 +20,6 @@ _patch.mjs
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# local editor / preview config
+.claude/

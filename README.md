@@ -153,7 +153,9 @@ out, never in the file itself.
 A **Practice** link in the header opens a second page: a bar-by-bar replay
 terminal for rehearsing entries, stops and exits. Step the chart forward one bar
 at a time, draw on it, take shares or options, and manage the position — with a
-Chain, Fib, Tape, Journal, Coach and Session pane alongside.
+Chain, Fib, Tape, Journal, Coach, Session and Rules pane alongside. It trades
+the account you actually have, under the rules you wrote for it, and keeps a
+record of every trade; see *Your account, your rules* below.
 
 ### Finding your way
 
@@ -184,6 +186,11 @@ shows its P&L in dollars **and percent**, in the ticket and in a bar in the
 header that stays in view while you watch the chart; the tape's closing line
 gives the return on the premium paid.
 
+Above the cards sits **the plan**: which setup this is, and a stop and a target
+on the stock's price. It is above them on purpose -- entry, stop and target
+before you click -- and under the rules below a card stays refused until the
+plan has what they require, with the reason written on the card.
+
 The Chain tab picks a strike and brings you back to the ticket; it does not buy.
 A one-tap buy in a dense table is too easy to hit by accident.
 
@@ -202,6 +209,80 @@ risk, the reward and the ratio for that side. The old one always priced a call.
 A stop and target on the same side get a warning, and pressing Buy with a stop
 on the wrong side of the price is refused rather than opening a trade the next
 bar would close.
+
+### Your account, your rules
+
+The simulator trades the account you actually have, under the rules you wrote
+for it. An **account strip** under the header shows the balance, today's P&L,
+how much of the day's options allowance is used, the trade count and the loss
+limit; tap it for the record. The **Rules** tab holds the numbers, and beneath
+them the whole of Alex's Rules from `rules.json`, so each rule and the number
+that enforces it sit together.
+
+The defaults are Alex's: a **$500** account, at most **$200 of options bought
+a day**, a **$60 daily loss limit**, **three trades a day**, at most **$60 at
+risk to the stop** on any one trade, a **$0.65 fee a contract each way**, and
+**ten minutes off after two straight losses**. All of it is editable and saved
+in the browser.
+
+With the rules on, a card **refuses** anything outside them and says which
+rule, on the card: *Name the setup first*, *Set a stop first*, *Daily cap used
+up*, *Over the daily cap · 1 fits*, *Risks $76.00 · max $60.00*, *Trade limit
+reached*, *Daily loss limit hit*, *Cooling off · 8 min*, *Never add to a
+loser*, *Too late for a 0DTE* (after 3:30), *No shorting in a cash account*. A
+stop on an open position may move closer but never further: type a wider one
+and the box is put back, with the rule on the tape. The refusals are re-checked
+every bar, so a cool-off that ends re-enables the card by itself. A line under
+the cards says what fits right now -- *$82.00 of $200.00 left to buy today · 1
+call or 2 puts fit here* -- and warns, without refusing, on a planned reward
+under 1.5x the risk, an entry within three minutes of a loss, and a green day
+worth protecting.
+
+With the rules **off**, nothing is refused and every breach is recorded against
+the trade instead: no stop, no setup named, moved the stop away, revenge entry,
+skipped the cool-off, past the daily loss limit, over the trade count, over the
+daily cap, oversized, added to a loser, late 0DTE, thin reward, held into
+expiry. Each trade carries a **discipline score** out of 100 -- a serious
+breach costs 25, a minor one 10 -- and the Coach lists every breach with the
+rule it broke. The score grades the execution, not the outcome: a well-executed
+loser scores 100.
+
+Fees are real: $0.65 a contract each way by default, charged as each clip
+closes, so a trade scaled out in pieces pays exactly once per contract and a
+trade that is rewound never paid at all. Every P&L on the page is net of them.
+
+### The record
+
+Every closed trade and every session is written to a **record** kept in the
+browser, and the account balance is the starting balance plus that record.
+Trades reach it at the **4:00 bell**, when you press **End the day** in the
+Session tab, or on the way out to another session -- never the moment they
+close, because a rewind must be able to unmake a trade. A day with no trades is
+still recorded when it ends; the skips are evidence of discipline.
+
+The bell opens a **debrief**: today's result and discipline score, two lines --
+what would you repeat, what would you not -- and a grade for the execution,
+saved with the session.
+
+Tap the account strip for the **track record**: net, win rate, profit factor,
+expectancy, average R, average win and loss, max drawdown, discipline, days
+practised and the current streak; an equity curve with the largest drawdown
+shaded; **what the habits cost**, every broken rule totalled in dollars (a
+habit in profit is listed too, on purpose); performance by setup, ticker, time
+of day, expiry, day of the week and time in the trade; then the sessions with
+their debriefs. Filters show only trades taken with the rules on, or only those
+with no rewind and no repeat of a day already traded. Copy or download the
+record to keep it, or to carry it to another device, where pasting it merges
+trade by trade.
+
+### Blind days and hardcore
+
+Two switches in the Rules tab change the replay itself. **Blind days** hide
+which date is being traded -- the day picker, the time axis and the tape all
+say *blind* -- and reveal it at the bell, so a day you remember cannot be traded
+on memory. **Allow rewind** off is hardcore: what happened, happened, and the
+back arrow is dead. The record marks trades taken after a rewind, and trades on
+a day already traded before, so the filters can leave them out.
 
 ### Option prices
 
@@ -325,7 +406,9 @@ from the picker at the top left of the chart. Heikin Ashi is built from the firs
 bar forward, because each of its candles depends on the one before it.
 
 Indicator chips sit beside it: EMA 9/20/50, VWAP, Bollinger bands, an **RSI 14
-subpanel**, volume, and magnet snapping for the drawing tools.
+subpanel**, volume, and magnet snapping for the drawing tools. A **levels**
+chip, on by default, draws the prior day's high, low and close and today's open
+-- the levels a day is traded against.
 
 **Auto fib is off by default.** It is derived from the opening range, which is an
 opinion about how to trade the day — useful when you want it, clutter when you

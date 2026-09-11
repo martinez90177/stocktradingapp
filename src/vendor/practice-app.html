@@ -159,6 +159,7 @@ footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-h
   /* the chart is no longer covered top-left, so auto fit moves out of the volume */
   .fitbtn{right:auto;left:9px;top:9px;bottom:auto;}
   .tfbar{padding:8px 12px 6px;}
+  .acct{gap:10px;font-size:11.5px;padding:6px 9px}
 }
 @media(min-width:900px){
   .wrap{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:1fr 340px;gap:14px;padding:0 14px 20px;align-items:start;}
@@ -285,6 +286,69 @@ button.oc:disabled .go b{display:none}
 .posbar.up .pv{color:var(--up)}
 .posbar.dn .pv{color:var(--dn)}
 .posbar .pv b{font-size:14px;margin-right:6px}
+/* ---- the account strip ---- */
+.acct{display:flex;gap:14px;align-items:center;max-width:1300px;margin:8px auto 0;padding:6px 11px;border-radius:9px;
+  font-family:var(--mono);font-size:12px;color:var(--dim);border:1px solid var(--line2);background:var(--p2);min-height:0;
+  width:100%;text-align:left;white-space:nowrap;overflow-x:auto;scrollbar-width:none;font-weight:500}
+.acct::-webkit-scrollbar{display:none}
+.acct b{color:var(--text);font-weight:600}
+.acct .tup{color:var(--up)} .acct .tdn{color:var(--dn)}
+.acct .warn{color:var(--fib)} .acct .bad{color:var(--dn);font-weight:700}
+.acct .off{color:var(--dn);font-weight:700}
+.acct .lnk{margin-left:auto;color:var(--acc);font-weight:600}
+/* ---- the rules line under the cards ---- */
+.rl{margin-top:9px;font-size:11.5px;color:var(--dim);line-height:1.6;font-family:var(--mono)}
+.rl b{color:var(--text);font-weight:600}
+.rl .bad{color:var(--fib)}
+/* ---- the rules pane ---- */
+.rf{display:flex;flex-direction:column;gap:4px;font-size:10.5px;color:var(--dim2);text-transform:uppercase;letter-spacing:.9px;font-weight:600}
+.rf small{text-transform:none;letter-spacing:0;font-weight:500;color:var(--dim2);font-size:10.5px}
+.chk.rc{align-items:flex-start;margin-top:10px}
+.chk.rc small{display:block;color:var(--dim2);font-size:11px;margin-top:1px}
+.rbook{margin-top:14px}
+.rbook h5{margin:12px 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--fib)}
+.rbook p{margin:0 0 7px;font-size:12.5px;line-height:1.5}
+.rbook p small{display:block;color:var(--dim2);font-size:11.5px}
+/* ---- debrief and record overlays ---- */
+.ovl{position:fixed;inset:0;z-index:110;background:rgba(3,5,10,.8);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ovl[hidden]{display:none}
+.ovl-card{max-width:520px;margin:6vh auto;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:16px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
+.ovl-card h4{margin:6px 0 4px;font-size:18px;letter-spacing:-.2px}
+.ovl-card textarea{width:100%;background:var(--p2);border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:9px 10px;font-family:inherit;font-size:14px;resize:vertical}
+.dbf-l{display:block;margin-top:12px;font-size:12.5px;color:var(--dim)}
+.dbf-l textarea{margin-top:5px}
+.stars{display:flex;gap:6px;margin-top:6px}
+.stars button{min-height:36px;width:40px;padding:0;font-size:16px}
+.stars button.on{border-color:var(--fib);color:var(--fib);background:rgba(245,165,36,.12)}
+.rec-in{max-width:980px;margin:0 auto;padding:14px 14px 40px}
+.rec-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.rec-top h4{margin:4px 0 0;font-size:22px;letter-spacing:-.4px}
+.rec-top button{margin-left:auto}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:14px}
+.tile{background:var(--panel);padding:12px 14px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.tile span{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dim2)}
+.tile b{font-family:var(--mono);font-size:19px;font-weight:600;letter-spacing:-.5px}
+.tile i{font-style:normal;font-size:10.5px;color:var(--dim2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rsec{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 14px;margin-bottom:12px}
+.rsec h3{margin-bottom:8px}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rgrid .rsec{margin-bottom:0}
+@media(max-width:700px){.rgrid{grid-template-columns:1fr}}
+svg.eq{display:block;width:100%;height:auto}
+.rchips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.rchips button{min-height:34px;font-size:12px}
+.rchips button.on{border-color:var(--acc);color:var(--text);background:rgba(109,156,245,.14)}
+.sessrec{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap}
+.sessrec:last-child{border-bottom:0}
+.sessrec .d{font-family:var(--mono);color:var(--dim);min-width:150px}
+.sessrec .q{color:var(--dim);font-size:11.5px;flex-basis:100%;line-height:1.45}
+.sessrec .q b{color:var(--text)}
+.hab{display:flex;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.hab:last-child{border-bottom:0}
+.hab b{font-family:var(--mono);font-size:15px;min-width:80px;text-align:right}
+.hab .h{font-weight:650;font-size:13px}
+.hab .w{color:var(--dim2);font-size:11.5px;display:block}
+.recta{width:100%;min-height:64px;background:var(--p2);border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:8px;font-family:var(--mono);font-size:11.5px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -303,6 +367,7 @@ button.oc:disabled .go b{display:none}
     <button id="sGuide" class="sbtn sq" title="How this page works" aria-label="How this page works">?</button>
   </div>
   <div class="posbar" id="posbar" hidden></div>
+  <button class="acct" id="acct" type="button" title="Your account, under your rules. Tap for the track record."></button>
   <div class="ohlc" id="ohlc"></div>
 </div>
 
@@ -352,6 +417,7 @@ button.oc:disabled .go b{display:none}
     <button class="tab" data-p="journal">Journal</button>
     <button class="tab" data-p="coach">Coach</button>
     <button class="tab" data-p="setup">Session</button>
+    <button class="tab" data-p="rules">Rules</button>
   </div>
   <div class="pane" id="pane"></div>
 </div>
@@ -369,6 +435,24 @@ button.oc:disabled .go b{display:none}
       <button type="button" id="tourBack">Back</button>
       <button type="button" class="tour-next" id="tourNext">Next</button>
     </div>
+  </div>
+</div>
+
+<div class="ovl" id="dbf" hidden>
+  <div class="ovl-card" role="dialog" aria-modal="true" aria-labelledby="dbfTitle">
+    <div class="tour-step">Debrief</div>
+    <h4 id="dbfTitle">The 4:00 bell</h4>
+    <div id="dbfSum"></div>
+    <label class="dbf-l">What did you do today that you would want to repeat?<textarea id="dbfWell" rows="2"></textarea></label>
+    <label class="dbf-l">What did you do today that you would not want to repeat?<textarea id="dbfBetter" rows="2"></textarea></label>
+    <div class="dbf-l">Grade the execution, not the outcome<div class="stars" id="dbfStars"></div></div>
+    <div class="tour-nav"><button type="button" class="tour-skip" id="dbfSkip">Not now</button><button type="button" class="tour-next" id="dbfSave">Save to the record</button></div>
+  </div>
+</div>
+<div class="ovl" id="rec" hidden>
+  <div class="rec-in">
+    <div class="rec-top"><div><div class="tour-step">Track record</div><h4 id="recTitle">Your practice account</h4></div><button type="button" id="recClose">Close</button></div>
+    <div id="recBody"></div>
   </div>
 </div>
 
@@ -551,8 +635,8 @@ function eventNote(exDays){
     e.timing==='bmo'?(e.date>d&&e.date<=exp):(e.date>=d&&e.date<=exp));
   if(!ev)return '';
   const when=ev.timing==='amc'?'after the close on ':ev.timing==='bmo'?'before the open on ':'on ';
-  return '<span class="evwarn">'+S.ticker+' reports earnings '+when+ev.date+', before this '+exLabel(exDays)+
-    ' contract expires. Real options were priced for that move and cost far more than shown here; this model has no earnings premium.</span> ';
+  return '<span class="evwarn">'+S.ticker+' reports earnings '+(S.blind?'before this '+exLabel(exDays)+' contract expires (the date stays hidden on a blind day)':when+ev.date+', before this '+exLabel(exDays)+' contract expires')+
+    '. Real options were priced for that move and cost far more than shown here; this model has no earnings premium.</span> ';
 }
 /** One line saying where the volatility in these prices came from. */
 function volSource(){
@@ -563,7 +647,7 @@ function volSource(){
     m.src==='open'?m.index+' opened the day at '+lvl+' (no minute record for this day)':
     m.index+' '+lvl+' from the last calibration (no record for this day)';
   const how=m.typical?S.ticker+' has not been measured yet, so it is priced like the typical measured stock':
-    S.ticker+' options trade at '+m.cal.ratio.toFixed(2)+'&times; '+m.index+' ('+(m.cal.date===(S.replay&&S.replay.date)?'measured at this day&rsquo;s close':'measured '+m.cal.date+(m.cal.carried?', carried back to this earlier day':''))+')';
+    S.ticker+' options trade at '+m.cal.ratio.toFixed(2)+'&times; '+m.index+' ('+(S.blind?'measured from real trades':m.cal.date===(S.replay&&S.replay.date)?'measured at this day&rsquo;s close':'measured '+m.cal.date+(m.cal.carried?', carried back to this earlier day':''))+')';
   return 'At-the-money volatility <b>'+pct+'</b>: '+where+'; '+how+'.';
 }
 function strikes(under){
@@ -682,7 +766,7 @@ function init(ticker,regime,vm,seed,replayPick){
   if(tkEl&&ticker&&tkEl.value!==ticker)tkEl.value=ticker;
   // Chart and ticket preferences carry over. Losing RSI, the chart type and the
   // timeframe every time you load a new day was a reset nobody asked for.
-  const keep=S&&S.ind?{ind:S.ind,ctype:S.ctype,speed:S.speed,tf:S.tf,mode:S.mode,oType:S.oType,tab:S.tab}:null;
+  const keep=S&&S.ind?{ind:S.ind,ctype:S.ctype,speed:S.speed,tf:S.tf,mode:S.mode,oType:S.oType,tab:S.tab,setup:S.setup}:null;
   S={ticker,regime,reg,vm,seed:sd,mins,dates,cursor:OR_MIN,tf:'5m',replay:live,
     or:null,fib:null,brk:null,brkMin:null,
     mode:'options',optType:'call',strike:null,exDays:0,
@@ -692,7 +776,13 @@ function init(ticker,regime,vm,seed,replayPick){
     // fib starts off. It is derived from the opening range, which is an opinion
     // about how to trade the day -- useful when you want it, clutter when you
     // do not. The draw tool puts one wherever you choose instead.
-    ind:{fib:0,or:1,vwap:0,ema9:0,ema20:0,ema50:0,bb:0,rsi:0,vol:1,magnet:1},
+    ind:{fib:0,or:1,lvl:1,vwap:0,ema9:0,ema20:0,ema50:0,bb:0,rsi:0,vol:1,magnet:1},
+    // The account and the record -- see "your account, your rules" below.
+    setup:null,pendingLedger:[],rewinds:0,peakNet:0,belled:false,ended:false,
+    sid:ticker+'|'+(live?live.date:'gen'+sd)+'|'+Date.now().toString(36),
+    startedAt:new Date().toISOString(),day:localDay(),
+    blind:!!(RULES.blind&&live),
+    repeat:!!(live&&LEDGER.sessions.some(x=>x.sym===ticker&&x.date===live.date&&x.trades>0)),
     ctype:'candle',speed:1,oType:'market',
     tool:'cursor',tab:'trade',auto:null,
     // Fewer bars on screen means wider candles and a tighter price range, so
@@ -705,9 +795,10 @@ function init(ticker,regime,vm,seed,replayPick){
   renderSessRow();
   S.strike=Math.round(price()/cfg(ticker).inc)*cfg(ticker).inc;
   const sessEl=document.getElementById('sess');
-  if(sessEl)sessEl.textContent=live?live.date:'generated';
+  if(sessEl)sessEl.textContent=live?(S.blind?'blind':live.date):'generated';
   if(live){
-    log('Recorded session — '+ticker+' '+live.date+', real 1-minute bars. Opening range set from 9:30–9:45.','hl');
+    log('Recorded session — '+ticker+(S.blind?', a blind day: which date it is stays hidden until the bell':' '+live.date)+', real 1-minute bars. Opening range set from 9:30–9:45.','hl');
+    if(S.repeat&&!S.blind)log('You have traded this day before. The record marks these trades as a repeat.','y');
     if(live.carried)log(live.carried+' minute(s) that day had no trade and are carried flat at the prior close.','y');
   }else{
     log('Generated session — '+ticker+'. No recorded days are embedded, so this is a simulated random walk.','y');
@@ -729,16 +820,18 @@ function log(t,c){S.log.push({t,c});if(S.tab==='tape')pane();}
 function snapshot(){
   S.hist.push(JSON.stringify({
     cursor:S.cursor,pos:S.pos,trades:S.trades,orders:S.orders,
-    brk:S.brk,brkMin:S.brkMin,logN:S.log.length,pj:S.pendingJournal.length}));
+    brk:S.brk,brkMin:S.brkMin,logN:S.log.length,pj:S.pendingJournal.length,pl:S.pendingLedger.length,peak:S.peakNet}));
   if(S.hist.length>420)S.hist.shift();
 }
 function stepBack(){
+  if(!RULES.rewind){log('Rewind is off under your rules: what happened, happened. The Rules tab turns it back on.','y');return renderAll();}
   const raw=S.hist.pop();
   if(!raw){log('Nothing to rewind — you are at the start of the session.','y');return renderAll();}
   const h=JSON.parse(raw);
   S.cursor=h.cursor;S.pos=h.pos;S.trades=h.trades;S.orders=h.orders;
   S.brk=h.brk;S.brkMin=h.brkMin;
-  S.log.length=h.logN;S.pendingJournal.length=h.pj;
+  S.log.length=h.logN;S.pendingJournal.length=h.pj;S.pendingLedger.length=h.pl||0;S.peakNet=h.peak||0;
+  S.rewinds++;   // a fact about the session, not part of the state being unwound
   S.cache={};
   if(S.view.right!=null)S.view.right=null;
   log(lbl(HIST,S.cursor)+' — rewound.','hl');
@@ -752,9 +845,9 @@ const price=()=>S.mins[revealed()-1].c;
 function tfMin(){return TFS.find(t=>t.k===S.tf).m;}
 function lbl(day,m){const h=Math.floor((570+m)/60),mm=(570+m)%60;
   const t=(h>12?h-12:h)+':'+String(mm).padStart(2,'0');
-  if(day===HIST)return t;const d=S.dates[day];return (d.getMonth()+1)+'/'+d.getDate()+' '+t;}
+  if(day===HIST)return t;if(S.blind)return dayLbl(day)+' '+t;const d=S.dates[day];return (d.getMonth()+1)+'/'+d.getDate()+' '+t;}
 function tlbl(m){const h=Math.floor((570+m)/60),mm=(570+m)%60;return (h>12?h-12:h)+':'+String(mm).padStart(2,'0');}
-function dayLbl(day){if(day===HIST)return 'today';const d=S.dates[day];return (d.getMonth()+1)+'/'+d.getDate();}
+function dayLbl(day){if(day===HIST)return 'today';if(S.blind)return day===HISTN?'today':(HISTN-day)+'d ago';const d=S.dates[day];return (d.getMonth()+1)+'/'+d.getDate();}
 
 function bars(){
   const key=S.tf+'|'+S.cursor;
@@ -851,10 +944,10 @@ function enter(bull,fill){
     const dir=bull?'long':'short';
     const qty=fill?fill.qty:Math.max(1,parseInt(val('qty'))||100);
     if(S.pos&&S.pos.dir!==dir){log('Close the current position before flipping sides.','y');return pane();}
-    if(S.pos){const p=S.pos,t=p.qty+qty;p.avg=(p.avg*p.qty+u*qty)/t;p.qty=t;p.openQty=(p.openQty||0)+qty;
+    if(S.pos){const p=S.pos,t=p.qty+qty;noteAdd(p,bull,qty);p.avg=(p.avg*p.qty+u*qty)/t;p.qty=t;p.openQty=(p.openQty||0)+qty;
       log(lbl(HIST,S.cursor)+' — added '+qty+' shares at '+u.toFixed(2)+', avg '+p.avg.toFixed(2)+'.',bull?'g':'r');}
     else{S.pos=mkPos({kind:'shares',dir,avg:u,entry:u,qty,openQty:qty,stopU:isNaN(stopU)?null:stopU,
-      targetU:isNaN(tgtU)?null:tgtU,uEntry:u});
+      targetU:isNaN(tgtU)?null:tgtU,uEntry:u,...planOf(bull,qty,stopU,tgtU,u)});
       log(lbl(HIST,S.cursor)+' — '+dir+' '+qty+' shares at '+u.toFixed(2)+
         (isNaN(stopU)?', no stop':', stop '+stopU.toFixed(2))+'.',bull?'g':'r');}
   }else{
@@ -864,13 +957,13 @@ function enter(bull,fill){
     if(S.pos&&(S.pos.optType!==type||S.pos.strike!==K||S.pos.exDays!==ex)){
       log('Close the open contract before opening a different one.','y');return pane();}
     const q=quote(K,type,ex,u);
-    if(S.pos){const p=S.pos,t=p.qty+qty;p.avgPrem=(p.avgPrem*p.qty+q.ask*qty)/t;p.qty=t;p.openQty=(p.openQty||0)+qty;
+    if(S.pos){const p=S.pos,t=p.qty+qty;noteAdd(p,bull,qty);p.avgPrem=(p.avgPrem*p.qty+q.ask*qty)/t;p.qty=t;p.openQty=(p.openQty||0)+qty;
       log(lbl(HIST,S.cursor)+' — added '+qty+' '+K+type[0].toUpperCase()+' at '+q.ask.toFixed(2)+
         ', avg '+p.avgPrem.toFixed(2)+'.',bull?'g':'r');}
     else{
       S.pos=mkPos({kind:'option',optType:type,strike:K,exDays:ex,qty,openQty:qty,
         avgPrem:q.ask,entryPrem:q.ask,entryIV:q.iv,entryDelta:q.delta,entryTheta:q.thetaHr,
-        uEntry:u,stopU:isNaN(stopU)?null:stopU,targetU:isNaN(tgtU)?null:tgtU});
+        uEntry:u,stopU:isNaN(stopU)?null:stopU,targetU:isNaN(tgtU)?null:tgtU,...planOf(bull,qty,stopU,tgtU,u)});
       log(lbl(HIST,S.cursor)+' — bought '+qty+'x '+K+' '+type+' ('+exLabel(ex)+') at '+q.ask.toFixed(2)+
         ' with '+S.ticker+' at '+u.toFixed(2)+'. Delta '+q.delta.toFixed(2)+'.',bull?'g':'r');
       if(!S.brk)log('Heads up: no 5m bar has closed outside the range yet.','y');
@@ -981,7 +1074,7 @@ function logToJournal(p, exitPrice, pnl, closeMin){
       // premium, so recording it would produce a confidently wrong R. Left null.
       plannedStop:p.kind==="option"?null:(p.stopU??null),
       plannedTarget:p.kind==="option"?null:(p.targetU??null),
-      fees:0,setup:null,mistakes:[],rating:null,
+      fees:p.fees||0,setup:p.setup||null,mistakes:journalMistakes(p.flags||[]),rating:null,
       notes:'Practice replay'+(S.replay?' — '+S.ticker+' '+S.replay.date:'')
     };
     // Queued, not posted. See snapshot() -- a rewind must be able to unmake a
@@ -1017,6 +1110,11 @@ function bufferTrade(t){
 
 function finish(pnl,px,qty,cm,why,underPx){
   const p=S.pos;
+  // The broker's cut, both ways, on the contracts leaving now. The entry side
+  // is charged here too, so a trade scaled out in clips pays exactly once per
+  // contract each way, and a trade that is rewound never paid at all.
+  const fee=p.kind==='option'?+(RULES.fee*qty*2).toFixed(2):0;
+  pnl-=fee;p.fees=+((p.fees||0)+fee).toFixed(2);
   p.realized+=pnl;p.qty-=qty;
   // Every clip that leaves the position is accumulated here. A trade scaled out
   // in three pieces is still one round trip, and it has one honest exit price:
@@ -1028,10 +1126,14 @@ function finish(pnl,px,qty,cm,why,underPx){
   p.exits.push({px,qty,m:cm,why,pnl,under:underPx??price()});
   const unit=p.kind==='option'?' @ '+px.toFixed(2)+' premium':' at '+px.toFixed(2);
   log(lbl(HIST,cm)+' — '+(why==='stop'?'stopped out of ':why==='expiry'?'expired ':'closed ')+qty+
-    (p.kind==='option'?' contract(s)':' shares')+unit+' ('+sgn(pnl)+')',pnl>=0?'g':'r');
+    (p.kind==='option'?' contract(s)':' shares')+unit+' ('+sgn(pnl)+(fee?' after '+usd(fee)+' in fees':'')+')',pnl>=0?'g':'r');
   if(p.qty<=0){
     const risk=riskOf(p);
-    S.trades.push({...p,total:p.realized,R:risk?p.realized/risk:null,closeMin:cm});
+    const rec=tradeRecord(p,cm,risk);
+    S.trades.push({...p,total:p.realized,R:risk?p.realized/risk:null,closeMin:cm,flags:rec.flags,score:rec.score});
+    S.pendingLedger.push(rec);
+    S.peakNet=Math.max(S.peakNet||0,S.trades.reduce((a,t)=>a+t.total,0));
+    if(rec.flags.length)log('Against your rules on this trade: '+rec.flags.map(f=>FLAGS[f]?FLAGS[f][0].toLowerCase():f).join(', ')+'. Discipline '+rec.score+'/100.','y');
     // The round trip is complete, so the journal gets it now rather than on a
     // later screen the user might never open.
     logToJournal(p,p.exitNotional/p.closedQty,p.realized,cm);
@@ -1180,6 +1282,18 @@ function draw(){
     cx.fillRect(padL,G.y(S.or.hi),w-padL-padR,G.y(S.or.lo)-G.y(S.or.hi));cx.restore();
     ln(padL,G.y(S.or.hi),w-padR,G.y(S.or.hi),'rgba(109,156,245,.7)',1.2);
     ln(padL,G.y(S.or.lo),w-padR,G.y(S.or.lo),'rgba(109,156,245,.7)',1.2);
+  }
+  // The levels a day is traded against: yesterday's high, low and close, and
+  // the open. Drawn only when they are in view, so a stretched scale does not
+  // pull the chart flat to fit a level a dollar away.
+  if(S.ind.lvl&&todayVis&&HISTN>0){
+    const s0=todayStart(),pd=S.mins.slice(s0-MPD,s0);
+    if(pd.length){
+      let ph_=-Infinity,pl_=Infinity;for(const b of pd){if(b.h>ph_)ph_=b.h;if(b.l<pl_)pl_=b.l;}
+      [['PDH',ph_,'#f5a524'],['PDL',pl_,'#f5a524'],['PDC',pd[pd.length-1].c,'#9aa4b4'],['open',S.mins[s0].o,'#9aa4b4']].forEach(([k,v,c])=>{
+        const y=G.y(v);if(y<padT+4||y>padT+ph-4)return;
+        ln(padL,y,w-padR,y,c,1,[2,4]);tag(k+' '+v.toFixed(2),padL+2,y-1,c);});
+    }
   }
   // fib lines with collision-filtered labels drawn in the axis gutter
   if(S.ind.fib&&S.fib&&todayVis){
@@ -1458,7 +1572,7 @@ function paintPosBar(){
   pb.innerHTML='<span class="pw">'+what+'</span><span class="pv"><b>'+(pp>=0?'+':'−')+Math.abs(pp).toFixed(dp)+'%</b> '+sgn(op)+'</span>';
 }
 function headline(){
-  paintPosBar();
+  paintPosBar();paintAcct();
   const b=S.mins[revealed()-1];
   $('px').textContent='$'+b.c.toFixed(2);
   const open=S.mins[todayStart()].o,d=b.c-open;
@@ -1475,13 +1589,14 @@ function hoverInfo(){const bi=Math.round(G.ix(S.hover.mx)),B=G.B;
 function btns(){
   const over=S.cursor>=MPD;
   $('next').disabled=over;
-  $('back').disabled=!S.hist.length;
+  $('back').disabled=!S.hist.length||!RULES.rewind;
   const t=tfMin();
   $('next').textContent=over?'Session over':'Next '+(t==='D'?'day':t+'m');
 }
 
 function pane(){
   const p=$('pane');
+  if(S.tab!=='rules')p.dataset.rules='';
   if(S.tab==='trade'){
     // Same ticket as last time? Then only the numbers move. See ticketKey().
     const k=ticketKey();
@@ -1495,6 +1610,11 @@ function pane(){
     const t=$('tp');t.scrollTop=t.scrollHeight;}
   else if(S.tab==='journal')p.innerHTML=paneJournal();
   else if(S.tab==='coach')p.innerHTML=paneCoach();
+  else if(S.tab==='rules'){
+    // Built once and left alone while it is open: a rebuild on every bar of a
+    // replay would throw away a number being typed.
+    if(!p.dataset.rules){p.dataset.rules='1';p.innerHTML=paneRules();wireRules();}
+  }
   else{p.innerHTML=paneSetup();wireSetup();}
 }
 /* ================= ticket ================= */
@@ -1539,8 +1659,10 @@ function planHtml(u,qty,opt){
  * on the card before the tap instead of in the tape after it. Returns a short
  * reason for the card and a full one for the tape, or null.
  */
-function buyBlock(bull){
+function buyBlock(bull){return holdBlock(bull)||ruleBlock(bull,ticketQty(S.mode==='options'));}
+function holdBlock(bull){
   if(S.cursor>=MPD)return {s:'Session over',l:'The session is over. Restart or load a new day.'};
+  if(S.ended)return {s:'Day ended',l:'You ended this day. Load a new one to keep going.'};
   const p=S.pos;if(!p)return null;
   if(S.mode==='options'){
     const type=bull?'call':'put';
@@ -1579,7 +1701,7 @@ function goText(bull,qty){
  */
 function ticketKey(){
   const p=S.pos;
-  return [S.ticker,S.seed,S.replay?S.replay.date:'',S.mode,S.strike,S.exDays,S.oType,S.cursor>=MPD,
+  return [S.ticker,S.seed,S.replay?S.replay.date:'',S.mode,S.strike,S.exDays,S.oType,S.cursor>=MPD,RULES.on,S.ended,
     p?[p.kind,p.optType,p.strike,p.exDays,p.dir,p.qty].join(':'):'-',S.orders.length,S.trades.length].join('|');
 }
 /** A new bar: the same ticket, new numbers. */
@@ -1623,7 +1745,11 @@ function refreshTicket(){
     setTxt('costC',usd(c.ask*100*qty));setTxt('costP',usd(p.ask*100*qty));
   }else{setTxt('costC',usd(u*qty));setTxt('costP',usd(u*qty));}
   setTxt('goC',goText(true,qty));setTxt('goP',goText(false,qty));
+  // The rules can change a card's mind between bars -- a cool-off ending, the
+  // loss limit hit -- so the disabled state follows the reason, not the build.
+  [['buyC',true],['buyP',false]].forEach(([id,b])=>{const e=$(id);if(e)e.disabled=!!buyBlock(b);});
   setTxt('plan',planHtml(u,qty,opt));
+  setTxt('rl',rulesLine(qty));
 }
 function paneTrade(){
   const u=price(),opt=S.mode==='options',qty=ticketQty(opt);
@@ -1701,12 +1827,36 @@ function paneTrade(){
     </button>
   </div>`;
   }
+  // The plan sits above the cards on purpose: entry, stop and target before
+  // you click. A card is refused until the plan has what the rules require,
+  // and the refusal is written on the card, so the order of the ticket is the
+  // order of the work.
+  const setupNow=S.pos?S.pos.setup:S.setup;
   return `
   <div class="seg" id="mode">
     <button data-m="options" class="${opt?'on':''}">Options</button>
     <button data-m="shares" class="${opt?'':'on'}">Shares</button>
   </div>
   ${top}
+
+  <h3 class="sp">The plan <i>${S.pos?'the stop may move closer, never further':'before you click'}</i></h3>
+  <div class="stepline"><label for="setupSel">Setup</label>
+    <select id="setupSel" ${S.pos?'disabled':''} aria-label="Setup">
+      <option value="">— which setup is this? —</option>
+      ${SETUPS.map(([k,l])=>`<option value="${k}" ${setupNow===k?'selected':''}>${l}</option>`).join('')}
+    </select></div>
+  <div class="grid2" style="margin-top:9px">
+    <label><span>Stop <i style="text-transform:none;letter-spacing:0">on ${S.ticker}</i></span><input class="n" id="stop" type="number" inputmode="decimal" step="0.01" value="${stopV}"></label>
+    <label><span>Target</span><input class="n" id="tgt" type="number" inputmode="decimal" step="0.01" value="${tgtV}"></label>
+  </div>
+  <div class="chips" id="chips">
+    <button data-q="far" title="The far side of the opening range: its low for an upside trade, its high for a downside one">Stop at range edge</button>
+    <button data-q="mid" title="Halfway through the opening range">Stop mid-range</button>
+    <button data-q="t127" title="The 127.2% extension of the opening range">Target 127%</button>
+    <button data-q="t161" title="The 161.8% extension of the opening range">Target 162%</button>
+  </div>
+  <div class="plan" id="plan"></div>
+  <label class="chk"><input type="checkbox" id="atrim" ${S.autoTrim?'checked':''}> Take a third off at each extension (127% and 162%)</label>
 
   <h3 class="sp">Order</h3>
   <div class="seg" id="otype">
@@ -1722,24 +1872,11 @@ function paneTrade(){
     'A stop fills once the stock breaks through: above the price for an upside trade, below it for a downside one. If price gaps past it, you get the worse price.'}</div>`}
 
   ${pair}
+  <div class="rl" id="rl"></div>
 
   ${S.orders.length?`<h3 class="sp">Working orders</h3>`+S.orders.map(o=>
     `<div class="kv"><span class="k">${o.kind} ${o.bull?'buy':'sell'} ${o.qty} @ ${o.px.toFixed(2)}</span>
      <button class="ocx" data-id="${o.id}" style="min-height:26px;padding:0 9px;font-size:11px">Cancel</button></div>`).join(''):''}
-
-  <h3 class="sp">Exit plan <i>on ${S.ticker}&rsquo;s price</i></h3>
-  <div class="grid2">
-    <label><span>Stop</span><input class="n" id="stop" type="number" inputmode="decimal" step="0.01" value="${stopV}"></label>
-    <label><span>Target</span><input class="n" id="tgt" type="number" inputmode="decimal" step="0.01" value="${tgtV}"></label>
-  </div>
-  <div class="chips" id="chips">
-    <button data-q="far" title="The far side of the opening range: its low for an upside trade, its high for a downside one">Stop at range edge</button>
-    <button data-q="mid" title="Halfway through the opening range">Stop mid-range</button>
-    <button data-q="t127" title="The 127.2% extension of the opening range">Target 127%</button>
-    <button data-q="t161" title="The 161.8% extension of the opening range">Target 162%</button>
-  </div>
-  <div class="plan" id="plan"></div>
-  <label class="chk"><input type="checkbox" id="atrim" ${S.autoTrim?'checked':''}> Take a third off at each extension (127% and 162%)</label>
 
   <h3 class="sp">Position</h3><div id="posBox">${posHtml}</div>
   <div class="mgmt">
@@ -1777,6 +1914,7 @@ function wireTrade(){
     S.mode=b.dataset.m;renderAll();});
   $('exch')&&$('exch').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
     S.exDays=+b.dataset.ex;pane();});
+  $('setupSel')&&($('setupSel').onchange=e=>{S.setup=e.target.value||null;refreshTicket();});
   $('strikeSel')&&($('strikeSel').onchange=e=>{S.strike=parseFloat(e.target.value);pane();draw();});
   const stepK=d=>{const ks=[...$('strikeSel').options].map(o=>parseFloat(o.value));
     const i=ks.indexOf(S.strike),j=Math.max(0,Math.min(ks.length-1,i+d));
@@ -1789,9 +1927,12 @@ function wireTrade(){
   $('qDn')&&($('qDn').onclick=()=>stepQ(-1));
   $('qUp')&&($('qUp').onclick=()=>stepQ(1));
   ['qty','stop','tgt'].forEach(id=>$(id)&&$(id).addEventListener('input',()=>{
-    if(S.pos){const s=parseFloat(val('stop')),t=parseFloat(val('tgt'));
-      S.pos.stopU=isNaN(s)?null:s;S.pos.targetU=isNaN(t)?null:t;}
+    // With a position open the stop is applied when you finish typing (see
+    // setStop). Applying every keystroke would read a half-typed "58" as a
+    // stop far below the price and refuse it as a widening.
+    if(S.pos&&id==='tgt'){const t=parseFloat(val('tgt'));S.pos.targetU=isNaN(t)?null:t;}
     refreshTicket();draw();}));
+  $('stop')&&$('stop').addEventListener('change',()=>{if(!S.pos)return;const s=parseFloat(val('stop'));setStop(isNaN(s)?null:s);refreshTicket();draw();});
   $('atrim')&&($('atrim').onchange=e=>S.autoTrim=e.target.checked);
   $('chips')&&$('chips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!S.fib)return;
     const bull=S.mode==='options'?(S.pos?S.pos.optType==='call':S.brk!=='short'):(S.pos?S.pos.dir==='long':S.brk!=='short');
@@ -1800,7 +1941,7 @@ function wireTrade(){
     if(q==='mid')$('stop').value=S.fib['50%'].toFixed(2);
     if(q==='t127')$('tgt').value=(bull?S.fib['127.2%']:S.fib['-27.2%']).toFixed(2);
     if(q==='t161')$('tgt').value=(bull?S.fib['161.8%']:S.fib['-61.8%']).toFixed(2);
-    $('stop').dispatchEvent(new Event('input'));pane();});
+    ['stop','tgt'].forEach(i=>{$(i).dispatchEvent(new Event('input'));$(i).dispatchEvent(new Event('change'));});pane();});
   $('otype')&&$('otype').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
     S.oType=b.dataset.o;pane();});
   $('olim')&&$('olim').addEventListener('input',e=>{S.oPx=e.target.value;});
@@ -1865,14 +2006,15 @@ function paneJournal(){
     <div><span>Win rate</span> ${Math.round(w/S.trades.length*100)}%</div>
     <div><span>Net</span> <b class="${net>=0?'up':'dn'}">${sgn(net)}</b></div>
     <div><span>Avg R</span> ${rs.length?(rs.reduce((a,b)=>a+b,0)/rs.length).toFixed(2)+'R':'—'}</div></div>
-   <div class="scroll"><table><thead><tr><th>In</th><th>Instrument</th><th>Entry</th><th>Exit</th><th>P&amp;L</th><th>R</th></tr></thead><tbody>
+   <div class="scroll"><table><thead><tr><th>In</th><th>Instrument</th><th>Entry</th><th>Exit</th><th>P&amp;L</th><th>R</th><th>Rules</th></tr></thead><tbody>
    ${S.trades.map(t=>`<tr><td>${lbl(HIST,t.entryMin)}</td>
      <td class="${(t.kind==='option'?t.optType==='call':t.dir==='long')?'up':'dn'}">${
        t.kind==='option'?t.qty0||t.openQty+'x '+t.strike+(t.optType==='call'?'C':'P'):t.dir+' '+t.openQty}</td>
      <td>${t.kind==='option'?t.entryPrem.toFixed(2):t.entry.toFixed(2)}</td>
      <td>${t.exits.map(e=>e.px.toFixed(2)).join(', ')}</td>
      <td class="${t.total>=0?'up':'dn'}">${sgn(t.total)}</td>
-     <td>${t.R!=null?t.R.toFixed(2):'—'}</td></tr>`).join('')}</tbody></table></div>`;
+     <td>${t.R!=null?t.R.toFixed(2):'—'}</td>
+     <td class="${t.flags&&t.flags.length?'dn':'up'}" title="${(t.flags||[]).map(f=>FLAGS[f]?FLAGS[f][0]:f).join(', ')}">${t.flags&&t.flags.length?t.flags.length+' broken':'kept'}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function paneCoach(){
   if(!S.trades.length&&!S.pos)
@@ -1881,9 +2023,15 @@ function paneCoach(){
   if(!S.trades.length)add('mid','Position still open — close it and the full grade appears here.');
   S.trades.forEach((t,n)=>{
     const inst=t.kind==='option'?`${t.openQty}x ${t.strike} ${t.optType} ${exLabel(t.exDays)}`:`${t.openQty} shares ${t.dir}`;
-    add('h',`<b>Trade ${n+1} · ${inst} at ${lbl(HIST,t.entryMin)}</b> — ${sgn(t.total)}${t.R!=null?', '+t.R.toFixed(2)+'R':''}`);
+    add('h',`<b>Trade ${n+1} · ${inst} at ${lbl(HIST,t.entryMin)}</b> — ${sgn(t.total)}${t.R!=null?', '+t.R.toFixed(2)+'R':''}${t.setup?' · '+setupName(t.setup):''}`);
+    (t.flags||[]).forEach(f=>{const F=FLAGS[f];if(F)add('bad',`<b>${F[0]}.</b> ${F[1]} <i>${F[3]}</i>`);});
+    if(t.flags&&!t.flags.length&&t.rulesOn!==false)add('ok','Every rule kept on this trade. Grade the execution, not the outcome: this is the repeatable part.');
     const bull=t.kind==='option'?t.optType==='call':t.dir==='long';
-    if(!t.afterBrk)add('bad','You entered before any 5-minute bar closed outside the opening range. That is exactly where fakeouts punish you — the range had not resolved.');
+    // The opening-range notes are about one playbook. A VWAP reclaim or a
+    // range fade is not late or early against a breakout it never traded.
+    const orb=!t.setup||t.setup==='orb';
+    if(!orb){}
+    else if(!t.afterBrk)add('bad','You entered before any 5-minute bar closed outside the opening range. That is exactly where fakeouts punish you — the range had not resolved.');
     else if((t.brkDir==='long')!==bull)add('bad','You took the opposite side of the confirmed breakout. Different setup, different playbook.');
     else if(t.lagBars===0)add('ok','Entry on the breakout bar close itself. Textbook timing.');
     else if(t.lagBars<=2)add('ok',`Entered ${t.lagBars} bar(s) after confirmation — slight chase, still fine.`);
@@ -1903,6 +2051,7 @@ function paneCoach(){
         `Spread cost on entry was about ${money(spread)} — you paid the ask and would sell the bid. ${spread>Math.abs(t.total)*.35?'That is a large share of this trade\'s result; wider spreads demand bigger moves to be worth taking.':'Reasonable relative to the trade size.'}`);
     }
     if(t.stopU==null)add('bad','No stop on the underlying. Without one there is no R to measure, and with options a stalled move bleeds premium while you wait.');
+    else if(!orb)add('ok',`Stop at ${t.stopU.toFixed(2)} before entry${t.rr0?`, planned reward ${t.rr0.toFixed(1)}x the risk`:''}. The plan had its parts.`);
     else{
       const inR=t.stopU<=S.or.hi&&t.stopU>=S.or.lo;
       add(inR?'ok':'mid',inR
@@ -1911,7 +2060,7 @@ function paneCoach(){
     }
     const ext=t.exits.some(e=>e.why.includes('127')||e.why.includes('161'));
     if(ext)add('ok','You scaled out at the fib extensions — exactly what those levels are for.');
-    else if(t.exits.length===1&&t.exits[0].why!=='stop'&&t.exits[0].why!=='expiry')
+    else if(orb&&t.exits.length===1&&t.exits[0].why!=='stop'&&t.exits[0].why!=='expiry')
       add('mid','One all-or-nothing exit. Trimming at 127.2% and running the rest at 161.8% smooths results on days that keep extending.');
     if(t.exits.some(e=>e.why==='expiry'))
       add('bad','You held a 0DTE contract into expiration. Whatever extrinsic value was left went to zero — closing before the last stretch is almost always better.');
@@ -1923,7 +2072,9 @@ function paneCoach(){
     if(t.total<0&&t.exits.some(e=>e.why==='stop'))add('ok','You let the stop do its job instead of widening it. Losing trade, correct behavior.');
   });
   const names={trendup:'trending up',trenddown:'trending down',chop:'choppy and range-bound',fakeout:'a fakeout that reversed'};
-  add('h',`Today was generated as <b>${names[S.reg]}</b>. Long options do very different things across those four — trend days pay, chop days bleed theta.`);
+  if(names[S.reg])add('h',`Today was generated as <b>${names[S.reg]}</b>. Long options do very different things across those four — trend days pay, chop days bleed theta.`);
+  else add('h',dayDesc());
+  add('h',disciplineLine());
   return out.join('');
 }
 function paneSetup(){
@@ -1958,9 +2109,15 @@ function paneSetup(){
   <div class="kv"><span class="k">Closed trades</span><span>${closed}</span></div>
   <div class="kv"><span class="k">Net</span><span class="${net>=0?'up':'dn'}">${sgn(net)}</span></div>
   <div class="kv"><span class="k">Winners</span><span>${closed?wins+' of '+closed+' ('+Math.round(wins/closed*100)+'%)':'—'}</span></div>
+  <div class="kv"><span class="k">Discipline</span><span>${closed?Math.round(S.trades.reduce((a,t)=>a+(t.score==null?100:t.score),0)/closed)+'/100':'—'}</span></div>
+  <div class="kv"><span class="k">Account</span><span>${usd(acctLive())}</span></div>
   <div class="kv"><span class="k">Waiting for the journal</span><span>${pend}</span></div>
   <div class="setup" style="margin-top:10px">
     <button id="sendJ" style="flex:1" ${pend?'':'disabled'}>Send ${pend} trade${pend===1?'':'s'} to the journal</button>
+  </div>
+  <div class="setup">
+    <button id="endDay" style="flex:1" ${S.pos||S.ended?'disabled':''} title="${S.pos?'Close the position first':'Write the day to the record and debrief'}">End the day &amp; debrief</button>
+    <button id="openRec" style="flex:1">Track record</button>
   </div>
   <div class="empty" style="margin-bottom:4px">Closed trades are held until you send them, or until the 4:00 bell, so a rewind can unmake one. A rewind past an entry removes it from this queue.</div>
 
@@ -2004,13 +2161,530 @@ function wireSetup(){
     let guard=0;
     while(S.cursor<target&&guard++<MPD+5){snapshot();stepMinutes(1);}
     S.cache={};S.view.right=null;
-    if(S.cursor>=MPD&&S.pendingJournal.length)flushJournal('close');
+    if(S.cursor>=MPD)bell();
     log(lbl(HIST,S.cursor)+' — jumped forward.','hl');
     renderAll();});
   $('sendJ')&&($('sendJ').onclick=()=>flushJournal('manual'));
+  $('endDay')&&($('endDay').onclick=()=>{if(S.pos||S.ended)return;stopAuto();bell();});
+  $('openRec')&&($('openRec').onclick=openRecord);
   $('newS').onclick=()=>startSession($('tk').value,null,{regime:$('regime').value,vm:parseFloat($('vm').value)});
   $('replayS').onclick=()=>startSession(S.ticker,S.replay?{symbol:S.ticker,date:S.replay.date}:null,{seed:S.seed});
   $('cp').onclick=()=>{navigator.clipboard?.writeText(S.ticker+'-'+S.seed);log('Session code copied.','hl');};
+}
+
+/* ================= your account, your rules ================= */
+/*
+ * The simulator trades the account you actually have, under the rules you
+ * wrote for it (rules.json, "Alex's Rules"), and refuses what they refuse:
+ * the daily cap on premium bought, the loss that ends the day, the trade
+ * count, the most a stop may risk, no entry without a stop and a named setup,
+ * no adding to a loser, no widening a stop, ten minutes off after two
+ * straight losses. Every refusal names its rule, on the card. With the rules
+ * switched off nothing is refused and every breach is recorded against the
+ * trade instead, so the record still says what happened.
+ *
+ * All of it lives in this browser: the rules under mpRules, and under
+ * mpLedger every committed practice trade and session. The balance is the
+ * starting balance plus that record, net of fees. Trades reach the record at
+ * the bell, when the day is ended by hand, or on the way out to another
+ * session -- never the moment they close, because a rewind must be able to
+ * unmake a trade and a record cannot be unmade.
+ */
+const RULE_DEF={on:1,start:500,cap:200,maxLoss:60,maxTrades:3,maxRisk:60,minRR:1.5,fee:.65,
+  needStop:1,needSetup:1,lockLoss:1,cooldown:10,noLate0:1,cash:1,rewind:1,blind:0};
+function loadJSON(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v&&typeof v==='object'?v:d;}catch(e){return d;}}
+function saveJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+let RULES=Object.assign({},RULE_DEF,loadJSON('mpRules',{}));
+function saveRules(){saveJSON('mpRules',RULES);}
+let LEDGER=loadJSON('mpLedger',{});
+if(!Array.isArray(LEDGER.trades))LEDGER.trades=[];
+if(!Array.isArray(LEDGER.sessions))LEDGER.sessions=[];
+function saveLedger(){saveJSON('mpLedger',LEDGER);}
+function localDay(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+const RULEBOOK=window.MP_RULEBOOK||null;
+
+const SETUPS=[['orb','Opening range breakout'],['orbf','Opening range failure'],['vwapr','VWAP reclaim'],['vwapj','VWAP rejection'],
+  ['pull','Pullback to an EMA'],['cont','Trend continuation'],['range','Range fade'],['rev','Reversal'],['retest','Breakout retest'],['other','Other']];
+function setupName(id){const s=SETUPS.find(x=>x[0]===id);return s?s[1]:'No setup named';}
+
+/* What a breach is called, what it means, what it costs the score, and the rule it breaks. */
+const FLAGS={
+  noStop:['No stop','Entered without a stop on the price.',25,'Entry, stop and target: say all three before you click.'],
+  noSetup:['No setup named','Clicked without saying what the trade was.',25,'No setup, no trade. Boredom is not a signal.'],
+  movedStop:['Moved the stop away','Widened the stop while the trade was open.',25,'Closer is fine, further is never fine.'],
+  revenge:['Revenge entry','Back in within three minutes of a loss.',10,'The market does not know you lost, and will not give it back because you asked louder.'],
+  cooldown:['Skipped the cool-off','Traded inside the ten minutes after two straight losses.',25,'Two losses in a row: stand up and walk away for ten minutes.'],
+  afterLimit:['Past the daily loss limit','Kept trading after the day was lost.',25,'When you hit it, you are done.'],
+  overTrades:['Over the trade count','More trades than the day allows.',25,'Most days have two or three real setups. Everything else is the market taking commissions.'],
+  overCap:['Over the daily cap','More premium bought than the day allows.',25,'Size from the stop distance, never from how confident you feel.'],
+  oversized:['Oversized','Risked more to the stop than one trade may.',25,'The stop is the only thing that decides what a loss costs.'],
+  addedLoser:['Added to a loser','Averaged down into a losing position.',25,'Never add to a loser to improve the average.'],
+  late0:['Late 0DTE','A new 0DTE entry after 3:30.',10,'After 3:30 a 0DTE is time value about to vanish.'],
+  lowRR:['Thin reward','The planned reward was under the minimum multiple of the risk.',10,'A target that never paid for the stop is an exit you did not plan.'],
+  expiry:['Held into expiry','A 0DTE left to expire instead of being closed.',10,'You are not paid for holding.'],
+  giveback:['Gave back a green day','Up more than half the loss limit, then closed the day down.',15,'Protect a green day. After a good gain, cut size or stop.']
+};
+const JMAP={noStop:'no-plan',noSetup:'no-plan',movedStop:'moved-stop',revenge:'revenge',cooldown:'against-plan',afterLimit:'against-plan',
+  overTrades:'overtraded',overCap:'against-plan',oversized:'oversized',addedLoser:'against-plan',late0:'against-plan',expiry:'held-loser'};
+function journalMistakes(flags){return [...new Set(flags.map(f=>JMAP[f]).filter(Boolean))];}
+function scoreOf(flags){return Math.max(0,100-flags.reduce((a,f)=>a+(FLAGS[f]?FLAGS[f][2]:0),0));}
+
+/** What this session has used so far. `total` on a closed trade is net of fees. */
+function dayUse(){
+  const all=S.trades.concat(S.pos?[S.pos]:[]);
+  let outlay=0;
+  all.forEach(p=>{if(p.kind==='option')outlay+=p.avgPrem*100*(p.openQty||p.qty);});
+  return {outlay,realized:S.trades.reduce((a,t)=>a+t.total,0),count:S.trades.length+(S.pos?1:0),
+    uncommitted:S.trades.filter(t=>!t.sent).reduce((a,t)=>a+t.total,0)};
+}
+/** The balance the record says you have. */
+function balance(){return RULES.start+LEDGER.trades.reduce((a,t)=>a+(t.net||0),0);}
+/** The balance right now: the record, plus what this session has closed but not yet written to it. */
+function acctLive(){return balance()+dayUse().uncommitted;}
+function openPnl(){
+  const p=S.pos;if(!p)return 0;const u=price();
+  if(p.kind==='shares')return (p.dir==='long'?u-p.avg:p.avg-u)*p.qty;
+  return (quote(p.strike,p.optType,p.exDays,u).bid-p.avgPrem)*100*p.qty;
+}
+/** Minutes still to wait after two losses in a row, or 0. */
+function cooldownLeft(){
+  if(!RULES.cooldown||S.trades.length<2)return 0;
+  const a=S.trades[S.trades.length-1],b=S.trades[S.trades.length-2];
+  if(a.total>=0||b.total>=0)return 0;
+  return Math.max(0,Math.ceil(a.closeMin+RULES.cooldown-S.cursor));
+}
+/** Dollars at risk to the stop `st` for what the ticket describes, or null without one. */
+function riskAt(bull,qty,st,u){
+  if(st==null||isNaN(st))return null;
+  if(S.mode==='shares')return Math.abs(u-st)*qty;
+  const type=bull?'call':'put',paid=quote(S.strike,type,S.exDays,u).ask;
+  return Math.max(0,paid-quote(S.strike,type,S.exDays,st).bid)*100*qty;
+}
+function rewardAt(bull,qty,tg,u){
+  if(tg==null||isNaN(tg))return null;
+  if(S.mode==='shares')return Math.abs(tg-u)*qty;
+  const type=bull?'call':'put',paid=quote(S.strike,type,S.exDays,u).ask;
+  return (quote(S.strike,type,S.exDays,tg).bid-paid)*100*qty;
+}
+/**
+ * Why the rules refuse this buy, or null: a short form for the card and a
+ * long one for the tape, each naming the rule. Checked before every tap and
+ * again on every bar, so a cool-off that ends re-enables the card by itself.
+ */
+function ruleBlock(bull,qty){
+  if(!RULES.on)return null;
+  const u=price(),opt=S.mode==='options',use=dayUse(),adding=!!S.pos;
+  if(RULES.lockLoss&&use.realized<=-RULES.maxLoss)
+    return {s:'Daily loss limit hit',l:'Down '+usd(-use.realized)+' today, past your '+usd(RULES.maxLoss)+' limit. You are done for the day: review it, do not revenge it.'};
+  if(!adding&&use.count>=RULES.maxTrades)
+    return {s:'Trade limit reached',l:'That would be trade '+(use.count+1)+' on a '+RULES.maxTrades+'-trade day. The next setup is not a make-up trade.'};
+  const cd=cooldownLeft();
+  if(!adding&&cd>0)return {s:'Cooling off · '+cd+' min',l:'Two losses in a row. Your rule is ten minutes away from the screen; '+cd+' to go.'};
+  if(adding&&openPnl()<0)
+    return {s:'Never add to a loser',l:'This position is losing '+usd(-openPnl())+'. Adding raises the risk exactly when the trade is saying the read was wrong.'};
+  const st=parseFloat(val('stop'));
+  if(!adding&&RULES.needSetup&&!S.setup)return {s:'Name the setup first',l:'No setup, no trade. Say what this is in the plan above the cards.'};
+  if(!adding&&RULES.needStop&&isNaN(st))return {s:'Set a stop first',l:'Entry, stop and target before you click. Put the stop on '+S.ticker+'\'s price in the plan.'};
+  if(opt){
+    if(RULES.noLate0&&S.exDays===0&&!adding&&S.cursor>360)
+      return {s:'Too late for a 0DTE',l:'After 3:30 a 0DTE contract is time value about to vanish. No new 0DTE entries this late; 1DTE is the same trade with a tomorrow.'};
+    const ask=quote(S.strike,bull?'call':'put',S.exDays,u).ask,each=ask*100+RULES.fee,cost=each*qty;
+    if(use.outlay+cost>RULES.cap+1e-9){
+      const fit=Math.floor(Math.max(0,RULES.cap-use.outlay)/each+1e-9);
+      return {s:fit>0?'Over the daily cap · '+fit+' fits':'Daily cap used up',
+        l:usd(cost)+' would take today past your '+usd(RULES.cap)+' of options ('+usd(use.outlay)+' bought so far). '+(fit>0?'Size '+fit+' still fits.':'Nothing more fits today.')};
+    }
+  }else{
+    if(RULES.cash&&!bull&&!adding)return {s:'No shorting in a cash account',l:'A cash account cannot short shares. If you want the downside, buy a put.'};
+    if(RULES.cash&&u*qty>acctLive()+1e-9)return {s:'Not enough cash',l:usd(u*qty)+' of shares against '+usd(acctLive())+' in the account. A cash account has no margin.'};
+  }
+  const risk=adding?null:riskAt(bull,qty,st,u);
+  if(risk!=null&&risk>RULES.maxRisk+1e-9)
+    return {s:'Risks '+usd(risk)+' · max '+usd(RULES.maxRisk),l:'To that stop this trade risks '+usd(risk)+', past your '+usd(RULES.maxRisk)+' a trade. Move the stop closer, cut size, or take a cheaper strike. Size from the stop, never from confidence.'};
+  return null;
+}
+/** What the rules only warn about. Shown under the cards, recorded against the trade, never refused. */
+function ruleWarn(bull,qty){
+  const u=price(),st=parseFloat(val('stop')),tg=parseFloat(val('tgt')),out=[];
+  if(S.pos)return out;   // these are about the next entry, and there is a trade on
+  const risk=riskAt(bull,qty,st,u),rew=rewardAt(bull,qty,tg,u);
+  if(risk>0&&rew!=null&&rew>0&&rew/risk<RULES.minRR)out.push('Reward '+(rew/risk).toFixed(1)+'x the risk, under your '+RULES.minRR+'x.');
+  const last=S.trades[S.trades.length-1];
+  if(!S.pos&&last&&last.total<0&&S.cursor-last.closeMin<=3)out.push('Three minutes since a loss. Is this the setup, or the loss talking?');
+  const use=dayUse();
+  if(!S.pos&&use.realized>=RULES.maxLoss/2)out.push('Up '+usd(use.realized)+' today. Protect a green day: cut size, or stop.');
+  return out;
+}
+/** What the plan carried at entry, kept on the position and later on the record. */
+function planOf(bull,qty,stopU,tgtU,u){
+  const st=isNaN(stopU)?null:stopU,tg=isNaN(tgtU)?null:tgtU;
+  const risk=riskAt(bull,qty,st,u),rew=rewardAt(bull,qty,tg,u);
+  return {setup:S.setup||null,flags:entryFlags(bull,qty,st,risk,rew,false),stopU0:st,risk0:risk,
+    rr0:risk>0&&rew!=null?rew/risk:null,rulesOn:!!RULES.on,rewinds:S.rewinds||0,fees:0,stopMoved:false,adds:0};
+}
+/** The breaches an entry -- or an add -- commits, whether or not the rules were on to refuse them. */
+function entryFlags(bull,qty,st,risk,rew,adding){
+  const f=[],use=dayUse(),opt=S.mode==='options',last=S.trades[S.trades.length-1];
+  if(use.realized<=-RULES.maxLoss)f.push('afterLimit');
+  if(adding){
+    if(openPnl()<0)f.push('addedLoser');
+  }else{
+    if(st==null)f.push('noStop');
+    if(!S.setup)f.push('noSetup');
+    if(use.count>=RULES.maxTrades)f.push('overTrades');
+    if(cooldownLeft()>0)f.push('cooldown');
+    else if(last&&last.total<0&&S.cursor-last.closeMin<=3)f.push('revenge');
+    if(opt&&S.exDays===0&&S.cursor>360)f.push('late0');
+    if(risk!=null&&risk>RULES.maxRisk+1e-9)f.push('oversized');
+    if(risk>0&&rew!=null&&rew>0&&rew/risk<RULES.minRR)f.push('lowRR');
+  }
+  if(opt){const ask=quote(S.strike,bull?'call':'put',S.exDays,price()).ask;
+    if(use.outlay+(ask*100+RULES.fee)*qty>RULES.cap+1e-9)f.push('overCap');}
+  return f;
+}
+/** An add to an open position: its own breaches join the position's. Called before the add changes it. */
+function noteAdd(p,bull,qty){
+  p.adds=(p.adds||0)+1;
+  entryFlags(bull,qty,p.stopU,null,null,true).forEach(f=>{if(!(p.flags||(p.flags=[])).includes(f))p.flags.push(f);});
+}
+/**
+ * A stop on an open position may move closer, never further. With the rules
+ * on a wider stop is refused and the box put back; off, it goes through and
+ * is recorded as moving the stop away.
+ */
+function setStop(v){
+  const p=S.pos;if(!p)return;
+  const bull=p.kind==='shares'?p.dir==='long':p.optType==='call';
+  const dist=x=>bull?p.uEntry-x:x-p.uEntry;   // below the entry for a long, above it for a short; more is wider
+  if(p.stopU!=null&&(v==null||dist(v)>dist(p.stopU)+1e-9)){
+    if(RULES.on){
+      log('Never move a stop away from price. Closer is fine, further is never fine. Kept at '+p.stopU.toFixed(2)+'.','y');
+      if($('stop'))$('stop').value=p.stopU.toFixed(2);return;
+    }
+    p.stopMoved=true;
+    log('Stop moved from '+p.stopU.toFixed(2)+' to '+(v==null?'none':v.toFixed(2))+', away from the price. Recorded against this trade.','y');
+  }else if(p.stopU!=null&&v!=null&&dist(v)<dist(p.stopU)-1e-9)log('Stop tightened to '+v.toFixed(2)+'.','hl');
+  p.stopU=v;
+}
+/** The record of one closed round trip. Settles the flags on the position too, so the journal copy matches. */
+function tradeRecord(p,cm,risk){
+  const flags=(p.flags||[]).slice();
+  if(p.stopMoved&&!flags.includes('movedStop'))flags.push('movedStop');
+  if(p.exits.some(e=>e.why==='expiry')&&!flags.includes('expiry'))flags.push('expiry');
+  p.flags=flags;
+  const opt=p.kind==='option';
+  return {id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),sid:S.sid,sym:S.ticker,
+    date:S.replay?S.replay.date:null,at:new Date().toISOString(),day:S.day,
+    entryMin:p.entryMin,closeMin:cm,kind:p.kind,side:opt?p.optType:p.dir,strike:opt?p.strike:null,exDays:opt?p.exDays:null,
+    qty:p.openQty||1,entry:+(opt?p.avgPrem:p.avg).toFixed(2),exit:+(p.exitNotional/p.closedQty).toFixed(2),
+    gross:+(p.realized+(p.fees||0)).toFixed(2),fees:+(p.fees||0).toFixed(2),net:+p.realized.toFixed(2),
+    risk:risk==null?null:+risk.toFixed(2),R:risk?+(p.realized/risk).toFixed(3):null,rr0:p.rr0==null?null:+p.rr0.toFixed(2),
+    setup:p.setup||null,delta:opt?+p.entryDelta.toFixed(2):null,held:cm-p.entryMin,
+    mfe:+p.mfe.toFixed(2),mae:+p.mae.toFixed(2),outlay:opt?+(p.avgPrem*100*(p.openQty||1)).toFixed(2):0,
+    adds:p.adds||0,exits:p.exits.length,how:p.exits.map(e=>e.why).join('+'),
+    flags,score:scoreOf(flags),rulesOn:p.rulesOn!==false,rewinds:p.rewinds||0,repeat:!!S.repeat,blind:!!S.blind};
+}
+function sessionScore(ts,giveback){
+  const base=ts.length?ts.reduce((a,t)=>a+t.score,0)/ts.length:100;
+  return Math.max(0,Math.round(base-(giveback?FLAGS.giveback[2]:0)));
+}
+/**
+ * Writes this session into the record: the trades waiting since the last
+ * commit, and the session's own line. A day with no trades is still recorded
+ * when it ends -- the skips are evidence of discipline.
+ */
+function commitSession(ended){
+  const pend=S.pendingLedger.splice(0);
+  pend.forEach(r=>{if(!LEDGER.trades.some(t=>t.id===r.id))LEDGER.trades.push(r);});
+  S.trades.forEach(t=>{t.sent=true;});
+  const mine=LEDGER.trades.filter(t=>t.sid===S.sid);
+  if(!mine.length&&!ended)return;
+  let rec=LEDGER.sessions.find(x=>x.sid===S.sid);
+  if(!rec){rec={sid:S.sid,sym:S.ticker,date:S.replay?S.replay.date:null,startedAt:S.startedAt,day:S.day};LEDGER.sessions.push(rec);}
+  const net=mine.reduce((a,t)=>a+t.net,0);
+  const giveback=!!ended&&(S.peakNet||0)>=RULES.maxLoss/2&&net<0;
+  Object.assign(rec,{trades:mine.length,net:+net.toFixed(2),fees:+mine.reduce((a,t)=>a+t.fees,0).toFixed(2),
+    wins:mine.filter(t=>t.net>0).length,score:sessionScore(mine,giveback),peak:+(S.peakNet||0).toFixed(2),
+    breaches:mine.reduce((a,t)=>a+t.flags.length,0)+(giveback?1:0),giveback,
+    rewinds:S.rewinds||0,rulesOn:!!RULES.on,blind:!!(RULES.blind&&S.replay),ended:!!ended||!!rec.ended,
+    endedAt:ended?new Date().toISOString():rec.endedAt||null,minute:S.cursor});
+  saveLedger();
+  if(pend.length)log(pend.length+' trade'+(pend.length===1?'':'s')+' written to the record. Account '+usd(acctLive())+'.','hl');
+}
+/** The 4:00 bell, or the day ended by hand: commit, reveal a blind day, debrief. */
+function bell(){
+  if(S.pendingJournal.length)flushJournal('close');
+  commitSession(true);
+  S.ended=true;
+  if(S.blind)reveal();
+  if(!S.belled){S.belled=true;debrief();}
+  renderAll();
+}
+function reveal(){
+  const d=S.replay&&S.replay.date;S.blind=false;S.cache={};
+  renderSessRow();const e=$('sess');if(e&&d)e.textContent=d;
+  if(d)log('Blind day revealed: it was '+dayName(d)+', '+d+'.','hl');
+}
+
+/* ---- the account strip ---- */
+function paintAcct(){
+  const e=$('acct');if(!e)return;
+  const use=dayUse(),open=openPnl(),live=acctLive()+open,today=use.realized+open;
+  const lossCls=use.realized<=-RULES.maxLoss?'bad':use.realized<=-RULES.maxLoss*.6?'warn':'';
+  const cd=cooldownLeft();
+  // A phone gets the same facts in fewer characters, so Record stays on screen.
+  const tight=window.innerWidth<600,d0=n=>'$'+Math.round(n);
+  e.innerHTML='<span>'+(tight?'':'Acct ')+'<b>'+usd(live)+'</b></span>'+
+    '<span class="'+(today>=0?'tup':'tdn')+'">'+(tight?'':'today ')+sgn(today)+'</span>'+
+    (RULES.on
+      ?'<span class="'+(use.outlay>=RULES.cap-1e-9?'bad':'')+'">'+(tight?d0(use.outlay)+'/'+d0(RULES.cap):usd(use.outlay)+' / '+usd(RULES.cap)+' bought')+'</span>'+
+       '<span class="'+(use.count>=RULES.maxTrades?'warn':'')+'">'+use.count+(tight?'/':' / ')+RULES.maxTrades+(tight?'':' trades')+'</span>'+
+       '<span class="'+lossCls+'">'+(tight?'lim −'+d0(RULES.maxLoss):'limit '+usd(-RULES.maxLoss))+'</span>'+
+       (cd>0?'<span class="warn">'+(tight?'wait ':'cool-off ')+cd+' min</span>':'')
+      :'<span class="off">rules off</span>')+
+    (S.blind?'<span class="warn">blind</span>':'')+(S.ended?'<span>ended</span>':'')+
+    '<span class="lnk">Record &rsaquo;</span>';
+}
+/** The line under the cards: what the rules allow right now, in numbers. */
+function rulesLine(qty){
+  if(!RULES.on)return '<span class="bad">Rules are off.</span> Nothing is refused; every breach is recorded against the trade. The Rules tab turns them on.';
+  const use=dayUse(),opt=S.mode==='options',u=price();
+  const st=parseFloat(val('stop')),tg=parseFloat(val('tgt'));
+  const bull=!isNaN(st)?st<u:!isNaN(tg)?tg>u:true;
+  let h='Your rules: <b>'+usd(Math.max(0,RULES.cap-use.outlay))+'</b> of '+usd(RULES.cap)+' left to buy today · trade <b>'+Math.min(use.count+(S.pos?0:1),RULES.maxTrades)+'</b> of '+RULES.maxTrades+
+    ' · day '+sgn(use.realized)+' against a '+usd(-RULES.maxLoss)+' limit · up to <b>'+usd(RULES.maxRisk)+'</b> at risk a trade';
+  if(opt){
+    const c=quote(S.strike,'call',S.exDays,u).ask,p=quote(S.strike,'put',S.exDays,u).ask,left=Math.max(0,RULES.cap-use.outlay);
+    const fc=Math.floor(left/(c*100+RULES.fee)+1e-9),fp=Math.floor(left/(p*100+RULES.fee)+1e-9);
+    h+=' · <b>'+fc+'</b> call'+(fc===1?'':'s')+' or <b>'+fp+'</b> put'+(fp===1?'':'s')+' fit here · fees '+usd(RULES.fee)+' a contract each way';
+  }
+  const warns=ruleWarn(bull,qty);
+  if(warns.length)h+='<br><span class="bad">'+warns.join(' ')+'</span>';
+  return h;
+}
+/** The recorded day in a sentence, for the coach: nobody labelled it in advance. */
+function dayDesc(){
+  const s=todayStart(),bars=S.mins.slice(s,revealed());if(!bars.length)return '';
+  let h=-Infinity,l=Infinity;for(const b of bars){if(b.h>h)h=b.h;if(b.l<l)l=b.l;}
+  const o=bars[0].o,c=bars[bars.length-1].c,over=S.cursor>=MPD;
+  const where=c>S.or.hi?'above the opening range':c<S.or.lo?'below the opening range':'back inside the opening range';
+  return S.ticker+' opened at '+o.toFixed(2)+', has a high of '+h.toFixed(2)+' and a low of '+l.toFixed(2)+(over?'':' so far')+', and '+(over?'closed':'is')+' at '+c.toFixed(2)+
+    ' ('+(c>=o?'+':'−')+Math.abs((c/o-1)*100).toFixed(2)+'%), '+where+'. A real day: nobody labelled it trend or chop in advance, which is the point.';
+}
+function disciplineLine(){
+  const ts=S.trades,n=ts.length;if(!n)return 'No trades closed yet today. If there was no setup, that is a good day.';
+  const br=ts.reduce((a,t)=>a+(t.flags||[]).length,0),sc=Math.round(ts.reduce((a,t)=>a+(t.score==null?100:t.score),0)/n);
+  return 'Discipline today: <b>'+sc+'/100</b> across '+n+' trade'+(n===1?'':'s')+(br?', '+br+' rule'+(br===1?'':'s')+' broken':', every rule kept')+'. Grade the execution, not the outcome.';
+}
+
+/* ---- the rules pane ---- */
+function paneRules(){
+  const r=RULES;
+  const f=(k,l,step,hint)=>'<label class="rf"><span>'+l+'</span><input class="n" id="r_'+k+'" type="number" inputmode="decimal" step="'+(step||1)+'" min="0" value="'+r[k]+'"><small>'+(hint||'')+'</small></label>';
+  const c=(k,l,hint)=>'<label class="chk rc"><input type="checkbox" id="r_'+k+'" '+(r[k]?'checked':'')+'><span>'+l+(hint?'<small>'+hint+'</small>':'')+'</span></label>';
+  const book=RULEBOOK?'<div class="rbook"><h3 class="sp">'+escHtml(RULEBOOK.title||'Your rules')+' <i>'+escHtml(RULEBOOK.subtitle||'')+'</i></h3>'+
+    RULEBOOK.groups.map(g=>'<h5>'+escHtml(g.name)+'</h5>'+g.rules.map(x=>'<p>'+escHtml(x.rule)+(x.why?'<small>'+escHtml(x.why)+'</small>':'')+'</p>').join('')).join('')+'</div>':'';
+  return '<div class="seg" id="ron"><button data-v="1" class="'+(r.on?'on':'')+'">Rules on</button><button data-v="0" class="'+(r.on?'':'on')+'">Rules off</button></div>'+
+    '<div class="meta tight">'+(r.on?'Every card checks these before it buys. What they refuse, they say why, on the card.':'Nothing is refused. Every breach is still recorded against the trade and the day.')+'</div>'+
+    '<h3 class="sp">The account</h3><div class="grid2">'+f('start','Starting balance',10,'the real one')+f('fee','Fee a contract, each way',.05,'$0.65 at Schwab; $0 at some brokers')+'</div>'+
+    '<h3 class="sp">The day</h3><div class="grid2">'+f('cap','Options bought a day, max',10,'premium paid, not risk')+f('maxLoss','Daily loss limit',5,'hit it and the day is over')+
+      f('maxTrades','Trades a day, max',1,'two or three real setups')+f('cooldown','Minutes off after two losses',1,'stand up and walk away')+'</div>'+
+    '<h3 class="sp">The trade</h3><div class="grid2">'+f('maxRisk','Risk a trade, max',5,'to the stop')+f('minRR','Reward : risk, at least',.1,'a warning, not a refusal')+'</div>'+
+    c('needStop','A stop before every entry','Entry, stop and target before you click.')+
+    c('needSetup','A named setup before every entry','No setup, no trade.')+
+    c('lockLoss','Lock the day at the loss limit','When you hit it, you are done.')+
+    c('noLate0','No new 0DTE entries after 3:30','')+
+    c('cash','Cash account: no shorting shares, no margin','')+
+    '<h3 class="sp">The replay</h3>'+
+    c('rewind','Allow rewind','Off is hardcore: what happened, happened.')+
+    c('blind','Blind days: hide which date it is','No hindsight. Revealed at the bell; starts with the next session.')+
+    '<div class="setup" style="margin-top:14px"><button id="rSave" style="flex:1;background:var(--acc);border-color:var(--acc);color:#fff">Save rules</button><button id="rDef">Defaults</button></div>'+
+    '<div class="setup"><button id="rRec" style="flex:1">Open the record</button></div>'+
+    '<div class="empty">Saved in this browser. The account is the starting balance plus every recorded practice trade, net of fees.</div>'+book;
+}
+function wireRules(){
+  $('ron').onclick=e=>{const b=e.target.closest('button');if(!b)return;RULES.on=+b.dataset.v;saveRules();
+    log(RULES.on?'Rules on.':'Rules off. Nothing is refused now; every breach is recorded.',RULES.on?'hl':'y');
+    $('pane').dataset.rules='';renderAll();};
+  $('rSave').onclick=()=>{
+    const num=k=>{const v=parseFloat(val('r_'+k));return isNaN(v)||v<0?RULES[k]:v;};
+    ['start','cap','maxLoss','maxTrades','maxRisk','minRR','fee','cooldown'].forEach(k=>RULES[k]=num(k));
+    RULES.maxTrades=Math.max(1,Math.round(RULES.maxTrades));
+    ['needStop','needSetup','lockLoss','noLate0','cash','rewind','blind'].forEach(k=>RULES[k]=$('r_'+k).checked?1:0);
+    saveRules();log('Rules saved.'+(RULES.blind&&!S.blind&&S.replay?' Blind days start with the next session.':''),'hl');renderAll();};
+  $('rDef').onclick=()=>{RULES=Object.assign({},RULE_DEF);saveRules();log('Rules back to the defaults.','hl');$('pane').dataset.rules='';renderAll();};
+  $('rRec').onclick=openRecord;
+}
+
+/* ---- the debrief ---- */
+function tile(l,v,c,sub){return '<div class="tile"><span>'+l+'</span><b class="'+(c||'')+'">'+v+'</b>'+(sub?'<i>'+sub+'</i>':'')+'</div>';}
+function tone(n){return n==null?'':n>0?'up':n<0?'dn':'';}
+function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function debrief(){
+  const box=$('dbf');if(!box)return;
+  const mine=LEDGER.trades.filter(t=>t.sid===S.sid),rec=LEDGER.sessions.find(x=>x.sid===S.sid)||{};
+  const net=mine.reduce((a,t)=>a+t.net,0),w=mine.filter(t=>t.net>0).length;
+  const flags=[...new Set(mine.flatMap(t=>t.flags))];
+  $('dbfTitle').textContent=S.cursor<MPD?'Day ended at '+tlbl(S.cursor):'The 4:00 bell';
+  $('dbfSum').innerHTML='<div class="tiles" style="margin:10px 0 0">'+
+    tile('Today',sgn(net),tone(net),mine.length?mine.length+' trade'+(mine.length===1?'':'s')+' · '+w+' won':'no trades')+
+    tile('Discipline',rec.score==null?'—':rec.score+'/100',rec.score>=90?'up':rec.score<70?'dn':'',flags.length?flags.map(f=>FLAGS[f][0]).join(', '):(mine.length?'every rule kept':'a no-trade day counts'))+
+    tile('Account',usd(acctLive()),tone(acctLive()-RULES.start),'from $'+RULES.start)+'</div>'+
+    (rec.giveback?'<div class="evwarn" style="margin-top:10px">Up '+usd(rec.peak)+' at the best, closed down. Protect a green day: after a good gain, cut size or stop.</div>':'')+
+    (S.pos?'<div class="empty" style="margin-top:8px">A position is still open; it is not a trade until it closes.</div>':'');
+  $('dbfWell').value='';$('dbfBetter').value='';S.dbfRating=0;paintStars();
+  box.hidden=false;
+}
+function paintStars(){const e=$('dbfStars');if(!e)return;const r=S.dbfRating||0;
+  e.innerHTML=[1,2,3,4,5].map(n=>'<button type="button" data-n="'+n+'" class="'+(n<=r?'on':'')+'" aria-label="'+n+' of 5">'+(n<=r?'★':'☆')+'</button>').join('');}
+$('dbfStars').onclick=e=>{const b=e.target.closest('button');if(!b)return;S.dbfRating=+b.dataset.n;paintStars();};
+$('dbfSkip').onclick=()=>{$('dbf').hidden=true;};
+$('dbfSave').onclick=()=>{
+  let rec=LEDGER.sessions.find(x=>x.sid===S.sid);
+  if(!rec){commitSession(true);rec=LEDGER.sessions.find(x=>x.sid===S.sid);}
+  if(rec){rec.debrief={well:$('dbfWell').value.trim(),better:$('dbfBetter').value.trim(),rating:S.dbfRating||null};saveLedger();}
+  $('dbf').hidden=true;log('Debrief saved to the record.','hl');
+};
+
+/* ---- the track record ---- */
+let recFilter='all';
+function openRecord(){const r=$('rec');if(!r)return;renderRecord();r.hidden=false;document.body.style.overflow='hidden';r.scrollTop=0;}
+function closeRecord(){const r=$('rec');if(!r)return;r.hidden=true;document.body.style.overflow='';}
+$('acct').onclick=openRecord;
+$('recClose').onclick=closeRecord;
+function recTrades(){
+  let ts=LEDGER.trades.slice().sort((a,b)=>a.at<b.at?-1:1);
+  if(recFilter==='rules')ts=ts.filter(t=>t.rulesOn!==false);
+  if(recFilter==='clean')ts=ts.filter(t=>!t.rewinds&&!t.repeat);
+  return ts;
+}
+function recStats(ts){
+  const n=ts.length,net=ts.reduce((a,t)=>a+t.net,0),fees=ts.reduce((a,t)=>a+(t.fees||0),0);
+  const w=ts.filter(t=>t.net>0),l=ts.filter(t=>t.net<0);
+  const gw=w.reduce((a,t)=>a+t.net,0),gl=-l.reduce((a,t)=>a+t.net,0);
+  const rs=ts.filter(t=>t.R!=null).map(t=>t.R);
+  let run=0,peak=0,dd=0,cur=0,best=0,worst=0;const eq=[];
+  ts.forEach(t=>{run+=t.net;eq.push(run);peak=Math.max(peak,run);dd=Math.max(dd,peak-run);
+    if(t.net>0)cur=cur>0?cur+1:1;else if(t.net<0)cur=cur<0?cur-1:-1;else cur=0;best=Math.max(best,cur);worst=Math.min(worst,cur);});
+  return {n,net,fees,wins:w.length,losses:l.length,winRate:n?w.length/n*100:null,
+    pf:gl>0?gw/gl:gw>0?Infinity:null,exp:n?net/n:null,avgR:rs.length?rs.reduce((a,b)=>a+b,0)/rs.length:null,nR:rs.length,
+    avgWin:w.length?gw/w.length:null,avgLoss:l.length?-gl/l.length:null,
+    bigWin:w.length?Math.max(...w.map(t=>t.net)):null,bigLoss:l.length?Math.min(...l.map(t=>t.net)):null,
+    maxDD:dd,bestStreak:best,worstStreak:-worst,eq,score:n?ts.reduce((a,t)=>a+(t.score==null?100:t.score),0)/n:null,
+    clean:ts.filter(t=>!(t.flags||[]).length).length};
+}
+const fmtPct=v=>v==null?'—':v.toFixed(0)+'%';
+const fmtR=v=>v==null?'—':(v>=0?'+':'')+v.toFixed(2)+'R';
+function eqSvg(eq){
+  if(eq.length<2)return '<p class="empty" style="margin:0">Two closed trades and the curve appears.</p>';
+  const w=900,h=190,pl=8,pr=66,pt=12,pb=18,pw=w-pl-pr,ph=h-pt-pb;
+  const lo=Math.min(0,...eq),hi=Math.max(0,...eq),span=hi-lo||1;
+  const x=i=>pl+i/(eq.length-1)*pw,y=v=>pt+ph*(1-(v-lo)/span);
+  const pts=eq.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ');
+  const end=eq[eq.length-1],col=end>=0?'#2dd4a7':'#f4525f';
+  let peak=-Infinity,pi=0,dd={a:0,b:0,d:0};
+  eq.forEach((v,i)=>{if(v>peak){peak=v;pi=i;}if(peak-v>dd.d)dd={a:pi,b:i,d:peak-v};});
+  return '<svg class="eq" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" role="img" aria-label="equity curve">'+
+    '<defs><linearGradient id="eqg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".26"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+
+    (dd.d>0?'<rect x="'+x(dd.a).toFixed(1)+'" y="'+pt+'" width="'+Math.max(1,x(dd.b)-x(dd.a)).toFixed(1)+'" height="'+ph+'" fill="#f4525f" opacity=".07"/>':'')+
+    '<line x1="'+pl+'" y1="'+y(0).toFixed(1)+'" x2="'+(pl+pw)+'" y2="'+y(0).toFixed(1)+'" stroke="#2b3547" stroke-dasharray="3 3"/>'+
+    '<polygon points="'+pl+','+y(0).toFixed(1)+' '+pts+' '+x(eq.length-1).toFixed(1)+','+y(0).toFixed(1)+'" fill="url(#eqg)"/>'+
+    '<polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="1.8" stroke-linejoin="round"/>'+
+    '<circle cx="'+x(eq.length-1).toFixed(1)+'" cy="'+y(end).toFixed(1)+'" r="3" fill="'+col+'"/>'+
+    '<text x="'+(pl+pw+7)+'" y="'+(y(hi)+4).toFixed(1)+'" fill="#8994a6" font-size="11" font-family="monospace">'+sgn(hi)+'</text>'+
+    '<text x="'+(pl+pw+7)+'" y="'+(y(lo)+4).toFixed(1)+'" fill="#8994a6" font-size="11" font-family="monospace">'+sgn(lo)+'</text></svg>';
+}
+function groupRows(ts,keyOf){
+  const m=new Map();ts.forEach(t=>{const k=keyOf(t);if(k==null)return;if(!m.has(k))m.set(k,[]);m.get(k).push(t);});
+  return [...m.entries()].map(([k,v])=>({k,s:recStats(v)})).sort((a,b)=>b.s.net-a.s.net);
+}
+function recTable(title,rows,note){
+  if(!rows.length)return '';
+  return '<div class="rsec"><h3>'+title+'</h3><div style="overflow-x:auto"><table><thead><tr><th></th><th>Trades</th><th>Win</th><th>Net</th><th>Avg</th><th>Avg R</th><th>Score</th></tr></thead><tbody>'+
+    rows.map(r=>'<tr><td style="font-family:var(--sans);font-weight:600">'+escHtml(r.k)+'</td><td>'+r.s.n+'</td><td>'+fmtPct(r.s.winRate)+'</td><td class="'+tone(r.s.net)+'">'+sgn(r.s.net)+'</td><td class="'+tone(r.s.exp)+'">'+sgn(r.s.exp)+'</td><td>'+fmtR(r.s.avgR)+'</td><td>'+(r.s.score==null?'—':Math.round(r.s.score))+'</td></tr>').join('')+
+    '</tbody></table></div>'+(note?'<div class="empty" style="margin-top:8px">'+note+'</div>':'')+'</div>';
+}
+const todOf=m=>m<60?'Open · 9:30–10:30':m<150?'Morning · 10:30–12':m<270?'Lunch · 12–2':m<360?'Afternoon · 2–3:30':'Last half hour';
+const holdOf=m=>m<5?'Under 5 min':m<15?'5–15 min':m<45?'15–45 min':'45 min and more';
+const dowOf=d=>d?['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d+'T12:00:00Z').getUTCDay()]:null;
+/** Days in a row with a recorded session, counting back from today or yesterday. */
+function streakDays(){
+  const days=new Set(LEDGER.sessions.map(s=>s.day).filter(Boolean));
+  if(!days.size)return 0;
+  const d=new Date();d.setHours(12,0,0,0);
+  const key=()=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  if(!days.has(key()))d.setDate(d.getDate()-1);
+  let n=0;while(days.has(key())){n++;d.setDate(d.getDate()-1);}
+  return n;
+}
+function renderRecord(){
+  const ts=recTrades(),s=recStats(ts),all=LEDGER.trades.length,bal=balance();
+  const sess=LEDGER.sessions.slice().sort((a,b)=>(a.startedAt||'')<(b.startedAt||'')?1:-1);
+  const days=new Set(LEDGER.sessions.map(x=>x.day)).size,streak=streakDays();
+  const flagRows=Object.keys(FLAGS).filter(f=>f!=='giveback').map(f=>{const v=ts.filter(t=>(t.flags||[]).includes(f));return v.length?{f,n:v.length,net:v.reduce((a,t)=>a+t.net,0)}:null;}).filter(Boolean).sort((a,b)=>a.net-b.net);
+  const gb=LEDGER.sessions.filter(x=>x.giveback).length;
+  $('recTitle').textContent=usd(bal)+' · '+(bal>=RULES.start?'+':'−')+usd(Math.abs(bal-RULES.start)).slice(1)+' since $'+RULES.start;
+  const chip=(k,l)=>'<button type="button" class="'+(recFilter===k?'on':'')+'" data-f="'+k+'">'+l+'</button>';
+  $('recBody').innerHTML=
+    '<div class="rchips" id="recF">'+chip('all','All trades')+chip('rules','Rules on')+chip('clean','No rewind, no repeat')+'</div>'+
+    '<div class="tiles">'+
+      tile('Net',sgn(s.net),tone(s.net),s.n+' closed · '+usd(s.fees)+' in fees')+
+      tile('Win rate',fmtPct(s.winRate),'',s.wins+'W / '+s.losses+'L')+
+      tile('Profit factor',s.pf==null?'—':s.pf===Infinity?'∞':s.pf.toFixed(2),s.pf!=null&&s.pf!==Infinity?(s.pf>=1?'up':'dn'):'','gross win ÷ gross loss')+
+      tile('Expectancy',s.exp==null?'—':sgn(s.exp),tone(s.exp),'a trade, the number that compounds')+
+      tile('Avg R',fmtR(s.avgR),tone(s.avgR),s.nR+' with a stop')+
+      tile('Avg win',s.avgWin==null?'—':sgn(s.avgWin),'up','best '+(s.bigWin==null?'—':sgn(s.bigWin)))+
+      tile('Avg loss',s.avgLoss==null?'—':sgn(s.avgLoss),'dn','worst '+(s.bigLoss==null?'—':sgn(s.bigLoss)))+
+      tile('Max drawdown',usd(-s.maxDD),s.maxDD>0?'dn':'',s.worstStreak+' in a row lost, at worst')+
+      tile('Discipline',s.score==null?'—':Math.round(s.score)+'/100',s.score==null?'':s.score>=90?'up':s.score>=70?'':'dn',s.clean+' of '+s.n+' clean')+
+      tile('Days practised',String(days),'',streak+'-day streak · '+LEDGER.sessions.length+' session'+(LEDGER.sessions.length===1?'':'s'))+
+    '</div>'+
+    '<div class="rsec"><h3>Equity <i>'+(ts.length<all?ts.length+' of '+all+' trades shown':'every closed practice trade, in order')+'</i></h3>'+eqSvg(s.eq)+'</div>'+
+    (flagRows.length||gb
+      ?'<div class="rsec"><h3>What the habits cost</h3><p class="empty" style="margin:0 0 6px">Every trade that broke a rule, totalled. A habit in profit is listed too, on purpose: a chase that got lucky is still a chase.</p>'+
+        flagRows.map(r=>'<div class="hab"><b class="'+tone(r.net)+'">'+sgn(r.net)+'</b><div><span class="h">'+FLAGS[r.f][0]+'</span><span class="w">'+r.n+' trade'+(r.n===1?'':'s')+' · '+FLAGS[r.f][3]+'</span></div></div>').join('')+
+        (gb?'<div class="hab"><b></b><div><span class="h">Gave back a green day</span><span class="w">'+gb+' session'+(gb===1?'':'s')+' · '+FLAGS.giveback[3]+'</span></div></div>':'')+'</div>'
+      :(ts.length?'<div class="rsec"><h3>What the habits cost</h3><p class="empty" style="margin:0">Not one rule broken in these trades.</p></div>':''))+
+    '<div class="rgrid">'+
+      recTable('By setup',groupRows(ts,t=>setupName(t.setup)),'One setup executed a hundred times beats ten setups executed once.')+
+      recTable('By ticker',groupRows(ts,t=>t.sym))+
+      recTable('By time of day',groupRows(ts,t=>todOf(t.entryMin)))+
+      recTable('By expiry',groupRows(ts,t=>t.kind==='option'?exLabel(t.exDays):'Shares'))+
+      recTable('By day of the week',groupRows(ts,t=>dowOf(t.date)))+
+      recTable('By time in the trade',groupRows(ts,t=>holdOf(t.held)))+
+    '</div>'+
+    '<div class="rsec"><h3>Sessions <i>newest first</i></h3>'+(sess.length?sess.slice(0,25).map(x=>
+      '<div class="sessrec"><span class="d">'+escHtml(x.day||'')+' · '+escHtml(x.sym)+(x.date?' '+escHtml(x.date):'')+'</span>'+
+      '<span class="'+tone(x.net)+'" style="font-family:var(--mono);font-weight:600">'+sgn(x.net||0)+'</span><span>'+(x.trades||0)+' trade'+(x.trades===1?'':'s')+'</span>'+
+      '<span>discipline '+(x.score==null?'—':x.score)+'</span>'+
+      (x.rewinds?'<span style="color:var(--fib)">'+x.rewinds+' rewind'+(x.rewinds===1?'':'s')+'</span>':'')+
+      (x.rulesOn===false?'<span style="color:var(--dn)">rules off</span>':'')+(x.blind?'<span>blind</span>':'')+
+      (!x.ended?'<span style="color:var(--dim2)">left at '+tlbl(x.minute||0)+'</span>':'')+
+      (x.debrief&&(x.debrief.well||x.debrief.better||x.debrief.rating)?'<span class="q">'+(x.debrief.rating?'★'.repeat(x.debrief.rating)+' ':'')+
+        (x.debrief.well?'<b>Repeat:</b> '+escHtml(x.debrief.well)+' ':'')+(x.debrief.better?'<b>Not again:</b> '+escHtml(x.debrief.better):'')+'</span>':'')+
+      '</div>').join(''):'<p class="empty" style="margin:0">No sessions recorded yet. Trade a day through to the bell, or end it from the Session tab.</p>')+'</div>'+
+    '<div class="rsec"><h3>Keep it</h3><div class="setup"><button type="button" id="recCopy">Copy the record</button><button type="button" id="recDl">Download JSON</button><button type="button" id="recReset" style="color:var(--dn)">Reset the record</button></div>'+
+    '<div class="empty">The record lives in this browser. Copy or download it to keep it, or to carry it to another device: paste it below there and merge.</div>'+
+    '<textarea class="recta" id="recPaste" placeholder="Paste a copied record here"></textarea>'+
+    '<div class="setup" style="margin-top:8px"><button type="button" id="recMerge">Merge it in</button><span class="empty" id="recMsg"></span></div></div>';
+  wireRecord();
+}
+function wireRecord(){
+  const msg=t=>{const e=$('recMsg');if(e)e.textContent=t;};
+  $('recF').onclick=e=>{const b=e.target.closest('button');if(!b)return;recFilter=b.dataset.f;renderRecord();};
+  $('recCopy').onclick=()=>{const t=JSON.stringify(LEDGER);
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>msg('Copied.'),()=>{$('recPaste').value=t;msg('Copy it from the box.');});};
+  $('recDl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(LEDGER,null,1)],{type:'application/json'}));
+    a.download='practice-record-'+localDay()+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);};
+  $('recReset').onclick=()=>{if(!confirm('Reset the whole practice record? Every trade and session goes, and the account returns to $'+RULES.start+'. Copy it first if you want to keep it.'))return;
+    LEDGER={v:1,trades:[],sessions:[]};saveLedger();renderRecord();renderAll();};
+  $('recMerge').onclick=()=>{let v;try{v=JSON.parse($('recPaste').value);}catch(e){return msg('That is not a record.');}
+    if(!v||!Array.isArray(v.trades)||!Array.isArray(v.sessions))return msg('That is not a record.');
+    let n=0,m=0;
+    v.trades.forEach(t=>{if(t&&t.id&&!LEDGER.trades.some(x=>x.id===t.id)){LEDGER.trades.push(t);n++;}});
+    v.sessions.forEach(s=>{if(s&&s.sid&&!LEDGER.sessions.some(x=>x.sid===s.sid)){LEDGER.sessions.push(s);m++;}});
+    saveLedger();renderRecord();renderAll();
+    const e=$('recMsg');if(e)e.textContent=n+' trade'+(n===1?'':'s')+' and '+m+' session'+(m===1?'':'s')+' merged.';};
 }
 
 /* ================= guide ================= */
@@ -2036,9 +2710,11 @@ const TOUR=[
   {t:".trow",h:"Move through the day",
    b:"Next steps forward one candle. The play button runs on its own at the speed beside it. The back arrow rewinds one candle and undoes anything you did in it: that is how you go back and try the other decision."},
   {t:"#pane",h:"The ticket",tab:"trade",
-   b:"This is where you trade. Choose the expiration, strike and number of contracts, then tap the Call card if you think the stock will rise or the Put card if you think it will fall; each shows what it costs. Under them is your exit plan, a stop and a target on the stock price, and your open position. Switch to Shares and the cards become Long and Short."},
+   b:"This is where you trade. Choose the expiration, strike and size, then write the plan: which setup this is, and a stop and a target on the stock price. Only then tap the Call card if you think the stock will rise, or the Put card if you think it will fall. Each shows what it costs and what tapping it will do. Your open position sits below. Switch to Shares and the cards become Long and Short."},
+  {t:"#acct",h:"Your account, your rules",
+   b:"The account you actually trade -- $500 to start -- under the rules you wrote for it: how much you may buy in a day, the loss that ends the day, the trade count, the most a stop may risk. A card refuses anything outside them and says which rule, on the card. Tap this strip for your track record. The Rules tab changes the numbers."},
   {t:"#tabs",h:"Everything else",
-   b:"Chain lists every strike. Fib has the levels from the opening range. Tape logs everything that happened. Coach reviews your trades. Session has today's stats, and sends your trades to the journal."},
+   b:"Chain lists every strike. Fib has the levels from the opening range. Tape logs everything that happened. Coach grades each trade against the rules and the setup. Session has today's stats, ends the day and opens the record. Rules is the account."},
   {t:null,h:"Your trades are kept",
    b:"Closed trades go to your Journal at the 4:00 bell, or when you send them from the Session tab. They are marked as practice, so they never mix with your real results. Open this guide again any time with the ? button."}
 ];
@@ -2147,6 +2823,7 @@ function dayName(d){const x=new Date(d+'T12:00:00Z');
 function renderSessRow(){
   const sel=$('sdate');if(!sel)return;
   if(!REPLAY.length){sel.innerHTML='<option>Generated day</option>';sel.disabled=true;return;}
+  if(S.blind){sel.innerHTML='<option>Blind day · revealed at the bell</option>';sel.disabled=true;return;}
   const ds=REPLAY.filter(r=>r.symbol===S.ticker).map(r=>r.date).sort().reverse();
   sel.disabled=false;
   sel.innerHTML=ds.map(d=>{
@@ -2169,6 +2846,7 @@ function startSession(ticker,pick,o){
   if(S.pos&&!confirm('You have an open position. Leave it and start a new session?'))return false;
   stopAuto();
   if(S.pendingJournal&&S.pendingJournal.length)flushJournal('session change');
+  if(S.pendingLedger)commitSession(false);
   init(ticker,o.regime??S.regime,o.vm??S.vm,o.seed,pick);
   return true;
 }
@@ -2195,6 +2873,7 @@ TFS.forEach(t=>{const b=document.createElement('button');b.className='tf'+(t.k==
 const INDS=[
   ['fib','auto fib','Fibonacci levels drawn from the opening range (9:30 to 9:45)'],
   ['or','range','Opening range: the high and low of the first 15 minutes'],
+  ['lvl','levels','Prior day high, low and close, and the open: the levels the day is traded against'],
   ['vwap','vwap','VWAP: the average price paid since the open, weighted by volume'],
   ['ema9','ema9','9-bar exponential moving average: the fastest trend line'],
   ['ema20','ema20','20-bar exponential moving average'],
@@ -2229,7 +2908,7 @@ function stepBar(){
   snapshot();
   const t=tfMin();stepMinutes(Math.max(1,t==='D'?MPD-S.cursor:t));
   if(S.view.right!=null&&S.view.right>=bars().length-2)S.view.right=null;
-  if(S.cursor>=MPD&&S.pendingJournal.length)flushJournal('close');
+  if(S.cursor>=MPD)bell();
   renderAll();}
 $('next').onclick=stepBar;
 $('back').onclick=()=>{stopAuto();stepBack();};
@@ -2238,6 +2917,8 @@ function stopAuto(){if(S.auto){clearInterval(S.auto);S.auto=null;$('auto').textC
 $('auto').onclick=()=>{if(S.auto)return stopAuto();$('auto').textContent='❚❚';
   S.auto=setInterval(()=>{if(S.cursor>=MPD)return stopAuto();stepBar();},Math.round(700/(S.speed||1)));};
 document.addEventListener('keydown',e=>{
+  if($('rec')&&!$('rec').hidden){if(e.key==='Escape')closeRecord();return;}
+  if($('dbf')&&!$('dbf').hidden){if(e.key==='Escape')$('dbf').hidden=true;return;}
   if(tourI>=0){
     if(e.key==='Escape')tourEnd();
     else if(e.key==='ArrowRight')tourShow(tourI+1);

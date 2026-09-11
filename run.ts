@@ -251,6 +251,7 @@ async function main() {
       embed: await loadVolForEmbed(VOL, sessions.map((s) => s.date)),
       calibrations: await loadCalibrations(VOL),
       events: await loadEvents(VOL),
+      rulebook: rules,
     });
     await writeFile(join(REPORTS, "practice.html"), practice, "utf8");
   } catch (e) {

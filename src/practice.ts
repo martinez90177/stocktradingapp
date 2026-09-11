@@ -1,9 +1,14 @@
 import { readFile } from "node:fs/promises";
 import { FONT_CSS } from "./fonts.ts";
 import type { VolEmbed, Calibration, Events } from "./volindex.ts";
+import type { RuleBook } from "./types.ts";
 
-/** Real volatility for the option prices: index levels per replayed day, and the per-ticker calibrations. */
-export interface PracticeVol { embed: VolEmbed; calibrations: Calibration[]; events?: Events }
+/**
+ * Real volatility for the option prices: index levels per replayed day, and
+ * the per-ticker calibrations. `rulebook` is Alex's Rules from rules.json,
+ * shown in the Rules tab beside the numbers the simulator enforces.
+ */
+export interface PracticeVol { embed: VolEmbed; calibrations: Calibration[]; events?: Events; rulebook?: RuleBook | null }
 import type { ReplaySession } from "./replay.ts";
 
 /**
@@ -307,6 +312,72 @@ button.oc:disabled .go b{display:none}
 .posbar.up .pv{color:var(--up)}
 .posbar.dn .pv{color:var(--dn)}
 .posbar .pv b{font-size:14px;margin-right:6px}
+/* ---- the account strip ---- */
+.acct{display:flex;gap:14px;align-items:center;max-width:1300px;margin:8px auto 0;padding:6px 11px;border-radius:9px;
+  font-family:var(--mono);font-size:12px;color:var(--dim);border:1px solid var(--line2);background:var(--p2);min-height:0;
+  width:100%;text-align:left;white-space:nowrap;overflow-x:auto;scrollbar-width:none;font-weight:500;cursor:pointer}
+.acct::-webkit-scrollbar{display:none}
+.acct:hover{border-color:var(--acc)}
+.acct b{color:var(--text);font-weight:600}
+.acct .tup{color:var(--up)} .acct .tdn{color:var(--dn)}
+.acct .warn{color:var(--fib)} .acct .bad{color:var(--dn);font-weight:700}
+.acct .off{color:var(--dn);font-weight:700}
+.acct .lnk{margin-left:auto;color:var(--acc);font-weight:600}
+/* ---- the rules line under the cards ---- */
+.rl{margin-top:9px;font-size:11.5px;color:var(--dim);line-height:1.6;font-family:var(--mono)}
+.rl b{color:var(--text);font-weight:600}
+.rl .bad{color:var(--fib)}
+/* ---- the rules pane ---- */
+.rf{display:flex;flex-direction:column;gap:4px;font-size:10.5px;color:var(--dim2);text-transform:uppercase;letter-spacing:.9px;font-weight:600}
+.rf small{text-transform:none;letter-spacing:0;font-weight:500;color:var(--dim2);font-size:10.5px}
+.chk.rc{align-items:flex-start;margin-top:10px}
+.chk.rc input{margin-top:2px}
+.chk.rc small{display:block;color:var(--dim2);font-size:11px;margin-top:1px}
+.rbook{margin-top:14px}
+.rbook h5{margin:12px 0 4px;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--fib)}
+.rbook p{margin:0 0 7px;font-size:12.5px;line-height:1.5}
+.rbook p small{display:block;color:var(--dim2);font-size:11.5px}
+/* ---- debrief and record overlays ---- */
+.ovl{position:fixed;inset:0;z-index:110;background:rgba(3,5,10,.8);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ovl[hidden]{display:none}
+.ovl-card{max-width:520px;margin:6vh auto;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:16px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
+.ovl-card h4{margin:6px 0 4px;font-size:18px;letter-spacing:-.2px}
+.ovl-card textarea{width:100%;background:var(--p2);border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:9px 10px;font-family:var(--sans);font-size:14px;resize:vertical}
+.dbf-l{display:block;margin-top:12px;font-size:12.5px;color:var(--dim)}
+.dbf-l textarea{margin-top:5px}
+.stars{display:flex;gap:6px;margin-top:6px}
+.stars button{min-height:36px;width:40px;padding:0;font-size:16px}
+.stars button.on{border-color:var(--fib);color:var(--fib);background:rgba(245,165,36,.12)}
+.rec-in{max-width:980px;margin:0 auto;padding:14px 14px 40px}
+.rec-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.rec-top h4{margin:4px 0 0;font-size:22px;letter-spacing:-.4px;font-family:var(--mono)}
+.rec-top button{margin-left:auto}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:14px}
+.tile{background:var(--panel);padding:12px 14px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.tile span{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dim2)}
+.tile b{font-family:var(--mono);font-size:19px;font-weight:600;letter-spacing:-.5px}
+.tile i{font-style:normal;font-size:10.5px;color:var(--dim2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rsec{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 14px;margin-bottom:12px}
+.rsec h3{margin-bottom:8px}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.rgrid .rsec{margin-bottom:0}
+@media(max-width:700px){.rgrid{grid-template-columns:1fr}}
+svg.eq{display:block;width:100%;height:auto}
+.rchips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.rchips button{min-height:34px;font-size:12px}
+.rchips button.on{border-color:var(--acc);color:var(--text);background:rgba(123,108,246,.16)}
+.sessrec{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap}
+.sessrec:last-child{border-bottom:0}
+.sessrec .d{font-family:var(--mono);color:var(--dim);min-width:150px}
+.sessrec .q{color:var(--dim);font-size:11.5px;flex-basis:100%;line-height:1.45}
+.sessrec .q b{color:var(--text)}
+.hab{display:flex;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.hab:last-child{border-bottom:0}
+.hab b{font-family:var(--mono);font-size:15px;min-width:80px;text-align:right}
+.hab .h{font-weight:650;font-size:13px}
+.hab .w{color:var(--dim2);font-size:11.5px;display:block}
+.recta{width:100%;min-height:64px;background:var(--p2);border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:8px;font-family:var(--mono);font-size:11.5px;margin-top:8px}
+.gr .b i{color:var(--dim2);font-style:italic}
 @media(min-width:900px){
   .wrap{display:grid;grid-template-columns:1fr 350px;gap:16px;align-items:start}
   .right{position:sticky;top:112px}
@@ -342,6 +413,7 @@ button.oc:disabled .go b{display:none}
   .chg{font-size:11px;padding:2px 6px;white-space:nowrap}
   .ssel{flex:1 1 auto}
   .ohlc{font-size:12px}
+  .acct{gap:10px;font-size:11.5px;padding:6px 9px}
 }
 /* On a desktop the chart stays pinned while the ticket scrolls beside it. The
    buy cards sit under the size and order settings, below the fold on a laptop,
@@ -384,7 +456,7 @@ function bannerFor(reportHref: string, sessions: ReplaySession[], vol?: Practice
   <div class="mp-brand">
     <div>
       <h1>Practice</h1>
-      <p>Bar-by-bar replay for rehearsing entries, stops and exits</p>
+      <p>Real days replayed bar by bar, traded on your own account under your own rules</p>
     </div>
     <button type="button" class="mp-guide" id="guideOpen">How to use this page</button>
     <a class="mp-back" href="${reportHref}">&larr; Back to the report</a>
@@ -451,7 +523,7 @@ export async function renderPractice(
 </head><body>
 ${bannerFor(reportHref, sessions, vol)}
 ${data}
-${vol ? `<script>window.MP_VOL=${JSON.stringify(vol.embed)};window.MP_VOLCAL=${JSON.stringify(vol.calibrations).replace(/</g, "\\u003c")};window.MP_EVENTS=${JSON.stringify(vol.events ?? {}).replace(/</g, "\\u003c")};</script>` : ""}
+${vol ? `<script>window.MP_VOL=${JSON.stringify(vol.embed)};window.MP_VOLCAL=${JSON.stringify(vol.calibrations).replace(/</g, "\\u003c")};window.MP_EVENTS=${JSON.stringify(vol.events ?? {}).replace(/</g, "\\u003c")};window.MP_RULEBOOK=${JSON.stringify(vol.rulebook ?? null).replace(/</g, "\\u003c")};</script>` : ""}
 ${body}
 </body></html>`;
 }
