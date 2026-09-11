@@ -1,6 +1,76 @@
 import type { Analysis, Catalysts, Level, Mover, RuleBook, TradeGrade } from "./types.ts";
 import { C, renderChart } from "./chart.ts";
 import { etTime } from "./intraday.ts";
+
+/** "Thu, Sep 10, 6:52 PM" in New York. A report built last night needs its date. */
+const builtLabel = (d: Date) =>
+  new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York", weekday: "short", month: "short",
+    day: "numeric", hour: "numeric", minute: "2-digit",
+  }).format(d);
+
+/**
+ * Says in the page itself how old the report is and what it covers.
+ *
+ * GitHub starts scheduled builds hours late, so the build you are reading at
+ * 9:25 may be last night's. That is fine for the levels -- they come from the
+ * completed session -- but not for the premarket, and a page that does not say
+ * which it is invites you to trade a gap that is not on it. Computed in the
+ * browser, so it stays true as the clock moves, including on a cached copy.
+ */
+const FRESHNESS_JS = String.raw`
+(function(){
+  var g=document.getElementById("gen"),f=document.getElementById("fresh");
+  if(!g||!f)return;
+  var built=new Date(g.getAttribute("data-built"));
+  if(isNaN(built.getTime()))return;
+  var PRE=240,OPEN=570,CLOSE=960;
+  function et(d){
+    var o={};
+    new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit",
+      hour:"2-digit",minute:"2-digit",hourCycle:"h23",weekday:"short"}).formatToParts(d)
+      .forEach(function(x){o[x.type]=x.value;});
+    return {ymd:o.year+"-"+o.month+"-"+o.day,min:(+o.hour)*60+(+o.minute),wd:o.weekday};
+  }
+  function key(ymd,min){return ymd+" "+("000"+min).slice(-4);}
+  function weekend(wd){return wd==="Sat"||wd==="Sun";}
+  function prevWeekday(ymd){
+    var d=new Date(ymd+"T12:00:00Z");
+    do{d.setUTCDate(d.getUTCDate()-1);}while(d.getUTCDay()===0||d.getUTCDay()===6);
+    return d.toISOString().slice(0,10);
+  }
+  function ago(ms){
+    var m=Math.max(0,Math.round(ms/60000));
+    if(m<60)return m+" min ago";
+    var h=Math.round(m/60);
+    return h<48?h+"h ago":Math.round(h/24)+" days ago";
+  }
+  function state(now){
+    var b=et(built),n=et(now),bk=key(b.ymd,b.min);
+    var trading=!weekend(n.wd);
+    // The most recent session that has finished. Holidays are not modelled,
+    // so the day after one reads as a day late -- conservative, not optimistic.
+    var lastClose=trading&&n.min>=CLOSE?n.ymd:prevWeekday(n.ymd);
+    if(bk>=key(lastClose,CLOSE)){
+      if(trading&&n.min>=PRE&&bk<key(n.ymd,PRE))
+        return ["warn",n.min>=OPEN?"Levels from the last close · today not in yet":"Levels from the last close · premarket not in yet"];
+      if(b.ymd===n.ymd&&trading&&b.min>=PRE&&b.min<OPEN)return ["ok","Includes today’s premarket"];
+      if(b.ymd===n.ymd&&trading&&b.min>=OPEN&&b.min<CLOSE)return ["ok","Built during today’s session"];
+      return ["ok","Built after the last close"];
+    }
+    if(b.ymd===lastClose&&b.min>=PRE&&b.min<CLOSE)
+      return ["warn",b.ymd===n.ymd?"Built before today’s close":"Built before that session closed"];
+    return ["bad","Out of date · built before the last session"];
+  }
+  function paint(){
+    var s=state(new Date());
+    f.className="fresh "+s[0];
+    f.textContent=s[1]+" · "+ago(Date.now()-built.getTime());
+    f.hidden=false;
+  }
+  paint();setInterval(paint,60000);
+})();
+`;
 import { resample, sma } from "./ta.ts";
 import { FONT_CSS } from "./fonts.ts";
 
@@ -975,6 +1045,11 @@ header.top>.wrap{position:relative}
 .railcell b.hl{color:var(--accent)} .railcell b.hot{color:var(--gold)}
 .railcell span{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--dim2)}
 .gen{color:var(--dim2);font-size:11.5px;margin:12px 0 0}
+.gen .fresh{display:inline-block;margin:4px 0 0 6px;padding:1px 9px;border-radius:999px;font-weight:600;font-size:11px;border:1px solid transparent}
+.gen .fresh[hidden]{display:none}
+.gen .fresh.ok{color:var(--up);background:rgba(45,212,167,.1);border-color:rgba(45,212,167,.3)}
+.gen .fresh.warn{color:var(--gold);background:rgba(245,165,36,.1);border-color:rgba(245,165,36,.32)}
+.gen .fresh.bad{color:var(--down);background:rgba(244,82,95,.1);border-color:rgba(244,82,95,.32)}
 .navrow{display:flex;gap:6px;overflow-x:auto;padding:14px 0 12px;scrollbar-width:thin}
 .navchip{flex:0 0 auto;border:1px solid var(--line2);border-radius:7px;padding:5px 9px;display:flex;gap:7px;align-items:baseline;background:var(--panel2);font-size:12px}
 .navchip b{font-size:12.5px;letter-spacing:.2px}
@@ -1348,7 +1423,8 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
   <div class="rail">
     ${railStats(ranked, input.movers)}
   </div>
-  <p class="gen">Generated ${esc(etTime(generatedAt.getTime()))} ET &middot; measured from Yahoo Finance OHLCV</p>
+  <p class="gen" id="gen" data-built="${generatedAt.toISOString()}">Built ${esc(builtLabel(generatedAt))} ET &middot; measured from Yahoo Finance OHLCV <span class="fresh" id="fresh" hidden></span></p>
+  <script>${FRESHNESS_JS}</script>
   <div class="views">
     <button type="button" class="viewbtn on" data-view="watchlist">Watchlist <i>${ranked.length}</i></button>
     <button type="button" class="viewbtn" data-view="movers">Movers board <i>${input.movers.length}</i></button>

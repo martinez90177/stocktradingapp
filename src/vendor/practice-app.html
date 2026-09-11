@@ -37,6 +37,11 @@ input,select{background:var(--p2);border:1px solid var(--line2);border-radius:8p
 .clk{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--dim);text-align:right;line-height:1.3;}
 .ohlc{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:5px;height:14px;white-space:nowrap;overflow:hidden;}
 .ohlc b{color:var(--text);font-weight:500;}
+.clkx{font-size:10px;}
+.sessrow{display:flex;gap:7px;align-items:center;margin-top:8px;}
+.ssel{flex:0 1 240px;min-width:0;width:auto;min-height:34px;padding:0 10px;font-size:12.5px;}
+.sbtn{flex:0 0 auto;min-height:34px;padding:0 12px;font-size:12.5px;white-space:nowrap;}
+.sbtn.sprim{border-color:var(--acc);}
 
 .tfbar{display:flex;gap:5px;overflow-x:auto;padding:8px 12px 6px;scrollbar-width:none;
   border-bottom:1px solid var(--line);background:var(--bg);}
@@ -171,10 +176,15 @@ footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-h
 
 <div class="top">
   <div class="row1">
-    <select class="tksel" id="tk"></select>
+    <select class="tksel" id="tk" title="Change ticker (loads a new session)"></select>
     <span class="px" id="px">—</span>
     <span class="chg u" id="chg">—</span>
-    <div class="clk"><span id="clk">9:45</span><br><span id="sub" style="font-size:10px">5m · live</span><br><span id="sess" style="font-size:10px"></span></div>
+    <div class="clk"><span id="clk">9:45</span><span class="clkx"><br><span id="sub">5m · live</span><br><span id="sess"></span></span></div>
+  </div>
+  <div class="sessrow">
+    <select id="sdate" class="ssel" title="Which recorded day to practise"></select>
+    <button id="sRestart" class="sbtn" title="Start this same day again from 9:45">↺ Restart</button>
+    <button id="sNew" class="sbtn sprim" title="Load a different recorded day">New day</button>
   </div>
   <div class="ohlc" id="ohlc"></div>
 </div>
@@ -410,6 +420,9 @@ function init(ticker,regime,vm,seed,replayPick){
   }
   const tkEl=document.getElementById('tk');
   if(tkEl&&ticker&&tkEl.value!==ticker)tkEl.value=ticker;
+  // Chart and ticket preferences carry over. Losing RSI, the chart type and the
+  // timeframe every time you load a new day was a reset nobody asked for.
+  const keep=S&&S.ind?{ind:S.ind,ctype:S.ctype,speed:S.speed,tf:S.tf,mode:S.mode,oType:S.oType,tab:S.tab}:null;
   S={ticker,regime,reg,vm,seed:sd,mins,dates,cursor:OR_MIN,tf:'5m',replay:live,
     or:null,fib:null,brk:null,brkMin:null,
     mode:'options',optType:'call',strike:null,exDays:0,
@@ -426,8 +439,10 @@ function init(ticker,regime,vm,seed,replayPick){
     // bodies read at a glance instead of as a hairline. Zoom out for context.
     view:{right:null,count:window.innerWidth<600?32:54},yMan:null,
     hover:null,cache:{}};
+  if(keep)Object.assign(S,keep);
   setRange();
   renderBadges();
+  renderSessRow();
   S.strike=Math.round(price()/cfg(ticker).inc)*cfg(ticker).inc;
   const sessEl=document.getElementById('sess');
   if(sessEl)sessEl.textContent=live?live.date:'generated';
@@ -478,6 +493,7 @@ function tfMin(){return TFS.find(t=>t.k===S.tf).m;}
 function lbl(day,m){const h=Math.floor((570+m)/60),mm=(570+m)%60;
   const t=(h>12?h-12:h)+':'+String(mm).padStart(2,'0');
   if(day===HIST)return t;const d=S.dates[day];return (d.getMonth()+1)+'/'+d.getDate()+' '+t;}
+function tlbl(m){const h=Math.floor((570+m)/60),mm=(570+m)%60;return (h>12?h-12:h)+':'+String(mm).padStart(2,'0');}
 function dayLbl(day){if(day===HIST)return 'today';const d=S.dates[day];return (d.getMonth()+1)+'/'+d.getDate();}
 
 function bars(){
@@ -778,15 +794,26 @@ function resize(){
 window.addEventListener('resize',resize);
 window.addEventListener('orientationchange',()=>setTimeout(resize,220));
 
+/* ============ chart text ============ */
+// TradingView draws its axes in the system UI face at about 12px, in a light
+// grey. This chart used 10px monospace in a mid grey (#5a6472), which was the
+// hardest thing on the page to read, and worst on a phone. The system face is
+// also always there offline, with no font load to wait for before drawing.
+const CFAM='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+const AXIS='#b4bdca';
+function fs(){return G.w<600?13:12;}
+function cfont(px,wt){return (wt||500)+' '+px+'px '+CFAM;}
+/** Round price steps (0.25, 0.5, 1, 2.5 ...) rather than five arbitrary splits. */
+function niceStep(raw){
+  const p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p;
+  return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p;
+}
+
 function scale(){
   const B=bars();if(!B.length)return null;
-  // RGAP holds empty chart between the newest candle and the price axis, so
-  // the last bars are not jammed under the level labels drawn along that edge.
-  // RGAP holds empty chart between the newest candle and the price axis. It has
-  // to clear the level labels drawn along that edge (261.8%, PDH and friends),
-  // which are right-aligned to the axis -- a gap narrower than the widest label
-  // just moves the collision rather than fixing it.
-  const padL=6,padR=64,padT=8,padB=22,RGAP=G.w<600?48:56;
+  const F=fs();
+  // Bottom padding holds the time labels, so it grows with the type.
+  const padL=6,padT=8,padB=F+12;
   const volH=S.ind.vol?Math.round(G.h*.15):0;
   const rsiH=S.ind.rsi?Math.round(G.h*.17):0;
   const ph=G.h-padT-padB-volH-(volH?5:0)-rsiH-(rsiH?5:0);
@@ -803,6 +830,15 @@ function scale(){
     if(S.pos)[S.pos.stopU,S.pos.targetU].forEach(v=>{if(v!=null){lo=Math.min(lo,v);hi=Math.max(hi,v);}});
     const pd=(hi-lo)*.07||1;lo-=pd;hi+=pd;
   }
+  // The price axis is as wide as its widest label rather than a fixed 64px:
+  // larger type needs a wider axis, and a guess that is too small clips digits.
+  cx.font=cfont(F,500);
+  const padR=Math.max(50,Math.ceil(Math.max(cx.measureText(hi.toFixed(2)).width,cx.measureText(lo.toFixed(2)).width))+18);
+  // RGAP keeps empty chart between the newest candle and the axis. Its only job
+  // is to clear the auto-fib labels, which are right-aligned to the axis; with
+  // those off, the candles get the room instead.
+  cx.font=cfont(F-1,600);
+  const RGAP=S.ind.fib?Math.ceil(cx.measureText('-161.8%').width)+18:16;
   const cw=(G.w-padL-padR-RGAP)/count;
   G={...G,padL,padR,padT,padB,volH,rsiH,ph,lo,hi,cw,left,right,count,B,RGAP,
     x:i=>padL+(i-left+.5)*cw,
@@ -813,18 +849,29 @@ function scale(){
 }
 function ln(x1,y1,x2,y2,c,w,d){cx.save();cx.strokeStyle=c;cx.lineWidth=w||1;if(d)cx.setLineDash(d);
   cx.beginPath();cx.moveTo(x1,y1);cx.lineTo(x2,y2);cx.stroke();cx.restore();}
-function tag(t,x,y,c,bg){cx.font='10px ui-monospace,monospace';
-  const w=cx.measureText(t).width+7;cx.fillStyle=bg||'rgba(8,11,16,.88)';cx.fillRect(x,y-7.5,w,13);
-  cx.fillStyle=c;cx.fillText(t,x+3.5,y+2);return w;}
+function tag(t,x,y,c,bg){const F=fs();cx.save();cx.font=cfont(F-1,600);
+  const w=cx.measureText(t).width+10,hh=F+6;
+  cx.fillStyle=bg||'rgba(8,11,16,.9)';cx.fillRect(x,y-hh/2,w,hh);
+  cx.fillStyle=c;cx.textBaseline='middle';cx.fillText(t,x+5,y+.5);cx.restore();return w;}
 
 function draw(){
   if(!S.mins||!scale())return;
   const {w,h,padL,padR,padT,ph,volH,rsiH,cw,B,left,right}=G;
   cx.clearRect(0,0,w,h);cx.fillStyle='#0a0e14';cx.fillRect(0,0,w,h);
-  cx.font='10px ui-monospace,monospace';
-  // price grid
-  for(let k=0;k<=4;k++){const p=G.lo+(G.hi-G.lo)*k/4,y=G.y(p);
-    ln(padL,y,w-padR,y,'#141b24',1);cx.fillStyle='#5a6472';cx.fillText(p.toFixed(2),w-padR+5,y+3);}
+  const F=fs();
+  // Price grid on round steps, spaced so the labels never crowd each other.
+  cx.save();cx.font=cfont(F,500);cx.textBaseline='middle';cx.fillStyle=AXIS;
+  {const step=niceStep((G.hi-G.lo)/Math.max(2,Math.floor(ph/(F*2.8))));
+   // The last-price tag is drawn over the axis later; a grid label under it
+   // would show through as a second number jammed against the first.
+   const lb=B[B.length-1],lastY=lb&&B.length-1<=right?G.y(lb.c):null;
+   for(let v=Math.ceil(G.lo/step)*step;v<=G.hi+1e-9;v+=step){
+     const p=Math.round(v/step)*step,y=G.y(p);
+     if(y<padT+F/2||y>padT+ph-F/2)continue;
+     ln(padL,y,w-padR,y,'#141b24',1);
+     if(lastY!=null&&Math.abs(y-lastY)<F+4)continue;
+     cx.fillText(p.toFixed(2),w-padR+7,y);}}
+  cx.restore();
   // axis affordances
   ln(w-padR+.5,padT,w-padR+.5,padT+ph,'#1c2430',1);
   ln(padL,padT+ph+volH+(volH?5:0)+G.rsiH+(G.rsiH?5:0)+.5,w-padR,padT+ph+volH+(volH?5:0)+G.rsiH+(G.rsiH?5:0)+.5,'#1c2430',1);
@@ -833,9 +880,28 @@ function draw(){
   for(let i=left;i<=right;i++){const b=B[i];
     if(prevDay!==null&&b.day!==prevDay)ln(G.x(i)-cw/2,padT,G.x(i)-cw/2,padT+ph,'#222d3a',1);
     prevDay=b.day;}
-  const st=Math.max(1,Math.ceil((right-left+1)/5));
-  for(let i=left;i<=right;i+=st){const b=B[i];cx.fillStyle='#5a6472';
-    cx.fillText(tfMin()==='D'?dayLbl(b.day):lbl(b.day,b.m),G.x(i)-14,h-6);}
+  // Time axis, TradingView style: labels are anchored to absolute bars so they
+  // do not jitter while you pan, spaced by their measured width so they cannot
+  // overlap, and the date is shown where a new day starts rather than stuck on
+  // the front of every label.
+  cx.save();cx.font=cfont(F-1,500);cx.fillStyle=AXIS;cx.textAlign='center';
+  {const slot=cx.measureText('12:00').width+26,every=Math.max(1,Math.ceil(slot/cw));
+   const isD=tfMin()==='D',cand=[];
+   for(let i=left;i<=right;i++){const b=B[i];
+     const newDay=!isD&&i>0&&B[i-1].day!==b.day;
+     if(newDay||i%every===0)cand.push({i,newDay,t:isD||newDay?dayLbl(b.day):tlbl(b.m)});}
+   // Dates first. Drawn left to right, an earlier time label could take the
+   // space and knock out the date of the day you are actually trading.
+   cand.sort((a,b)=>b.newDay-a.newDay);
+   const taken=[];
+   for(const c of cand){
+     cx.font=cfont(F-1,c.newDay?700:500);
+     const X=G.x(c.i),tw=cx.measureText(c.t).width,l=X-tw/2,r=X+tw/2;
+     if(l<padL||r>w-padR)continue;
+     if(taken.some(q=>l<q[1]+10&&r>q[0]-10))continue;
+     taken.push([l,r]);
+     cx.fillStyle=c.newDay?'#e9edf5':AXIS;cx.fillText(c.t,X,h-8);}}
+  cx.restore();
 
   const todayVis=B.slice(left,right+1).some(b=>b.day===HISTN);
   if(S.ind.or&&S.or&&todayVis){
@@ -854,13 +920,13 @@ function draw(){
       const isExt=k.includes('127')||k.includes('161')||k.includes('261')||k.startsWith('-');
       const edge=k==='0%'||k==='100%';
       if(!edge)ln(padL,y,w-padR,y,isExt?'rgba(201,162,39,.45)':'rgba(90,100,114,.4)',1,isExt?[2,3]:[4,4]);
-      if(placed.some(p=>Math.abs(p-y)<12))return;
+      if(placed.some(p=>Math.abs(p-y)<F+6))return;
       placed.push(y);
-      cx.font='9.5px ui-monospace,monospace';
-      const t=k;const tw=cx.measureText(t).width+6;
-      cx.fillStyle='rgba(10,14,20,.92)';cx.fillRect(w-padR-tw-2,y-6.5,tw,12);
-      cx.fillStyle=edge?'#6d9cf5':isExt?'#c9a227':'#7b8695';
-      cx.fillText(t,w-padR-tw+1,y+2.5);
+      cx.save();cx.font=cfont(F-1,600);cx.textBaseline='middle';
+      const t=k;const tw=cx.measureText(t).width+10;
+      cx.fillStyle='rgba(10,14,20,.92)';cx.fillRect(w-padR-tw-2,y-(F+6)/2,tw,F+6);
+      cx.fillStyle=edge?'#8fb3ff':isExt?'#e0b73a':'#aab3c0';
+      cx.fillText(t,w-padR-tw+3,y+.5);cx.restore();
     });
   }
   const series=(a,col)=>{cx.save();cx.strokeStyle=col;cx.lineWidth=1.3;cx.beginPath();let on=false;
@@ -950,8 +1016,8 @@ function draw(){
       on?cx.lineTo(X,Y):(cx.moveTo(X,Y),on=true);}
     cx.stroke();cx.restore();
     const lastR=rs[right];
-    cx.fillStyle='#7b8695';cx.font='9.5px ui-monospace,monospace';
-    cx.fillText('RSI 14'+(lastR==null?'':'  '+lastR.toFixed(1)),padL+3,rt+10);
+    cx.fillStyle=AXIS;cx.font=cfont(F-2,600);
+    cx.fillText('RSI 14'+(lastR==null?'':'  '+lastR.toFixed(1)),padL+4,rt+F);
   }
 
   S.orders.forEach(o=>{
@@ -998,7 +1064,7 @@ function shape(d,prev){
   else if(d.t==='fib'){const r=d.p2-d.p1;const placed=[];
     [...LV,1.272,1.618].forEach(p=>{const v=d.p1+r*p,Y=G.y(v),ext=p>1;
       ln(Math.min(x1,x2),Y,G.w-G.padR,Y,ext?'rgba(201,162,39,.5)':'rgba(180,143,173,.5)',1,[3,3]);
-      if(placed.some(q=>Math.abs(q-Y)<12))return;placed.push(Y);
+      if(placed.some(q=>Math.abs(q-Y)<fs()+6))return;placed.push(Y);
       tag((p*100).toFixed(1).replace('.0','')+'% '+v.toFixed(2),Math.min(x1,x2)+2,Y-1,ext?'#c9a227':'#b48ead');});
     ln(x1,y1,x2,y2,'rgba(180,143,173,.4)',1);}
   else if(d.t==='measure'){const df=d.p2-d.p1,pc=df/d.p1*100;
@@ -1457,9 +1523,8 @@ function wireSetup(){
     const sym=$('rsym').value,ds=REPLAY.filter(r=>r.symbol===sym).map(r=>r.date).sort().reverse();
     $('rdate').innerHTML=ds.map(d=>'<option value="'+d+'">'+d+'</option>').join('');
   });
-  $('loadS')&&($('loadS').onclick=()=>{stopAuto();
-    init($('rsym').value,S.regime,S.vm,undefined,{symbol:$('rsym').value,date:$('rdate').value});});
-  $('anyS')&&($('anyS').onclick=()=>{stopAuto();const p=randomReplay();init(p?p.symbol:S.ticker,S.regime,S.vm,undefined,p);});
+  $('loadS')&&($('loadS').onclick=()=>startSession($('rsym').value,{symbol:$('rsym').value,date:$('rdate').value}));
+  $('anyS')&&($('anyS').onclick=()=>{const p=randomReplay();startSession(p?p.symbol:S.ticker,p);});
   $('jgo')&&($('jgo').onclick=()=>{
     const parts=(val('jt')||'').trim().split(':');
     const mm=parseInt(parts[1],10);
@@ -1478,17 +1543,57 @@ function wireSetup(){
     log(lbl(HIST,S.cursor)+' — jumped forward.','hl');
     renderAll();});
   $('sendJ')&&($('sendJ').onclick=()=>flushJournal('manual'));
-  $('newS').onclick=()=>{stopAuto();init($('tk').value,$('regime').value,parseFloat($('vm').value),undefined,null);};
-  $('replayS').onclick=()=>{stopAuto();
-    init(S.ticker,S.regime,S.vm,S.seed,S.replay?{symbol:S.ticker,date:S.replay.date}:null);};
+  $('newS').onclick=()=>startSession($('tk').value,null,{regime:$('regime').value,vm:parseFloat($('vm').value)});
+  $('replayS').onclick=()=>startSession(S.ticker,S.replay?{symbol:S.ticker,date:S.replay.date}:null,{seed:S.seed});
   $('cp').onclick=()=>{navigator.clipboard?.writeText(S.ticker+'-'+S.seed);log('Session code copied.','hl');};
+}
+
+/* ================= sessions ================= */
+function dayName(d){const x=new Date(d+'T12:00:00Z');
+  return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][x.getUTCDay()]+' '+(x.getUTCMonth()+1)+'/'+x.getUTCDate();}
+/** The day picker in the header: recorded dates for this ticker, newest first. */
+function renderSessRow(){
+  const sel=$('sdate');if(!sel)return;
+  if(!REPLAY.length){sel.innerHTML='<option>Generated day</option>';sel.disabled=true;return;}
+  const ds=REPLAY.filter(r=>r.symbol===S.ticker).map(r=>r.date).sort().reverse();
+  sel.disabled=false;
+  sel.innerHTML=ds.map(d=>{
+    // A day with nothing recorded before it opens on a handful of candles with
+    // empty higher timeframes. Still pickable, but labelled so it is no surprise.
+    const depth=REPLAY.filter(x=>x.symbol===S.ticker&&x.date<d).length;
+    const note=depth===0?' · no history':depth<MIN_HIST?' · thin history':'';
+    return '<option value="'+d+'"'+(S.replay&&S.replay.date===d?' selected':'')+'>'+dayName(d)+note+'</option>';
+  }).join('');
+}
+/**
+ * Every way of leaving a session comes through here: a ticker change, a new
+ * day, a restart, or the Session pane. Closed practice trades wait in a queue
+ * until the bell so a rewind can unmake them, which means starting over would
+ * otherwise discard trades that genuinely closed. They are sent first. An open
+ * position never closed, so it is not a trade; leaving one behind asks first.
+ */
+function startSession(ticker,pick,o){
+  o=o||{};
+  if(S.pos&&!confirm('You have an open position. Leave it and start a new session?'))return false;
+  stopAuto();
+  if(S.pendingJournal&&S.pendingJournal.length)flushJournal('session change');
+  init(ticker,o.regime??S.regime,o.vm??S.vm,o.seed,pick);
+  return true;
 }
 
 /* ================= wiring ================= */
 const tkSel=$('tk');
 const PICKABLE=REPLAY.length?[...new Set(REPLAY.map(r=>r.symbol))].sort():Object.keys(TICKERS);
 PICKABLE.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;tkSel.appendChild(o);});
-tkSel.onchange=()=>{stopAuto();init(tkSel.value,S.regime,S.vm);};
+tkSel.onchange=()=>{if(!startSession(tkSel.value))tkSel.value=S.ticker;};
+$('sdate').onchange=e=>{if(!startSession(S.ticker,{symbol:S.ticker,date:e.target.value}))renderSessRow();};
+$('sRestart').onclick=()=>startSession(S.ticker,S.replay?{symbol:S.ticker,date:S.replay.date}:null,{seed:S.seed});
+$('sNew').onclick=()=>{
+  // A different day for the same ticker, not a reroll that lands on this one.
+  const cur=S.replay&&S.replay.date;let p=randomReplay(S.ticker),k=0;
+  while(p&&cur&&p.date===cur&&k++<12)p=randomReplay(S.ticker);
+  startSession(p?p.symbol:S.ticker,p);
+};
 const tfbar=$('tfbar');
 TFS.forEach(t=>{const b=document.createElement('button');b.className='tf'+(t.k==='5m'?' on':'');b.textContent=t.k;
   b.onclick=()=>{document.querySelectorAll('.tf').forEach(x=>x.classList.remove('on'));b.classList.add('on');

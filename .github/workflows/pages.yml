@@ -11,9 +11,23 @@ on:
   push:
     branches: [main]
   schedule:
-    # 12:20 and 13:25 UTC == 8:20am and 9:25am US Eastern during daylight time.
-    # GitHub runs cron in UTC only, so these shift by an hour when the US
-    # changes clocks; adjust if the timing matters to you.
+    # GitHub starts scheduled runs late on this repo: in its first week the
+    # 8:20am and 9:25am ET runs began between 12:31pm and 2:17pm, every day.
+    # A morning cron cannot be relied on to land before the open.
+    #
+    # So the build that matters runs in the evening, after the close. Even
+    # five hours late it finishes long before the next open, and the levels,
+    # fibs, patterns and grades all come from the completed session. Times are
+    # UTC, chosen to stay after the 4pm close in both daylight and standard time:
+    #   22:37 UTC Mon-Fri  = 6:37pm EDT / 5:37pm EST
+    #   01:07 UTC Tue-Sat  = 9:07pm EDT / 8:07pm EST, the same ET evening
+    - cron: "37 22 * * 1-5"
+    - cron: "7 1 * * 2-6"
+    # Morning runs still try to add the premarket. The early ones are there
+    # because a start several hours late can still finish before 9:30; the
+    # report labels which kind of build you are looking at.
+    - cron: "7 8 * * 1-5"
+    - cron: "37 9 * * 1-5"
     - cron: "20 12 * * 1-5"
     - cron: "25 13 * * 1-5"
 

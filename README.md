@@ -12,7 +12,8 @@ Runs on Node alone. **No `npm install`, no dependencies, no build step.**
 ## The hosted site
 
 Published to GitHub Pages on every push to `main`, and rebuilt on GitHub's own
-machines at 8:20am and 9:25am US Eastern each weekday:
+machines every weekday evening after the close, with further attempts through
+the early morning:
 
 **https://martinez90177.github.io/stocktradingapp/**
 
@@ -25,6 +26,21 @@ machines at 8:20am and 9:25am US Eastern each weekday:
 Save the first link to a phone home screen and it behaves like an app. Because
 the rebuild runs on GitHub, the site is current each morning whether or not this
 computer is switched on -- which the local Windows scheduled task cannot do.
+
+**Why evenings.** GitHub starts scheduled jobs late on this repository -- in its
+first week, the 8:20am and 9:25am runs began between 12:31pm and 2:17pm every
+day, so the link showed the previous afternoon's report at the open. An evening
+build can be five hours late and still land long before the next open, and
+everything that comes from the completed session (levels, fibs, patterns,
+grades, the prior-session read) is correct in it. The morning runs remain, to
+add the premarket when GitHub gets to them in time.
+
+**The report says which kind of build it is.** Next to the build time, a label
+computed in the browser reads *Includes today's premarket*, *Levels from the
+last close · premarket not in yet*, or *Out of date* -- with its age. It is
+worked out from the clock when you open the page, so it stays true on a copy
+your phone cached yesterday. Market holidays are not modelled: the day after
+one reads a day staler than it is, which errs in the safe direction.
 
 Two things are deliberate about what does and does not get published.
 `journal.json` is gitignored, so the hosted journal builds empty and real trade

@@ -60,17 +60,34 @@ input,select{background:var(--p2);border:1px solid var(--line2);border-radius:8p
 .top{position:sticky;top:0;z-index:20;background:rgba(8,11,17,.94);backdrop-filter:blur(10px);
   border-bottom:1px solid var(--line);padding:10px 14px 9px}
 .row1{display:flex;align-items:center;gap:11px;max-width:1300px;margin:0 auto}
-.tksel{background:transparent;border:none;font-family:var(--sans);font-size:20px;font-weight:700;letter-spacing:-.4px;
-  padding:0 20px 0 0;min-height:0;width:auto;-webkit-appearance:none;appearance:none;
+/* The ticker used to be bare text with a faint caret -- it read as a heading,
+   so nobody found out it could be changed. It is a bordered control now. */
+.tksel{background-color:var(--p2);border:1px solid var(--line2);border-radius:9px;font-family:var(--sans);font-size:19px;
+  font-weight:700;letter-spacing:-.3px;padding:3px 28px 3px 11px;min-height:0;width:auto;cursor:pointer;
+  -webkit-appearance:none;appearance:none;
   background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
-  background-position:calc(100% - 8px) 10px,calc(100% - 3px) 10px;background-size:5px 5px;background-repeat:no-repeat}
+  background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.tksel:hover{border-color:var(--acc)}
 .px{font-size:20px;font-weight:600;letter-spacing:-.4px}
 .chg{font-size:12px;padding:2px 8px;border-radius:5px;font-weight:600}
 .chg.u{color:var(--up);background:rgba(45,212,167,.14)}
 .chg.d{color:var(--dn);background:rgba(244,82,95,.14)}
-.clk{margin-left:auto;font-size:12px;color:var(--dim);text-align:right;line-height:1.3}
-.ohlc{font-size:11px;color:var(--dim);margin:6px auto 0;max-width:1300px;height:14px;white-space:nowrap;overflow:hidden}
+.clk{margin-left:auto;font-size:12px;color:var(--dim);text-align:right;line-height:1.3;white-space:nowrap}
+.clk #clk{color:var(--text);font-weight:600;font-size:13px}
+.clkx{font-size:10.5px}
+.ohlc{font-size:12.5px;color:#a3adbb;margin:8px auto 0;max-width:1300px;height:17px;white-space:nowrap;overflow:hidden}
 .ohlc b{color:var(--text);font-weight:600}
+
+/* Restart / new day / which day: in the header, where they can be found. */
+.sessrow{display:flex;gap:7px;align-items:center;max-width:1300px;margin:9px auto 0}
+.ssel{flex:0 1 240px;min-width:0;width:auto;min-height:34px;padding:0 28px 0 11px;font-family:var(--mono);font-size:12.5px;
+  border-radius:8px;background-color:var(--p2);border:1px solid var(--line2);color:var(--text);cursor:pointer;
+  -webkit-appearance:none;appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.ssel:disabled{opacity:.5;cursor:default}
+.sbtn{flex:0 0 auto;min-height:34px;padding:0 13px;font-size:12.5px;white-space:nowrap}
+.sbtn.sprim{background:rgba(123,108,246,.16);border-color:var(--acc);color:var(--text)}
 
 .tfbar{display:flex;gap:5px;overflow-x:auto;padding:9px 14px 8px;scrollbar-width:none;
   border-bottom:1px solid var(--line);background:var(--bg);max-width:1300px;margin:0 auto}
@@ -203,6 +220,15 @@ footer{color:var(--dim2);font-size:11px;text-align:center;padding:0 20px 28px;li
     background-position:calc(100% - 9px) 13px,calc(100% - 5px) 13px}
   /* nothing covers the top-left now, so auto fit leaves the volume bars alone */
   .fitbtn{right:auto;left:10px;top:10px;bottom:auto}
+  /* The day now lives in the picker and the timeframe in the bar below, so the
+     four-line clock block that wrapped beside the price comes down to the time. */
+  .clkx{display:none}
+  .row1{gap:9px}
+  .tksel{font-size:17px;padding:3px 26px 3px 10px}
+  .px{font-size:18px}
+  .chg{font-size:11px;padding:2px 6px;white-space:nowrap}
+  .ssel{flex:1 1 auto}
+  .ohlc{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){button:active:not(:disabled){transform:none}}
 `;
