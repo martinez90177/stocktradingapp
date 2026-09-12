@@ -404,13 +404,15 @@ per ticker per run**, and a week the computer was off fills itself in, as long
 as it is within those 30 days. As of Sep 10 every practice ticker has **20
 recorded days**, back to Aug 13.
 
-The page embeds the newest **12 days per ticker** -- counted per ticker, because
-a total of 30 across seven tickers had left about four days each. So the day
-picker offers twelve, and the newest day has eleven real days of history behind
-it for the daily and 4H views. The oldest one or two are labelled thin or no
-history. The bars are embedded as whole cents from the previous close, which is
-exact for two-decimal prices and about half the size: twelve days of seven
-tickers make a 900 KB page instead of 1.5 MB. Decoding was checked against the
+The page embeds the newest **12 days per ticker to trade** -- counted per
+ticker, because a total of 30 across seven tickers had left about four days
+each -- and up to **10 older days behind them as history only**, carried at
+5-minute bars so the daily and 4H views behind even the oldest pickable day
+show a real fortnight. It used to embed the twelve and nothing else, so the
+twelfth opened on three candles. History-only days are not in the picker and
+carry no extended hours. The bars are embedded as whole cents from the previous
+close, which is exact for two-decimal prices and about half the size; the
+history days are a fifth of that again. Decoding was checked against the
 recorded files, value for value.
 
 Recorded: every ticker already in the library plus the first six on the

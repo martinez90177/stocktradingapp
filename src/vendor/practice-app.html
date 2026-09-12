@@ -726,8 +726,14 @@ function barsOf(r){
     const O=pc+z[i],H=O+z[i+1],L=O-z[i+2],C=O+z[i+3];
     out.push([O/100,H/100,L/100,C/100,z[i+4]]);pc=C;
   }
+  // A history-only day comes in 5-minute bars. The engine counts a day as 390
+  // minutes, so each is repeated five times: the 5m view and everything above
+  // it is exact, and the 1m view of a day nobody trades is five flat bars.
+  if(r.d===5){const m=[];for(const b of out)for(let k=0;k<5;k++)m.push([b[0],b[1],b[2],b[3],Math.round(b[4]/5)]);return m;}
   return out;
 }
+/** The days that can be traded: the newest twelve of each ticker. Older ones are history behind them. */
+const PICK=(window.MP_SESSIONS||[]).filter(r=>!r.hist);
 /**
  * A session's extended hours as bar objects, from the raw form ([m,o,h,l,c,v]
  * rows) or the compact one practice.ts embeds. Null where none were kept.
@@ -764,7 +770,7 @@ function fromReplay(pick){
  */
 const MIN_HIST=2;
 function randomReplay(symbol){
-  const pool=symbol?REPLAY.filter(r=>r.symbol===symbol):REPLAY;
+  const pool=symbol?PICK.filter(r=>r.symbol===symbol):PICK;
   if(!pool.length)return null;
   // A day with nothing recorded behind it has no context: the daily and 4H views
   // are empty, prior-session levels do not exist, and the chart opens on three
@@ -2232,8 +2238,8 @@ function paneCoach(){
   return out.join('')+lesson;
 }
 function paneSetup(){
-  const syms=[...new Set(REPLAY.map(r=>r.symbol))].sort();
-  const dates=REPLAY.filter(r=>r.symbol===S.ticker).map(r=>r.date).sort().reverse();
+  const syms=[...new Set(PICK.map(r=>r.symbol))].sort();
+  const dates=PICK.filter(r=>r.symbol===S.ticker).map(r=>r.date).sort().reverse();
   const closed=S.trades.length;
   const net=S.trades.reduce((a,t)=>a+t.total,0);
   const wins=S.trades.filter(t=>t.total>0).length;
@@ -2249,7 +2255,7 @@ function paneSetup(){
     <button id="loadS" style="flex:1;background:var(--acc);border-color:var(--acc);color:#06090f;font-weight:600">Load that day</button>
     <button id="anyS" style="flex:1">Surprise me</button>
   </div>
-  <div class="empty" style="margin-bottom:4px">${REPLAY.length} recorded sessions across ${syms.length} symbols. Every candle is a measured 1-minute bar.</div>`
+  <div class="empty" style="margin-bottom:4px">${PICK.length} days to trade across ${syms.length} symbols, with ${REPLAY.length-PICK.length} older days behind them as history. Every candle is a measured bar.</div>`
   :`<div class="empty">No recorded sessions are embedded in this build, so days are generated. Run the tool with replay harvesting on to collect real ones.</div>`}
 
   <h3 class="sp">Jump to a time</h3>
@@ -2296,7 +2302,7 @@ function wireSetup(){
   $('regime').value=S.regime;$('vm').value=String(S.vm);
   $('rsym')&&($('rsym').onchange=()=>{
     // Dates belong to the chosen symbol, so the list has to follow it.
-    const sym=$('rsym').value,ds=REPLAY.filter(r=>r.symbol===sym).map(r=>r.date).sort().reverse();
+    const sym=$('rsym').value,ds=PICK.filter(r=>r.symbol===sym).map(r=>r.date).sort().reverse();
     $('rdate').innerHTML=ds.map(d=>'<option value="'+d+'">'+d+'</option>').join('');
   });
   $('loadS')&&($('loadS').onclick=()=>startSession($('rsym').value,{symbol:$('rsym').value,date:$('rdate').value}));
@@ -3154,7 +3160,7 @@ function renderSessRow(){
   const sel=$('sdate');if(!sel)return;
   if(!REPLAY.length){sel.innerHTML='<option>Generated day</option>';sel.disabled=true;return;}
   if(S.blind){sel.innerHTML='<option>Blind day · revealed at the bell</option>';sel.disabled=true;return;}
-  const ds=REPLAY.filter(r=>r.symbol===S.ticker).map(r=>r.date).sort().reverse();
+  const ds=PICK.filter(r=>r.symbol===S.ticker).map(r=>r.date).sort().reverse();
   sel.disabled=false;
   sel.innerHTML=ds.map(d=>{
     // A day with nothing recorded before it opens on a handful of candles with
@@ -3183,7 +3189,7 @@ function startSession(ticker,pick,o){
 
 /* ================= wiring ================= */
 const tkSel=$('tk');
-const PICKABLE=REPLAY.length?[...new Set(REPLAY.map(r=>r.symbol))].sort():Object.keys(TICKERS);
+const PICKABLE=PICK.length?[...new Set(PICK.map(r=>r.symbol))].sort():Object.keys(TICKERS);
 PICKABLE.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;tkSel.appendChild(o);});
 tkSel.onchange=()=>{if(!startSession(tkSel.value))tkSel.value=S.ticker;};
 $('sdate').onchange=e=>{if(!startSession(S.ticker,{symbol:S.ticker,date:e.target.value}))renderSessRow();};

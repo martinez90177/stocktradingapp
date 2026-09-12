@@ -245,7 +245,7 @@ async function main() {
   }
 
   try {
-    const sessions = await loadForEmbed(SESSIONS, 12);
+    const sessions = await loadForEmbed(SESSIONS, 22);   // 12 to trade, the rest behind them as history
     const VOL = join(ROOT, "volatility");
     const practice = await renderPractice(join(ROOT, "src", "vendor", "practice-app.html"), "latest.html", sessions, {
       embed: await loadVolForEmbed(VOL, sessions.map((s) => s.date)),

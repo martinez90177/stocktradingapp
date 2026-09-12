@@ -33,7 +33,7 @@ await mkdir(SITE, { recursive: true });
 // The report lands at index.html, so the practice page links back to that name
 // rather than to latest.html.
 await writeFile(join(SITE, "index.html"), report, "utf8");
-const sessions = await loadForEmbed(join(HERE, "sessions"), 12);
+const sessions = await loadForEmbed(join(HERE, "sessions"), 22);   // 12 to trade, the rest behind them as history
 await writeFile(
   join(SITE, "practice.html"),
   await renderPractice(

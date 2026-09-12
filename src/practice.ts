@@ -502,16 +502,26 @@ const esc = (s: string) =>
  * of seven tickers would otherwise add about a megabyte to a page opened on
  * a phone.
  */
-function compactSession(s: ReplaySession) {
+function compactSession(s: ReplaySession, hist = false) {
   const z: number[] = [];
   const cents = (n: number) => Math.round(n * 100);
   const base = cents(s.bars[0][0]);
   let pc = base;
-  for (const [o, h, l, c, v] of s.bars) {
+  // A history-only day is carried at 5-minute bars: the daily and 4H views
+  // behind a pickable day need the shape of the day, not every minute of it,
+  // and this is a fifth of the bytes.
+  const rows: ReplaySession["bars"] = hist
+    ? Array.from({ length: s.bars.length / 5 }, (_, i) => {
+        const g = s.bars.slice(i * 5, i * 5 + 5);
+        return [g[0][0], Math.max(...g.map((b) => b[1])), Math.min(...g.map((b) => b[2])), g[g.length - 1][3], g.reduce((a, b) => a + b[4], 0)];
+      })
+    : s.bars;
+  for (const [o, h, l, c, v] of rows) {
     const O = cents(o), C = cents(c);
     z.push(O - pc, cents(h) - O, O - cents(l), C - O, Math.round(v));
     pc = C;
   }
+  if (hist) return { symbol: s.symbol, date: s.date, carried: s.carried, p: base, z, d: 5, hist: true };
   // Extended hours the same way, in sixes: the 5-minute slot, then the open
   // as cents from the previous close (the first one absolute), and the rest.
   const ext = (rows: ExtBar[]) => {
@@ -536,6 +546,20 @@ export async function renderPractice(
 ): Promise<string> {
   const src = await readFile(vendorPath, "utf8");
 
+  // The newest `PICKABLE` days of each ticker can be traded; anything older
+  // that is embedded is history only, so the oldest pickable day still has a
+  // real fortnight behind it on the daily and 4H views. It used to embed the
+  // twelve and nothing else, and the twelfth opened on three candles.
+  const PICKABLE = 12;
+  const rank = new Map<string, number>();
+  for (const s of sessions.slice().sort((a, b) => (a.symbol === b.symbol ? b.date.localeCompare(a.date) : a.symbol.localeCompare(b.symbol)))) {
+    const n = rank.get(s.symbol) ?? 0;
+    rank.set(s.symbol, n + 1);
+    (s as ReplaySession & { hist?: boolean }).hist = n >= PICKABLE;
+  }
+  const isHist = (s: ReplaySession) => !!(s as ReplaySession & { hist?: boolean }).hist;
+  const pickable = sessions.filter((s) => !isHist(s));
+
   const bodyOpen = src.search(/<body[^>]*>/i);
   const bodyClose = src.lastIndexOf("</body>");
   if (bodyOpen === -1 || bodyClose === -1) {
@@ -546,7 +570,7 @@ export async function renderPractice(
   // Embedded ahead of the app script, which reads window.MP_SESSIONS on load.
   // JSON.stringify cannot emit "</script>", but a symbol could in principle
   // carry a "<", so the sequence is escaped rather than trusted.
-  const data = `<script>window.MP_SESSIONS=${JSON.stringify(sessions.map(compactSession)).replace(/</g, "\\u003c")};</script>`;
+  const data = `<script>window.MP_SESSIONS=${JSON.stringify(sessions.map((s) => compactSession(s, isHist(s)))).replace(/</g, "\\u003c")};</script>`;
 
   return `<!doctype html>
 <html lang="en"><head>
@@ -557,7 +581,7 @@ export async function renderPractice(
 <title>Practice &middot; Market Prep</title>
 <style>${SKIN}</style>
 </head><body>
-${bannerFor(reportHref, sessions, vol)}
+${bannerFor(reportHref, pickable, vol)}
 ${data}
 ${vol ? `<script>window.MP_VOL=${JSON.stringify(vol.embed)};window.MP_VOLCAL=${JSON.stringify(vol.calibrations).replace(/</g, "\\u003c")};window.MP_EVENTS=${JSON.stringify(vol.events ?? {}).replace(/</g, "\\u003c")};window.MP_RULEBOOK=${JSON.stringify(vol.rulebook ?? null).replace(/</g, "\\u003c")};</script>` : ""}
 ${body}
