@@ -169,6 +169,16 @@ Measure, Erase, Undo, Clear) and has a hover description. Picking a tool, or
 switching an indicator on, shows a short note over the chart saying what it
 does, since a phone has no hover.
 
+**Drawings can be moved.** With the pointer, drag an end of a trend line, fib,
+box or ruler to reshape it, drag its body to move it whole, and drag a price
+level up or down; the selected drawing shows its handles, and Delete removes
+it. A drawing lands where the pointer is rather than on the nearest bar's
+centre, which is what made every line jump into place as it was drawn, and
+the magnet -- ends snapping to a nearby open, high, low or close -- is off
+unless you switch it on, and gentler when you do. After each drawing the
+pointer comes back by itself, so the next drag pans or moves what you just
+drew instead of drawing another.
+
 ### The ticket
 
 **The ticket is where you trade.** The call and the put at the chosen strike sit
@@ -474,9 +484,11 @@ bar forward, because each of its candles depends on the one before it. The
 chips live in that strip on every screen: floated over the candles they
 covered the first hour, and at ten-pixel mono they were the hardest thing on
 the page to read. Any strip wider than its box -- the chips, the timeframes,
-the draw rail, the pane tabs on a phone -- gets **arrows** at the edges that
-scroll it, since a hidden scrollbar is no sign that *Session* and *Rules*
-exist past the edge.
+the draw rail -- gets **arrows** at the edges that scroll it. The pane tabs
+do not scroll at all: all eight sit in view as two rows of four, in the order
+they are reached for -- Trade, Session, Coach, Chain, then Fib, Tape, Journal,
+Rules -- since a strip that scrolled sideways hid Session and Rules past the
+edge, where nobody looked.
 
 Indicator chips sit beside it: EMA 9/20/50, VWAP, Bollinger bands, an **RSI 14
 subpanel**, volume, and magnet snapping for the drawing tools. A **levels**

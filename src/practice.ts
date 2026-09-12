@@ -162,12 +162,15 @@ canvas{display:block;width:100%;touch-action:none}
 .bshort{border-color:rgba(244,82,95,.5);color:var(--dn);background:rgba(244,82,95,.1)}
 
 /* ---- panes ------------------------------------------------------- */
-.tabs{display:flex;gap:4px;overflow-x:auto;padding:12px 0 0;scrollbar-width:none;scroll-behavior:smooth}
-.tabs::-webkit-scrollbar{display:none}
-.tab{flex:0 0 auto;min-height:34px;padding:0 13px;font-size:12.5px;background:transparent;border:1px solid transparent;
-  color:var(--dim);border-radius:8px 8px 0 0;font-weight:600}
-.tab.on{background:var(--panel);border-color:var(--line);border-bottom-color:var(--panel);color:var(--text)}
-.pane{background:var(--panel);border:1px solid var(--line);border-radius:0 10px 10px 10px;margin:0 0 14px;padding:14px;min-height:190px}
+/* Every pane tab in view at once, two rows of four, in the order they are
+   reached for: a strip that scrolled sideways hid Session and Rules past
+   the edge, where nobody looked. */
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:12px 0 6px}
+.tab{min-height:36px;padding:0 6px;font-size:12.5px;background:var(--p2);border:1px solid var(--line2);
+  color:var(--dim);border-radius:8px;font-weight:600;white-space:nowrap}
+.tab:hover{border-color:var(--acc);color:var(--text)}
+.tab.on{background:rgba(123,108,246,.22);border-color:var(--acc);color:var(--text);font-weight:700}
+.pane{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:0 0 14px;padding:14px;min-height:190px}
 h3{font-size:10.5px;color:var(--dim2);font-weight:650;margin:0 0 10px;text-transform:uppercase;letter-spacing:1.2px}
 h3.sp{margin-top:18px}
 .empty{color:var(--dim);font-size:13px;line-height:1.55}
@@ -433,7 +436,7 @@ svg.eq{display:block;width:100%;height:auto}
   .sessrow{margin-top:7px}
   .top{padding:8px 12px 8px}
   .fitbtn{left:auto;right:70px;top:9px}
-  .tab{min-height:36px;padding:0 14px;font-size:13px}
+  .tab{min-height:38px;font-size:13px}
   .tfbar{padding:8px 12px 7px}
   .rail{padding:8px 10px}
   .tool{width:50px;height:48px}

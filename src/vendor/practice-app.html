@@ -94,12 +94,10 @@ canvas{display:block;width:100%;touch-action:none;}
 .blong{border-color:var(--up);color:var(--up);background:rgba(38,163,122,.10);}
 .bshort{border-color:var(--dn);color:var(--dn);background:rgba(224,82,74,.10);}
 
-.tabs{display:flex;gap:4px;overflow-x:auto;padding:10px 12px 0;scrollbar-width:none;}
-.tabs::-webkit-scrollbar{display:none;}
-.tab{flex:0 0 auto;min-height:34px;padding:0 13px;font-size:13px;background:transparent;border:1px solid transparent;
-  color:var(--dim);border-radius:8px 8px 0 0;}
-.tab.on{background:var(--panel);border-color:var(--line);border-bottom-color:var(--panel);color:var(--text);}
-.pane{background:var(--panel);border:1px solid var(--line);border-radius:0 10px 10px 10px;margin:0 12px 14px;padding:13px;min-height:190px;}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:10px 12px 6px;}
+.tab{min-height:36px;padding:0 6px;font-size:13px;background:var(--p2);border:1px solid var(--line2);color:var(--dim);border-radius:8px;}
+.tab.on{background:var(--acc);border-color:var(--acc);color:#06090f;font-weight:700;}
+.pane{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:0 12px 14px;padding:13px;min-height:190px;}
 h3{font-size:12px;color:var(--dim);font-weight:600;margin:0 0 9px;}
 h3.sp{margin-top:16px;}
 .empty{color:var(--dim);font-size:13.5px;line-height:1.5;}
@@ -400,7 +398,7 @@ svg.eq{display:block;width:100%;height:auto}
     <span class="lbl">draw</span>
     <button class="tool on" data-t="cursor" title="Pointer: pan the chart and read candles (Esc)" aria-label="Pointer"><svg viewBox="0 0 24 24"><path d="M5 3l6 16 2.5-6.5L20 10z"/></svg><small>Pointer</small></button>
     <button class="tool" data-t="trend" title="Trend line: drag from one point to another" aria-label="Trend line"><svg viewBox="0 0 24 24"><path d="M4 19L20 5"/><circle cx="4" cy="19" r="1.7"/><circle cx="20" cy="5" r="1.7"/></svg><small>Trend</small></button>
-    <button class="tool" data-t="hline" title="Level: tap a price to mark it with a horizontal line" aria-label="Horizontal level"><svg viewBox="0 0 24 24"><path d="M3 12h18"/><circle cx="12" cy="12" r="1.7"/></svg><small>Level</small></button>
+    <button class="tool" data-t="hline" title="Level: tap a price to mark it with a horizontal line; drag it later to move it" aria-label="Horizontal level"><svg viewBox="0 0 24 24"><path d="M3 12h18"/><circle cx="12" cy="12" r="1.7"/></svg><small>Level</small></button>
     <button class="tool" data-t="fib" title="Fib retracement: drag from a swing low to a swing high" aria-label="Fib retracement"><svg viewBox="0 0 24 24"><path d="M3 5h18M3 10h18M3 14h18M3 19h18"/></svg><small>Fib</small></button>
     <button class="tool" data-t="rect" title="Box: drag to mark a zone" aria-label="Box"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1.5"/></svg><small>Box</small></button>
     <button class="tool" data-t="measure" title="Measure: drag to see a move in dollars, percent and bars" aria-label="Measure"><svg viewBox="0 0 24 24"><path d="M4 20V8M4 8l4 3M4 8l-1 4M20 4v12M20 16l-4-3M20 16l1-4"/></svg><small>Measure</small></button>
@@ -425,12 +423,12 @@ svg.eq{display:block;width:100%;height:auto}
 <div class="right">
   <div class="tabs" id="tabs">
     <button class="tab on" data-p="trade">Trade</button>
+    <button class="tab" data-p="setup">Session</button>
+    <button class="tab" data-p="coach">Coach</button>
     <button class="tab" data-p="chain">Chain</button>
     <button class="tab" data-p="fib">Fib</button>
     <button class="tab" data-p="tape">Tape</button>
     <button class="tab" data-p="journal">Journal</button>
-    <button class="tab" data-p="coach">Coach</button>
-    <button class="tab" data-p="setup">Session</button>
     <button class="tab" data-p="rules">Rules</button>
   </div>
   <div class="pane" id="pane"></div>
@@ -842,7 +840,7 @@ function init(ticker,regime,vm,seed,replayPick){
     // fib starts off: it follows the last swing (see autoFib), useful when you
     // want it and clutter when you do not. The draw tool puts one wherever you
     // choose instead.
-    ind:{fib:0,or:1,lvl:1,ext:1,vwap:0,ema9:0,ema20:0,ema50:0,bb:0,rsi:0,vol:1,magnet:1},
+    ind:{fib:0,or:1,lvl:1,ext:1,vwap:0,ema9:0,ema20:0,ema50:0,bb:0,rsi:0,vol:1,magnet:0},
     // The account and the record -- see "your account, your rules" below.
     setup:null,pendingLedger:[],rewinds:0,peakNet:0,belled:false,ended:false,
     sid:ticker+'|'+(live?live.date:'gen'+sd)+'|'+Date.now().toString(36),
@@ -1608,7 +1606,7 @@ function draw(){
     const X=G.x(bi),Y=G.y(p);cx.beginPath();cx.arc(X,Y,4,0,6.284);
     if(fill){cx.fillStyle=col;cx.fill();}else{cx.strokeStyle=col;cx.lineWidth=1.4;cx.stroke();}}
 
-  S.draw.forEach(d=>shape(d,0));if(S.pend)shape(S.pend,1);
+  S.draw.forEach((d,k)=>shape(d,0,k));if(S.pend)shape(S.pend,1,-1);
   flushLtags();
 
   if(S.hover&&S.hover.in){const{mx,my}=S.hover;
@@ -1631,10 +1629,16 @@ function draw(){
   }
   $('fit').classList.toggle('show',!!S.yMan||S.view.right!=null);
 }
-function shape(d,prev){
+function shape(d,prev,k){
   const a=cx.globalAlpha;if(prev)cx.globalAlpha=.7;
   const x1=G.x(barIdxForMin(d.m1)),y1=G.y(d.p1);
   const x2=d.m2!=null?G.x(barIdxForMin(d.m2)):x1,y2=d.p2!=null?G.y(d.p2):y1;
+  // The selected drawing, or the one under the pointer, shows its handles:
+  // that is how you know it can be picked up.
+  const sel=k===S.sel||k===S.hoverShape;
+  if(sel&&!prev){cx.save();cx.fillStyle='#e9edf5';cx.strokeStyle='#7b6cf6';cx.lineWidth=1.5;
+    const pts=d.t==='hline'?[[G.padL+60,y1]]:[[x1,y1],[x2,y2]];
+    pts.forEach(([X,Y])=>{cx.beginPath();cx.arc(X,Y,5,0,6.284);cx.fill();cx.stroke();});cx.restore();}
   if(d.t==='trend')ln(x1,y1,x2,y2,'#6d9cf5',1.6);
   else if(d.t==='hline'){ln(G.padL,y1,G.w-G.padR,y1,'#88c0d0',1.3);if(prev)tag(d.p1.toFixed(2),G.padL+2,y1-1,'#88c0d0');else ltag(d.p1.toFixed(2),y1-1,'#88c0d0');}
   else if(d.t==='rect'){cx.save();cx.fillStyle='rgba(109,156,245,.10)';cx.strokeStyle='rgba(109,156,245,.6)';
@@ -1662,12 +1666,48 @@ function pos(e){const r=cv.getBoundingClientRect();return{mx:e.clientX-r.left,my
 function inYAxis(mx){return mx>G.w-G.padR;}
 function inXAxis(my){return my>G.padT+G.ph+G.volH+(G.rsiH||0)+2;}
 function lockY(){if(!S.yMan)S.yMan={lo:G.lo,hi:G.hi};}
-function minAt(x){const bi=Math.round(G.ix(x)),B=G.B;
-  const b=B[Math.max(0,Math.min(B.length-1,bi))];return b?b.s:revealed()-1;}
+/**
+ * The minute under a point on the chart, fractional: a drawing lands where
+ * the pointer is, not on the nearest bar's centre. It used to round to the
+ * bar, which made every line jump into place as it was drawn.
+ */
+function minAt(x){const B=G.B;if(!B.length)return revealed()-1;
+  const f=Math.max(0,Math.min(B.length-1,G.ix(x))),r=Math.floor(f),b=B[r];
+  return b.s+(f-r)*Math.max(0,b.e-b.s);}
+/** Magnet: off unless asked for, and gentle when on -- eight pixels, not eleven. */
 function snap(y,x){if(!S.ind.magnet)return G.yp(y);
   const bi=Math.round(G.ix(x)),B=G.B;if(bi<0||bi>=B.length)return G.yp(y);
-  const b=B[bi];let best=G.yp(y),bd=11;
+  const b=B[bi];let best=G.yp(y),bd=8;
   [b.o,b.h,b.l,b.c].forEach(v=>{const d=Math.abs(G.y(v)-y);if(d<bd){bd=d;best=v;}});return best;}
+/**
+ * Which drawing is under a point, and which part: an end to reshape it, the
+ * body to move it. Generous on touch, where a finger is not a pixel.
+ */
+function hitShape(mx,my,touch){
+  const R=touch?14:9;let best=null,bd=R;
+  S.draw.forEach((d,k)=>{
+    const x1=G.x(barIdxForMin(d.m1)),y1=G.y(d.p1);
+    const x2=d.m2!=null?G.x(barIdxForMin(d.m2)):x1,y2=d.p2!=null?G.y(d.p2):y1;
+    let part=null,dist=Infinity;
+    if(d.t==='hline'){dist=Math.abs(my-y1);part='body';}
+    else{
+      const d1=Math.hypot(mx-x1,my-y1),d2=Math.hypot(mx-x2,my-y2);
+      if(d1<R+2){dist=d1;part='p1';}else if(d2<R+2){dist=d2;part='p2';}
+      else if(d.t==='rect'){const X=Math.min(x1,x2),Y=Math.min(y1,y2),W=Math.abs(x2-x1),H=Math.abs(y2-y1);
+        dist=Math.min(seg(mx,my,X,Y,X+W,Y),seg(mx,my,X+W,Y,X+W,Y+H),seg(mx,my,X,Y+H,X+W,Y+H),seg(mx,my,X,Y,X,Y+H));
+        if(mx>X&&mx<X+W&&my>Y&&my<Y+H)dist=Math.min(dist,R-1);part='body';}
+      else{dist=seg(mx,my,x1,y1,x2,y2);part='body';}
+    }
+    if(dist<bd){bd=dist;best={k,part};}
+  });
+  return best;
+}
+/** Picks a tool from the rail; back to the pointer after each drawing unless told to stay. */
+function setTool(t,quiet){
+  document.querySelectorAll('.tool[data-t]').forEach(x=>x.classList.toggle('on',x.dataset.t===t));
+  S.tool=t;if(!quiet)hint(TOOL_HINT[t]);
+  cv.style.cursor=t==='cursor'?'crosshair':'default';
+}
 
 cv.addEventListener('pointerdown',e=>{
   cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,pos(e));
@@ -1682,10 +1722,16 @@ cv.addEventListener('pointerdown',e=>{
     lockY();drag={mode:'yaxis',my,lo:S.yMan.lo,hi:S.yMan.hi};return;
   }
   if(inXAxis(my)){drag={mode:'xaxis',mx,count:S.view.count};return;}
-  if(S.tool==='cursor'){drag={mode:'pan',mx,my,right:G.right,lo:G.lo,hi:G.hi};S.hover={mx,my,in:1};draw();return;}
+  if(S.tool==='cursor'){
+    // A drawing under the pointer is picked up rather than the chart panned.
+    const h=hitShape(mx,my,e.pointerType==='touch');
+    if(h){const d=S.draw[h.k];S.sel=h.k;
+      drag={mode:'shape',k:h.k,part:h.part,mx,my,m1:d.m1,p1:d.p1,m2:d.m2,p2:d.p2,m0:minAt(mx),y0:G.yp(my)};draw();return;}
+    S.sel=null;
+    drag={mode:'pan',mx,my,right:G.right,lo:G.lo,hi:G.hi};S.hover={mx,my,in:1};draw();return;}
   if(S.tool==='erase'){erase(mx,my);draw();return;}
   const m=minAt(mx),p=snap(my,mx);
-  if(S.tool==='hline'){S.draw.push({t:'hline',m1:m,p1:p});draw();return;}
+  if(S.tool==='hline'){S.draw.push({t:'hline',m1:m,p1:p});S.sel=S.draw.length-1;setTool('cursor',true);hint('Level placed. Drag it to move it; Delete removes it.');draw();return;}
   S.pend={t:S.tool,m1:m,p1:p,m2:m,p2:p};
 });
 cv.addEventListener('pointermove',e=>{
@@ -1701,9 +1747,24 @@ cv.addEventListener('pointermove',e=>{
   }
   const{mx,my}=pos(e);
   S.hover={mx,my,in:mx>G.padL&&mx<G.w-G.padR&&my>G.padT&&my<G.padT+G.ph};
-  if(!drag&&!pinch)cv.style.cursor=inYAxis(mx)?'ns-resize':inXAxis(my)?'ew-resize':S.tool==='cursor'?'crosshair':'default';
+  if(!drag&&!pinch){
+    const h=S.tool==='cursor'&&e.pointerType!=='touch'?hitShape(mx,my,false):null;
+    S.hoverShape=h?h.k:null;
+    cv.style.cursor=inYAxis(mx)?'ns-resize':inXAxis(my)?'ew-resize':h?(h.part==='body'?'move':'grab'):S.tool==='cursor'?'crosshair':'default';
+  }
   if(drag){
-    if(drag.mode==='yaxis'){
+    if(drag.mode==='shape'){
+      // Moved by the distance the pointer has travelled, in minutes and in
+      // price, so the drawing keeps its shape; an end follows the pointer
+      // itself, snapping if the magnet is on.
+      const d=S.draw[drag.k];if(!d){drag=null;return;}
+      const dm=minAt(mx)-drag.m0,dp=G.yp(my)-drag.y0;
+      if(d.t==='hline')d.p1=drag.p1+dp;
+      else if(drag.part==='p1'){d.m1=minAt(mx);d.p1=snap(my,mx);}
+      else if(drag.part==='p2'){d.m2=minAt(mx);d.p2=snap(my,mx);}
+      else{d.m1=drag.m1+dm;d.p1=drag.p1+dp;if(drag.m2!=null){d.m2=drag.m2+dm;d.p2=drag.p2+dp;}}
+    }
+    else if(drag.mode==='yaxis'){
       const f=Math.exp((my-drag.my)*.014);
       const mid=(drag.lo+drag.hi)/2,r=(drag.hi-drag.lo)*f;
       S.yMan={lo:mid-r/2,hi:mid+r/2};
@@ -1724,7 +1785,11 @@ cv.addEventListener('pointermove',e=>{
 function endPtr(e){
   pts.delete(e.pointerId);if(pts.size<2)pinch=null;drag=null;
   if(S.pend){const d=S.pend;S.pend=null;
-    if(Math.abs(G.x(barIdxForMin(d.m2))-G.x(barIdxForMin(d.m1)))>5||Math.abs(G.y(d.p2)-G.y(d.p1))>5)S.draw.push(d);}
+    if(Math.abs(G.x(barIdxForMin(d.m2))-G.x(barIdxForMin(d.m1)))>5||Math.abs(G.y(d.p2)-G.y(d.p1))>5){
+      S.draw.push(d);S.sel=S.draw.length-1;
+      // One drawing per pick of the tool. The next drag pans, or moves the
+      // drawing you just made; pick the tool again for another.
+      setTool('cursor',true);hint('Drawn. Drag an end to reshape it or the body to move it; Delete removes it.');}}
   draw();
 }
 cv.addEventListener('pointerup',endPtr);
@@ -3061,7 +3126,7 @@ const TOUR=[
   {t:"#ov",h:"Indicators and chart style",
    b:"Tap a chip to switch an indicator on or off; a short note explains each one as it turns on. The first box changes the chart style: candles, Heikin Ashi, line and so on."},
   {t:"#rail",h:"Drawing tools",
-   b:"Pick a tool, then drag on the chart: trend lines, price levels, fib retracements, boxes, and a ruler that measures a move in dollars and percent. Undo and Clear are at the end. Pointer takes you back to panning."},
+   b:"Pick a tool, then drag on the chart: trend lines, price levels, fib retracements, boxes, and a ruler that measures a move in dollars and percent. After each drawing the pointer comes back by itself, and every drawing can be picked up: drag an end to reshape it, the body to move it, Delete to remove it. Undo and Clear are at the end."},
   {t:".trow",h:"Move through the day",
    b:"Next steps forward one candle. The play button runs on its own at the speed beside it. The back arrow rewinds one candle and undoes anything you did in it: that is how you go back and try the other decision."},
   {t:"#pane",h:"The ticket",tab:"trade",
@@ -3069,7 +3134,7 @@ const TOUR=[
   {t:"#acct",h:"Your account, your rules",
    b:"The account you actually trade -- $1,000 to start, or set it to whatever yours holds -- under the rules you wrote for it: how much you may buy in a day, the loss that ends the day, the trade count, the most a stop may risk. A card refuses anything outside them and says which rule, on the card. Tap this strip for your track record. The Rules tab changes the numbers and the balance."},
   {t:"#tabs",h:"Everything else",
-   b:"Chain lists every strike. Fib has the levels from the opening range. Tape logs everything that happened. Coach grades each trade against the rules and the setup. Session has today's stats, ends the day and opens the record. Rules is the account."},
+   b:"All eight are always in view. Session picks the day, has today's stats, ends the day and opens the record. Coach grades each trade against the rules and the setup, and shows what the day offered at the bell. Chain lists every strike. Fib has the swing levels and the opening range. Tape logs everything that happened. Journal is today's trades. Rules is the account."},
   {t:null,h:"Your trades are kept",
    b:"Closed trades go to your Journal at the 4:00 bell, or when you send them from the Session tab. They are marked as practice, so they never mix with your real results. Open this guide again any time with the ? button."}
 ];
@@ -3175,13 +3240,7 @@ function stripArrows(el){
   new MutationObserver(upd).observe(el,{childList:true,subtree:true,attributes:true});
   upd();setTimeout(upd,300);
 }
-['tabs','ov','tfbar','rail'].forEach(id=>stripArrows($(id)));
-// A tab picked past the edge scrolls into view -- sideways only. scrollIntoView
-// would also move the page up or down to suit itself.
-$('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab'),t=$('tabs');if(!b)return;
-  const r=b.getBoundingClientRect(),p=t.getBoundingClientRect();
-  if(r.left<p.left+30)t.scrollBy({left:r.left-p.left-34,behavior:'smooth'});
-  else if(r.right>p.right-30)t.scrollBy({left:r.right-p.right+34,behavior:'smooth'});});
+['ov','tfbar','rail'].forEach(id=>stripArrows($(id)));
 // The page itself never pinch-zooms: iOS ignores user-scalable=no, so a pinch
 // with one finger off the canvas zoomed the page and the chart went with it.
 document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
@@ -3201,9 +3260,9 @@ function hint(t){
   hintT=setTimeout(()=>{h.classList.remove('show');setTimeout(()=>{if(!h.classList.contains('show'))h.hidden=true;},260);},4200);
 }
 const TOOL_HINT={
-  cursor:'Pointer: drag to pan the chart, hover or touch a candle to read it.',
-  trend:'Trend line: press and drag from one point to another.',
-  hline:'Level: tap the price you want to mark.',
+  cursor:'Pointer: drag to pan; drag a drawing to move it, or an end of it to reshape it.',
+  trend:'Trend line: press and drag from one point to another. You can move it afterwards.',
+  hline:'Level: tap the price you want to mark. Drag it later to move it.',
   fib:'Fib retracement: drag from a swing low to a swing high, or high to low.',
   rect:'Box: drag across the zone you want to mark.',
   measure:'Measure: drag to see a move in dollars, percent and bars.',
@@ -3289,7 +3348,7 @@ const INDS=[
   ['bb','boll','Bollinger bands: the 20-bar average plus and minus two standard deviations'],
   ['rsi','rsi','RSI 14: momentum from 0 to 100. Above 70 is stretched, below 30 washed out'],
   ['vol','vol','Volume bars under the chart'],
-  ['magnet','magnet','Magnet: drawings snap to the nearest open, high, low or close']];
+  ['magnet','magnet','Magnet: the ends of drawings snap to a nearby open, high, low or close']];
 const CTYPES=[['candle','Candles'],['hollow','Hollow'],['heikin','Heikin Ashi'],
   ['bar','OHLC bars'],['line','Line'],['area','Area']];
 function renderBadges(){
@@ -3304,10 +3363,9 @@ $('ov').addEventListener('click',e=>{const b=e.target.closest('.badge');if(!b)re
   const k=b.dataset.i;S.ind[k]=!S.ind[k];b.classList.toggle('on',!!S.ind[k]);resize();
   if(S.ind[k]){const e=INDS.find(x=>x[0]===k);if(e)hint(e[2]);}});
 $('rail').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-  if(b.id==='undo'){hint(S.draw.length?'Removed the last drawing.':'Nothing to undo.');S.draw.pop();return draw();}
-  if(b.id==='clear'){hint(S.draw.length?'Cleared '+S.draw.length+' drawing'+(S.draw.length===1?'':'s')+'.':'No drawings to clear.');S.draw=[];return draw();}
-  document.querySelectorAll('.tool[data-t]').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');S.tool=b.dataset.t;hint(TOOL_HINT[S.tool]);});
+  if(b.id==='undo'){hint(S.draw.length?'Removed the last drawing.':'Nothing to undo.');S.draw.pop();S.sel=null;return draw();}
+  if(b.id==='clear'){hint(S.draw.length?'Cleared '+S.draw.length+' drawing'+(S.draw.length===1?'':'s')+'.':'No drawings to clear.');S.draw=[];S.sel=null;return draw();}
+  S.sel=null;setTool(b.dataset.t);});
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');S.tab=b.dataset.p;pane();});
@@ -3342,8 +3400,9 @@ document.addEventListener('keydown',e=>{
   else if(k==='l')buy(true);
   else if(k==='s')buy(false);
   else if(k==='x'&&S.pos)trim(1);
-  else if(k==='u'){S.draw.pop();draw();}
-  else if(k==='escape')document.querySelector('.tool[data-t="cursor"]').click();
+  else if(k==='u'){S.draw.pop();S.sel=null;draw();}
+  else if((e.key==='Delete'||e.key==='Backspace')&&S.sel!=null){S.draw.splice(S.sel,1);S.sel=null;hint('Drawing removed.');draw();}
+  else if(k==='escape'){S.sel=null;setTool('cursor',true);draw();}
 });
 (function(){const first=randomReplay();init(first?first.symbol:'SPY','random',1,undefined,first);})();
 (function(){let seen=true;try{seen=!!localStorage.getItem('mpGuideSeen');}catch(e){}
