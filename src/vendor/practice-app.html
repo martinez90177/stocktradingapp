@@ -163,9 +163,10 @@ footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-h
   .ctsel{flex:0 0 auto;min-height:30px;font-size:11.5px;padding:0 20px 0 9px;
     background-position:calc(100% - 9px) 13px,calc(100% - 5px) 13px;}
   /* the chart is no longer covered top-left, so auto fit moves out of the volume */
-  .fitbtn{right:auto;left:9px;top:9px;bottom:auto;}
+  .fitbtn{left:auto;right:70px;top:9px;bottom:auto;}
   .tfbar{padding:8px 12px 6px;}
   .acct{gap:10px;font-size:11.5px;padding:6px 9px}
+  .ohlc{display:none;}
 }
 @media(min-width:900px){
   .wrap{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:1fr 340px;gap:14px;padding:0 14px 20px;align-items:start;}
@@ -1258,7 +1259,15 @@ let G={};
 function resize(){
   const w=cv.parentElement.clientWidth;
   const desktop=window.innerWidth>=900;
-  const h=desktop?Math.round(Math.min(540,w*.5)):Math.round(Math.min(window.innerHeight*.46,430));
+  // On a phone the height is fixed once per width. Safari's address bar
+  // collapses and expands as you scroll, which changes innerHeight and fired
+  // a resize on every gesture -- the chart changed height under your fingers
+  // and the whole page shifted. Only a change of width (a rotation) resizes it.
+  let h;
+  if(desktop)h=Math.round(Math.min(540,w*.5));
+  else if(G.hFor===w&&G.h)h=G.h;
+  else h=Math.round(Math.min(window.innerHeight*.46,430));
+  G.hFor=w;
   const dpr=window.devicePixelRatio||1;
   cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';
   cx.setTransform(dpr,0,0,dpr,0,0);
@@ -1553,6 +1562,17 @@ function draw(){
   const last=B[B.length-1];
   if(last&&B.length-1<=right){const y=G.y(last.c);
     if(y>padT&&y<padT+ph)tag(last.c.toFixed(2),w-padR+1,y,'#06090f',last.c>=last.o?'#26a37a':'#e0524a');}
+  // On a phone the bar readout lives in the chart's corner, TradingView style,
+  // instead of a line in the sticky header; the hovered bar when there is one.
+  if(w<600){
+    let b=last,when='';
+    if(S.hover&&S.hover.in){const bi=Math.round(G.ix(S.hover.mx));if(bi>=0&&bi<B.length){b=B[bi];
+      when=(tfMin()==='D'?dayLbl(b.day):(b.day===HISTN?'':dayLbl(b.day)+' ')+tlblAbs(b.t,!!b.x))+'  ';}}
+    if(b){cx.save();cx.font=cfont(F-1,600);cx.textBaseline='top';cx.fillStyle='rgba(11,16,23,.75)';
+      const t=when+'O '+b.o.toFixed(2)+'  H '+b.h.toFixed(2)+'  L '+b.l.toFixed(2)+'  C '+b.c.toFixed(2)+'  V '+(b.v/1000).toFixed(0)+'k';
+      const tw=cx.measureText(t).width;cx.fillRect(padL+2,padT,tw+10,F+6);
+      cx.fillStyle=b.c>=b.o?'#2dd4a7':'#f4525f';cx.fillText(t,padL+7,padT+3);cx.restore();}
+  }
   $('fit').classList.toggle('show',!!S.yMan||S.view.right!=null);
 }
 function shape(d,prev){
@@ -3092,8 +3112,19 @@ function stripArrows(el){
   upd();setTimeout(upd,300);
 }
 ['tabs','ov','tfbar','rail'].forEach(id=>stripArrows($(id)));
-// A tab picked past the edge scrolls into view.
-$('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)b.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'});});
+// A tab picked past the edge scrolls into view -- sideways only. scrollIntoView
+// would also move the page up or down to suit itself.
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab'),t=$('tabs');if(!b)return;
+  const r=b.getBoundingClientRect(),p=t.getBoundingClientRect();
+  if(r.left<p.left+30)t.scrollBy({left:r.left-p.left-34,behavior:'smooth'});
+  else if(r.right>p.right-30)t.scrollBy({left:r.right-p.right+34,behavior:'smooth'});});
+// The page itself never pinch-zooms: iOS ignores user-scalable=no, so a pinch
+// with one finger off the canvas zoomed the page and the chart went with it.
+document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gesturechange',e=>e.preventDefault(),{passive:false});
+document.addEventListener('touchmove',e=>{if(e.touches.length>1&&e.cancelable)e.preventDefault();},{passive:false});
+// Nor does a two-finger drag on the chart scroll the page underneath.
+document.querySelector('.chartbox').addEventListener('touchmove',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
 
 /* ================= hints ================= */
 /** A short note over the chart: what a tool does as you pick it, or an indicator as it turns on. */

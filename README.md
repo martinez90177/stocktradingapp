@@ -494,6 +494,19 @@ There is deliberate empty space between the newest candle and the price axis. It
 is sized to clear the level labels drawn along that edge, so 261.8% and PDH sit
 in clear air instead of on top of the last few bars.
 
+### On a phone
+
+The chart's height is fixed once per width. Safari's address bar collapses and
+expands as you scroll, which changes `innerHeight` and used to fire a resize
+on every gesture: the chart changed height under your fingers and the whole
+page shifted -- the "unstable" feel. Only a rotation resizes it now. The page
+itself never pinch-zooms (iOS ignores `user-scalable=no`, so a pinch with one
+finger off the canvas zoomed the page and the chart went with it), a
+two-finger drag on the chart never scrolls the page underneath, and tapping a
+tab past the edge scrolls the tab strip sideways only. The bar readout lives
+in the chart's corner, TradingView style, instead of a line in the sticky
+header, which was already tall.
+
 ### Maintaining it
 
 The app lives at `src/vendor/practice-app.html` and is now **maintained here** —

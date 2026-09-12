@@ -423,8 +423,20 @@ svg.eq{display:block;width:100%;height:auto}
   .px{font-size:18px}
   .chg{font-size:11px;padding:2px 6px;white-space:nowrap}
   .ssel{flex:1 1 auto}
-  .ohlc{font-size:12px}
-  .acct{gap:10px;font-size:11.5px;padding:6px 9px}
+  /* The bar readout is drawn in the chart's corner on a phone; the header
+     line it replaced was 25px of a sticky header that was already tall. */
+  .ohlc{display:none}
+  .acct{gap:10px;font-size:11.5px;padding:6px 9px;margin-top:6px}
+  .posbar{margin-top:6px;padding:6px 10px}
+  .sessrow{margin-top:7px}
+  .top{padding:8px 12px 8px}
+  .fitbtn{left:auto;right:70px;top:9px}
+  .tab{min-height:36px;padding:0 14px;font-size:13px}
+  .tfbar{padding:8px 12px 7px}
+  .rail{padding:8px 10px}
+  .tool{width:50px;height:48px}
+  .pane{padding:13px 12px}
+  html,body{touch-action:pan-y pan-x;-webkit-text-size-adjust:100%}
 }
 /* On a desktop the chart stays pinned while the ticket scrolls beside it. The
    buy cards sit under the size and order settings, below the fold on a laptop,
