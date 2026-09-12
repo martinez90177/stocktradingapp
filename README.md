@@ -492,6 +492,12 @@ The price axis is draggable to stretch or squash the scale — the cursor turns
 into a resize arrow over it — and scrolling there zooms the price scale alone.
 Double-tap the axis to reset it, or press **auto fit**.
 
+Labels along the left edge -- the levels, a stop, a target, the strike, working
+orders, drawn levels -- are laid out together at the end of each frame: sorted
+by height and pushed apart until none overlaps, with a short tick from a moved
+label to its line, which stays exactly at its price. Three levels within a
+dollar of each other used to print three labels on top of one another.
+
 There is deliberate empty space between the newest candle and the price axis. It
 is sized to clear the level labels drawn along that edge, so 261.8% and PDH sit
 in clear air instead of on top of the last few bars.

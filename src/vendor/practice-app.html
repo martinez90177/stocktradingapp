@@ -1337,6 +1337,25 @@ function scale(){
 }
 function ln(x1,y1,x2,y2,c,w,d){cx.save();cx.strokeStyle=c;cx.lineWidth=w||1;if(d)cx.setLineDash(d);
   cx.beginPath();cx.moveTo(x1,y1);cx.lineTo(x2,y2);cx.stroke();cx.restore();}
+/**
+ * Labels along the left edge -- levels, stop, target, strike, working orders,
+ * drawn levels -- are queued and laid out together at the end of the frame:
+ * sorted by height and pushed apart until none overlaps, the line itself
+ * staying exactly at its price. Three levels within a dollar of each other
+ * used to print three labels on top of one another.
+ */
+function ltag(t,y,c){(G.ltags||(G.ltags=[])).push({t,y,c});}
+function flushLtags(){
+  const L=G.ltags||[];if(!L.length)return;G.ltags=[];
+  const F=fs(),gap=F+7,top=G.padT+gap/2,bot=G.padT+G.ph-gap/2;
+  L.sort((a,b)=>a.y-b.y);
+  for(let i=0;i<L.length;i++){L[i].ly=Math.max(L[i].y,i?L[i-1].ly+gap:top);}
+  for(let i=L.length-1;i>=0;i--){L[i].ly=Math.min(L[i].ly,i<L.length-1?L[i+1].ly-gap:bot);}
+  for(let i=1;i<L.length;i++)if(L[i].ly<L[i-1].ly+gap)L[i].ly=L[i-1].ly+gap;   // the bottom bound may have squeezed the top
+  L.forEach(l=>{
+    if(Math.abs(l.ly-l.y)>2)ln(G.padL+2,l.y,G.padL+9,l.ly,l.c,1);   // a tick from the label to its line
+    tag(l.t,G.padL+(Math.abs(l.ly-l.y)>2?9:2),l.ly,l.c);});
+}
 function tag(t,x,y,c,bg){const F=fs();cx.save();cx.font=cfont(F-1,600);
   const w=cx.measureText(t).width+10,hh=F+6;
   cx.fillStyle=bg||'rgba(8,11,16,.9)';cx.fillRect(x,y-hh/2,w,hh);
@@ -1421,7 +1440,7 @@ function draw(){
     }
     L.forEach(([k,v,c])=>{
       const y=G.y(v);if(y<padT+4||y>padT+ph-4)return;
-      ln(padL,y,w-padR,y,c,1,[2,4]);tag(k+' '+v.toFixed(2),padL+2,y-1,c);});
+      ln(padL,y,w-padR,y,c,1,[2,4]);ltag(k+' '+v.toFixed(2),y-1,c);});
   }
   // auto fib: the last swing's levels, labelled in the axis gutter, with the
   // swing itself drawn faintly from its start to its end
@@ -1541,15 +1560,15 @@ function draw(){
   S.orders.forEach(o=>{
     const Y=G.y(o.px);if(Y<padT||Y>padT+ph)return;
     ln(padL,Y,w-padR,Y,o.bull?'rgba(38,163,122,.75)':'rgba(224,82,74,.75)',1,[6,4]);
-    tag(o.kind+' '+(o.bull?'buy':'sell')+' '+o.qty,padL+2,Y-1,o.bull?'#26a37a':'#e0524a');
+    ltag(o.kind+' '+(o.bull?'buy':'sell')+' '+o.qty,Y-1,o.bull?'#26a37a':'#e0524a');
   });
   if(S.pos){const p=S.pos;
     if(p.stopU!=null){ln(padL,G.y(p.stopU),w-padR,G.y(p.stopU),'#e0524a',1,[3,3]);
-      tag('stop '+p.stopU.toFixed(2),padL+2,G.y(p.stopU)-1,'#e0524a');}
+      ltag('stop '+p.stopU.toFixed(2),G.y(p.stopU)-1,'#e0524a');}
     if(p.targetU!=null){ln(padL,G.y(p.targetU),w-padR,G.y(p.targetU),'#26a37a',1,[3,3]);
-      tag('tgt '+p.targetU.toFixed(2),padL+2,G.y(p.targetU)-1,'#26a37a');}
+      ltag('tgt '+p.targetU.toFixed(2),G.y(p.targetU)-1,'#26a37a');}
     if(p.kind==='option'){ln(padL,G.y(p.strike),w-padR,G.y(p.strike),'rgba(180,143,173,.8)',1,[5,4]);
-      tag(p.strike+(p.optType==='call'?'C':'P'),padL+2,G.y(p.strike)-1,'#b48ead');}
+      ltag(p.strike+(p.optType==='call'?'C':'P'),G.y(p.strike)-1,'#b48ead');}
     mark(todayStart()+p.entryMin-1,p.uEntry,'#dfe6ef',true);}
   S.trades.forEach(t=>{mark(todayStart()+t.entryMin-1,t.uEntry,t.total>=0?'#26a37a':'#e0524a',false);
     t.exits.forEach(e=>{const bi=barIdxForMin(todayStart()+e.m-1);if(bi<left-1||bi>right+1)return;
@@ -1560,6 +1579,7 @@ function draw(){
     if(fill){cx.fillStyle=col;cx.fill();}else{cx.strokeStyle=col;cx.lineWidth=1.4;cx.stroke();}}
 
   S.draw.forEach(d=>shape(d,0));if(S.pend)shape(S.pend,1);
+  flushLtags();
 
   if(S.hover&&S.hover.in){const{mx,my}=S.hover;
     ln(mx,padT,mx,padT+ph,'rgba(223,230,239,.24)',1,[3,3]);
@@ -1586,7 +1606,7 @@ function shape(d,prev){
   const x1=G.x(barIdxForMin(d.m1)),y1=G.y(d.p1);
   const x2=d.m2!=null?G.x(barIdxForMin(d.m2)):x1,y2=d.p2!=null?G.y(d.p2):y1;
   if(d.t==='trend')ln(x1,y1,x2,y2,'#6d9cf5',1.6);
-  else if(d.t==='hline'){ln(G.padL,y1,G.w-G.padR,y1,'#88c0d0',1.3);tag(d.p1.toFixed(2),G.padL+2,y1-1,'#88c0d0');}
+  else if(d.t==='hline'){ln(G.padL,y1,G.w-G.padR,y1,'#88c0d0',1.3);if(prev)tag(d.p1.toFixed(2),G.padL+2,y1-1,'#88c0d0');else ltag(d.p1.toFixed(2),y1-1,'#88c0d0');}
   else if(d.t==='rect'){cx.save();cx.fillStyle='rgba(109,156,245,.10)';cx.strokeStyle='rgba(109,156,245,.6)';
     const X=Math.min(x1,x2),Y=Math.min(y1,y2),W=Math.abs(x2-x1),H=Math.abs(y2-y1);
     cx.fillRect(X,Y,W,H);cx.strokeRect(X,Y,W,H);cx.restore();}
