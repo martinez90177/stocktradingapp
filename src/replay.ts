@@ -41,7 +41,7 @@ export interface ReplaySession {
   /** Which cleaning the extended bars had. 2 = bad prints dropped and stray wicks clipped. */
   extv?: number;
 }
-export const EXT_VERSION = 2;
+export const EXT_VERSION = 3;
 
 const PRE_START = 4 * 60;
 const POST_START = 16 * 60;
@@ -117,13 +117,17 @@ export function splitSessions(symbol: string, bars: Bar[]): ReplaySession[] {
  */
 function cleanExt(bs: Bar[]): Bar[] {
   const med = (xs: number[]) => { const s = xs.slice().sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : null; };
+  // The tolerance is the ticker's own: four typical off-hours minute ranges,
+  // or 0.4% of the price, whichever is more. A flat 1.2% let an $8 wick stand
+  // on a $716 ETF that moves a dime a minute after the bell.
+  const typical = med(bs.map((x) => x.h - x.l).filter((r) => r > 0)) ?? 0;
   const out: Bar[] = [];
   for (let i = 0; i < bs.length; i++) {
     const b = bs[i];
     const prev = med(bs.slice(Math.max(0, i - 6), i).map((x) => x.c));
     const next = med(bs.slice(i + 1, i + 7).map((x) => x.c));
     const ref = prev ?? next ?? b.c;
-    const tol = Math.max(ref * 0.012, 0.05);
+    const tol = Math.max(ref * 0.004, typical * 4, 0.05);
     const farPrev = prev != null && Math.abs(b.c - prev) > tol;
     const farNext = next != null && Math.abs(b.c - next) > tol;
     if ((prev != null && next != null) ? farPrev && farNext : farPrev || farNext) continue;

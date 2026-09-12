@@ -1330,7 +1330,7 @@ function scale(){
   const F=fs();
   // Bottom padding holds the time labels, so it grows with the type.
   const padL=6,padT=8,padB=F+12;
-  const volH=S.ind.vol?Math.round(G.h*.15):0;
+  const volH=0;   // volume is drawn inside the price pane now, not in a band under it
   const rsiH=S.ind.rsi?Math.round(G.h*.17):0;
   const ph=G.h-padT-padB-volH-(volH?5:0)-rsiH-(rsiH?5:0);
   let right=S.view.right==null?B.length-1:Math.min(S.view.right,B.length-1);
@@ -1438,11 +1438,24 @@ function draw(){
      cx.fillStyle=c.newDay?'#e9edf5':AXIS;cx.fillText(c.t,X,h-8);}}
   cx.restore();
 
+  // Everything that belongs to the price pane is clipped to it. A bar whose
+  // wick reaches past the scale used to draw straight through the panels and
+  // the time axis underneath.
+  const clipPane=()=>{cx.save();cx.beginPath();cx.rect(padL,padT,w-padL-padR,ph);cx.clip();};
+  clipPane();
   // Extended hours are tinted, the way TradingView does it, so 4:00 in the
   // morning is not mistaken for 4:00 in the afternoon.
   if(S.ind.ext){cx.save();cx.fillStyle='rgba(123,108,246,.07)';
     for(let i=left;i<=right;i++)if(B[i].x)cx.fillRect(G.x(i)-cw/2,padT,cw,ph);
     cx.restore();}
+  // Volume as translucent bars along the bottom of the pane, behind the
+  // candles, on one backdrop -- the band it used to have underneath read as a
+  // separate section that the pane's tint and lines never reached.
+  if(S.ind.vol){const vh=ph*.2;let mx=0;for(let i=left;i<=right;i++)if(B[i].v>mx)mx=B[i].v;
+    const bwv=Math.max(cw*.66,1.2);
+    for(let i=left;i<=right;i++){const b=B[i],bh=mx?(b.v/mx)*vh:0;
+      cx.fillStyle=b.c>=b.o?'rgba(45,212,167,.22)':'rgba(244,82,95,.22)';
+      cx.fillRect(G.x(i)-bwv/2,padT+ph-bh,bwv,bh);}}
   const todayVis=B.slice(left,right+1).some(b=>b.day===HISTN);
   if(S.ind.or&&S.or&&todayVis){
     cx.save();cx.fillStyle='rgba(109,156,245,.06)';
@@ -1557,10 +1570,7 @@ function draw(){
       }
     }
   }
-  if(volH){const vt=padT+ph+5,mx=Math.max(...B.slice(left,right+1).map(b=>b.v));
-    for(let i=left;i<=right;i++){const b=B[i],bh=(b.v/mx)*volH;
-      cx.fillStyle=b.c>=b.o?'rgba(38,163,122,.36)':'rgba(224,82,74,.36)';
-      cx.fillRect(G.x(i)-bw/2,vt+volH-bh,bw,bh);}}
+  cx.restore();   // end of the price-pane clip: the RSI panel is below it
   if(rsiH){
     // Wilder smoothing, seeded on the first 14 bars.
     const NP=14,cl=B.map(b=>b.c),rs=new Array(B.length).fill(null);
@@ -1585,6 +1595,7 @@ function draw(){
     cx.fillText('RSI 14'+(lastR==null?'':'  '+lastR.toFixed(1)),padL+4,rt+F);
   }
 
+  clipPane();
   S.orders.forEach(o=>{
     const Y=G.y(o.px);if(Y<padT||Y>padT+ph)return;
     ln(padL,Y,w-padR,Y,o.bull?'rgba(38,163,122,.75)':'rgba(224,82,74,.75)',1,[6,4]);
@@ -1608,6 +1619,7 @@ function draw(){
 
   S.draw.forEach((d,k)=>shape(d,0,k));if(S.pend)shape(S.pend,1,-1);
   flushLtags();
+  cx.restore();   // end of the second price-pane clip
 
   if(S.hover&&S.hover.in){const{mx,my}=S.hover;
     ln(mx,padT,mx,padT+ph,'rgba(223,230,239,.24)',1,[3,3]);
@@ -2110,12 +2122,17 @@ function paneTrade(){
     <label><span>Target</span><input class="n" id="tgt" type="number" inputmode="decimal" step="0.01" value="${tgtV}"></label>
   </div>
   <div class="chips" id="chips">
-    <button data-q="far" title="The far side of the opening range: its low for an upside trade, its high for a downside one" ${S.or?'':'disabled'}>Stop at range edge</button>
-    <button data-q="mid" title="Halfway through the opening range" ${S.or?'':'disabled'}>Stop mid-range</button>
-    <button data-q="t127" title="The 127.2% extension of the opening range" ${S.or?'':'disabled'}>Target 127%</button>
-    <button data-q="t161" title="The 161.8% extension of the opening range" ${S.or?'':'disabled'}>Target 162%</button>
+    <button data-q="far" title="The far side of the opening range: its low for an upside trade, its high for a downside one" ${S.or?'':'disabled'}>Stop: range edge</button>
+    <button data-q="mid" title="Halfway through the opening range" ${S.or?'':'disabled'}>Stop: mid-range</button>
+    <button data-q="swing" title="The last swing low for an upside trade, the last swing high for a downside one: where the read is wrong">Stop: last swing</button>
+    <button data-q="t127" title="The 127.2% extension of the opening range" ${S.or?'':'disabled'}>Target: 127%</button>
+    <button data-q="t161" title="The 161.8% extension of the opening range" ${S.or?'':'disabled'}>Target: 162%</button>
+    <button data-q="lvl" title="The nearest level in the trade's direction: yesterday's high, low or close, the pre-market high or low, the open, or the range edge">Target: next level</button>
+    <button data-q="r2" title="Twice the distance to your stop, the other way. Needs a stop.">Target: 2R</button>
+    <button data-q="r3" title="Three times the distance to your stop, the other way. Needs a stop.">Target: 3R</button>
+    <button data-q="mm" title="The measured move: the opening range's height projected past its edge" ${S.or?'':'disabled'}>Target: measured</button>
   </div>
-  ${S.or?'':'<div class="meta tight">The range chips wake up at 9:45, once the opening range has formed.</div>'}
+  ${S.or?'':'<div class="meta tight">The range chips wake up at 9:45, once the opening range has formed; the others work now.</div>'}
   <div class="plan" id="plan"></div>
   <label class="chk"><input type="checkbox" id="atrim" ${S.autoTrim?'checked':''}> Take a third off at each extension (127% and 162%)</label>
 
@@ -2195,13 +2212,30 @@ function wireTrade(){
     refreshTicket();draw();}));
   $('stop')&&$('stop').addEventListener('change',()=>{if(!S.pos)return;const s=parseFloat(val('stop'));setStop(isNaN(s)?null:s);refreshTicket();draw();});
   $('atrim')&&($('atrim').onchange=e=>S.autoTrim=e.target.checked);
-  $('chips')&&$('chips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!S.fib)return;
-    const bull=S.mode==='options'?(S.pos?S.pos.optType==='call':S.brk!=='short'):(S.pos?S.pos.dir==='long':S.brk!=='short');
-    const q=b.dataset.q;
+  $('chips')&&$('chips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    const u=price(),st=parseFloat(val('stop'));
+    // Which way the trade points: the stop says, if there is one; else the position; else the breakout.
+    const bull=!isNaN(st)?st<u:S.mode==='options'?(S.pos?S.pos.optType==='call':S.brk!=='short'):(S.pos?S.pos.dir==='long':S.brk!=='short');
+    const q=b.dataset.q,need=(what)=>{log(what,'y');return;};
+    if(['far','mid','t127','t161','mm'].includes(q)&&!S.or)return need('The opening range forms at 9:45.');
     if(q==='far')$('stop').value=(bull?S.or.lo:S.or.hi).toFixed(2);
     if(q==='mid')$('stop').value=S.fib['50%'].toFixed(2);
     if(q==='t127')$('tgt').value=(bull?S.fib['127.2%']:S.fib['-27.2%']).toFixed(2);
     if(q==='t161')$('tgt').value=(bull?S.fib['161.8%']:S.fib['-61.8%']).toFixed(2);
+    if(q==='mm')$('tgt').value=(bull?S.or.hi+S.or.r:S.or.lo-S.or.r).toFixed(2);
+    if(q==='swing'){const AF=getAutoFib();if(!AF)return need('No swing on the chart yet.');
+      const v=bull?Math.min(AF.a.p,AF.b.p):Math.max(AF.a.p,AF.b.p);
+      if(bull?v>=u:v<=u)return need('The last swing '+(bull?'low':'high')+' ('+v.toFixed(2)+') is on the wrong side of the price for this trade.');
+      $('stop').value=v.toFixed(2);}
+    if(q==='r2'||q==='r3'){if(isNaN(st))return need('Set the stop first: an R target is a multiple of the distance to it.');
+      const k=q==='r2'?2:3;$('tgt').value=(u+(bull?1:-1)*k*Math.abs(u-st)).toFixed(2);}
+    if(q==='lvl'){const s0=todayStart(),L=[S.mins[s0].o];
+      if(HISTN>0){const pd=S.mins.slice(s0-MPD,s0);L.push(Math.max(...pd.map(x=>x.h)),Math.min(...pd.map(x=>x.l)),pd[pd.length-1].c);}
+      const pre=S.ext&&S.ext[HISTN]&&S.ext[HISTN].pre;if(pre&&pre.length){L.push(Math.max(...pre.map(x=>x.h)),Math.min(...pre.map(x=>x.l)));}
+      if(S.or)L.push(S.or.hi,S.or.lo);
+      const c=L.filter(v=>bull?v>u+.05:v<u-.05);
+      if(!c.length)return need('No level left '+(bull?'above':'below')+' the price today. Nothing to aim at; a measured move or an R target instead.');
+      $('tgt').value=(bull?Math.min(...c):Math.max(...c)).toFixed(2);}
     ['stop','tgt'].forEach(i=>{$(i).dispatchEvent(new Event('input'));$(i).dispatchEvent(new Event('change'));});pane();});
   $('otype')&&$('otype').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
     S.oType=b.dataset.o;pane();});
@@ -3347,7 +3381,7 @@ const INDS=[
   ['ema50','ema50','50-bar exponential moving average: the slower trend'],
   ['bb','boll','Bollinger bands: the 20-bar average plus and minus two standard deviations'],
   ['rsi','rsi','RSI 14: momentum from 0 to 100. Above 70 is stretched, below 30 washed out'],
-  ['vol','vol','Volume bars under the chart'],
+  ['vol','vol','Volume, as translucent bars along the bottom of the chart'],
   ['magnet','magnet','Magnet: the ends of drawings snap to a nearby open, high, low or close']];
 const CTYPES=[['candle','Candles'],['hollow','Hollow'],['heikin','Heikin Ashi'],
   ['bar','OHLC bars'],['line','Line'],['area','Area']];

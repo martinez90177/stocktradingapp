@@ -470,7 +470,7 @@ function bannerFor(reportHref: string, sessions: ReplaySession[], vol?: Practice
        ${sessions.length} recorded ${sessions.length === 1 ? "day" : "days"} across
        ${symbols.length} ${symbols.length === 1 ? "symbol" : "symbols"}
        (${esc(symbols.slice(0, 8).join(", "))}), ${esc(dates[0])} to ${esc(dates[dates.length - 1])}
-       to pick from, and <b>Surprise me</b> draws from the whole library beside the page &mdash; every day ever recorded, one you have not had before first.
+       to pick from, and <strong>Surprise me</strong> draws from the whole library beside the page &mdash; every day ever recorded, one you have not had before first.
        <span>Option prices are modelled rather than quoted, but not guessed: the volatility in them is
        the market&rsquo;s own &mdash; that day&rsquo;s VXN or VIX, minute by minute &mdash; scaled to each
        ticker by how its options really traded${vol && vol.calibrations.length ? ` (measured ${esc(vol.calibrations[vol.calibrations.length - 1].date)})` : ""}.

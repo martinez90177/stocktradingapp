@@ -212,6 +212,18 @@ threw away whatever was being typed in the stop box.
 Strike and size have steppers. Expiration is labelled today / next day / a week
 out rather than only 0DTE, 1DTE, 7DTE.
 
+**Stops and targets besides the fib.** The plan's chips set them from what is
+on the chart: a stop at the range edge or mid-range, or at the **last swing**
+(the last pivot the auto-fib found, which is where the read is wrong); a
+target at the 127% or 162% extension, at the **next level** in the trade's
+direction (yesterday's high, low or close, the pre-market high or low, the
+open, or the range edge -- levels are where the other side's orders sit), at
+**2R or 3R** (a multiple of the distance to the stop, so the reward is in
+units of the risk; needs a stop), or the **measured move** (the opening
+range's height projected past its edge). Worth knowing but not chips: ATR
+multiples, VWAP as a mean-reversion target, and strikes as magnets on names
+with heavy option volume.
+
 The **exit plan** is a stop and a target on the stock's price. A stop below the
 price only makes sense for an upside trade and above it only for a downside
 one, so the ticket works out from the stop which side you mean and prices the
@@ -463,10 +475,13 @@ Off-hours the tape carries **bad prints** -- the odd late or odd-lot trade far
 from the market that nothing follows, a $196.93 low on a $223 stock gone the
 next minute. Left in, one sets the pre-market low and the chart scales to it
 all morning. The recorder drops any extended-hours minute whose close is far
-(1.2%) from both the bars before it and the bars after it -- a real gap, like
-an earnings move, agrees with what follows and stays -- and clips a wick that
-reaches more than 1.2% past its bar's own body. Sessions carry `extv: 2` once
-cleaned, and the next run redoes any that are not.
+from both the bars before it and the bars after it -- a real gap, like an
+earnings move, agrees with what follows and stays -- and clips a wick that
+reaches further than that past its bar's own body. "Far" is the ticker's own:
+four typical off-hours minute ranges, or 0.4% of the price, whichever is
+more; a flat 1.2% let an $8 wick stand on a $716 ETF that moves a dime a
+minute after the bell. Sessions carry `extv: 3` once cleaned, and the next
+run redoes any that are not.
 
 **Option prices are still modelled**, with Black-Scholes over the real
 underlying, and fills are assumed at the mid. So the chart is real and the
@@ -491,7 +506,12 @@ Rules -- since a strip that scrolled sideways hid Session and Rules past the
 edge, where nobody looked.
 
 Indicator chips sit beside it: EMA 9/20/50, VWAP, Bollinger bands, an **RSI 14
-subpanel**, volume, and magnet snapping for the drawing tools. A **levels**
+subpanel**, volume, and magnet snapping for the drawing tools. Volume is drawn
+as translucent bars along the bottom of the price pane, behind the candles,
+the way TradingView does it; the band it used to have underneath read as a
+separate section that the pane's tint and levels never reached. The price pane
+is clipped, so a bar whose wick reaches past the scale no longer draws through
+the panels and the time axis under it. A **levels**
 chip, on by default, draws the prior day's high, low and close, the pre-market
 high and low, and today's open -- the levels a day is traded against.
 
