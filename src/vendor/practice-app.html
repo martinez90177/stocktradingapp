@@ -732,8 +732,30 @@ function barsOf(r){
   if(r.d===5){const m=[];for(const b of out)for(let k=0;k<5;k++)m.push([b[0],b[1],b[2],b[3],Math.round(b[4]/5)]);return m;}
   return out;
 }
-/** The days that can be traded: the newest twelve of each ticker. Older ones are history behind them. */
+/** The days that can be picked: the newest twelve of each ticker. Older ones are history behind them. */
 const PICK=(window.MP_SESSIONS||[]).filter(r=>!r.hist);
+/*
+ * The library: every day ever recorded, published beside the page as one
+ * pack per ticker, with an index of what is there. Surprise me and New day
+ * draw from it, so a day cannot be learned and traded on memory; the picker
+ * stays on the newest twelve, which are embedded. Where the packs cannot be
+ * fetched -- the page opened from disk -- the embedded days stand in.
+ */
+let LIB=null;const PACKS={};
+fetch('sessions/index.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&typeof j==='object'){LIB=j;if(S.tab==='setup')pane();}}).catch(()=>{});
+function libDates(sym){return LIB&&LIB[sym]?LIB[sym]:PICK.filter(r=>r.symbol===sym).map(r=>r.date).sort();}
+function libSymbols(){return LIB?Object.keys(LIB).sort():[...new Set(PICK.map(r=>r.symbol))].sort();}
+function libSize(){return libSymbols().reduce((a,s)=>a+libDates(s).length,0);}
+/** The days already served by Surprise me and New day, so the next one is a day you have not seen. */
+function seenDays(){return loadJSON('mpSeen',[]);}
+function markSeen(sym,date){const s=seenDays().filter(x=>x!==sym+'|'+date);s.push(sym+'|'+date);saveJSON('mpSeen',s.slice(-2000));}
+async function loadPack(sym){
+  if(PACKS[sym])return PACKS[sym];
+  const r=await fetch('sessions/'+encodeURIComponent(sym)+'.json',{cache:'no-store'});
+  if(!r.ok)throw new Error(r.status);
+  const list=await r.json();if(!Array.isArray(list))throw new Error('bad pack');
+  PACKS[sym]=list;return list;
+}
 /**
  * A session's extended hours as bar objects, from the raw form ([m,o,h,l,c,v]
  * rows) or the compact one practice.ts embeds. Null where none were kept.
@@ -748,14 +770,16 @@ function extOf(r){
     return out;};
   return {pre:dec(r.x.pre||[]),post:dec(r.x.post||[])};
 }
-/** Turns embedded sessions into the minute array the engine expects. */
+/** Turns embedded or fetched sessions into the minute array the engine expects. */
 function fromReplay(pick){
-  const sess=REPLAY.filter(r=>r.symbol===pick.symbol).sort((a,b)=>a.date.localeCompare(b.date));
+  const src=pick.lib&&PACKS[pick.symbol]?PACKS[pick.symbol]:REPLAY.filter(r=>r.symbol===pick.symbol);
+  const sess=src.slice().sort((a,b)=>a.date.localeCompare(b.date));
   if(!sess.length)return null;
-  // The chosen day is the one traded; everything before it is real history.
+  // The chosen day is the one traded; everything before it is real history,
+  // up to a month of it.
   let end=sess.findIndex(r=>r.date===pick.date);
   if(end<0)end=sess.length-1;
-  const use=sess.slice(0,end+1);
+  const use=sess.slice(Math.max(0,end-22),end+1);
   const mins=[],dates=[];
   use.forEach((r,day)=>{
     dates.push(new Date(r.date+'T12:00:00Z'));
@@ -768,20 +792,26 @@ function fromReplay(pick){
  * A random recorded session, optionally restricted to one symbol. Returns null
  * when nothing is embedded, which sends init() down the generator path.
  */
-const MIN_HIST=2;
+const MIN_HIST=2,WANT_HIST=10;
+/**
+ * A random day from the library -- any ticker, or one -- preferring days with
+ * a fortnight of history behind them and days not served before. A day with
+ * nothing recorded behind it has no context: the daily and 4H views are
+ * empty and the chart opens on three candles.
+ */
 function randomReplay(symbol){
-  const pool=symbol?PICK.filter(r=>r.symbol===symbol):PICK;
+  const syms=symbol?[symbol]:libSymbols();
+  let pool=[];
+  syms.forEach(s=>{const ds=libDates(s);ds.forEach((d,i)=>pool.push({symbol:s,date:d,depth:i}));});
   if(!pool.length)return null;
-  // A day with nothing recorded behind it has no context: the daily and 4H views
-  // are empty, prior-session levels do not exist, and the chart opens on three
-  // candles. Pick days that have history; if the library is too shallow for that,
-  // take the deepest available rather than the shallowest.
-  const depth=r=>REPLAY.filter(x=>x.symbol===r.symbol&&x.date<r.date).length;
-  const deep=pool.filter(r=>depth(r)>=MIN_HIST);
-  const best=Math.max.apply(null,pool.map(depth));
-  const use=deep.length?deep:pool.filter(r=>depth(r)===best);
+  const deep=pool.filter(r=>r.depth>=WANT_HIST),ok=pool.filter(r=>r.depth>=MIN_HIST);
+  const best=Math.max.apply(null,pool.map(r=>r.depth));
+  let use=deep.length?deep:ok.length?ok:pool.filter(r=>r.depth===best);
+  const seen=new Set(seenDays());
+  const fresh=use.filter(r=>!seen.has(r.symbol+'|'+r.date));
+  if(fresh.length)use=fresh;
   const r=use[Math.floor(Math.random()*use.length)];
-  return {symbol:r.symbol,date:r.date};
+  return {symbol:r.symbol,date:r.date,lib:!!LIB};
 }
 
 function init(ticker,regime,vm,seed,replayPick){
@@ -2272,10 +2302,17 @@ function paneSetup(){
     <select id="rdate">${dates.map(d=>`<option value="${d}"${S.replay&&S.replay.date===d?' selected':''}>${d}</option>`).join('')}</select>
   </div>
   <div class="setup">
-    <button id="loadS" style="flex:1;background:var(--acc);border-color:var(--acc);color:#06090f;font-weight:600">Load that day</button>
-    <button id="anyS" style="flex:1">Surprise me</button>
+    <button id="loadS" style="flex:1">Load that day</button>
   </div>
-  <div class="empty" style="margin-bottom:4px">${PICK.length} days to trade across ${syms.length} symbols, with ${REPLAY.length-PICK.length} older days behind them as history. Every candle is a measured bar.</div>`
+  <div class="empty" style="margin-bottom:12px">The newest ${Math.round(PICK.length/syms.length)} days of each ticker, built into the page.</div>
+  <h3>Surprise me</h3>
+  <div class="setup">
+    <button id="anyS" style="flex:1;background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600">Any ticker, any day</button>
+    <button id="anyT" style="flex:1">Any ${S.ticker} day</button>
+  </div>
+  <div class="empty" style="margin-bottom:4px">${LIB?'A random day from the whole library: <b>'+libSize()+' days</b> across '+libSymbols().length+' tickers, every one with a fortnight of history behind it, and days you have not had before first. The library grows by a day per ticker per run and nothing ages out, so it cannot be learned.'
+    :'A random day from the days built into the page. The full library could not be reached from here'+(location.protocol==='file:'?' (the page is open from disk)':'')+'.'}
+    ${seenDays().length?' <span style="opacity:.8">'+seenDays().length+' served so far.</span>':''}</div>`
   :`<div class="empty">No recorded sessions are embedded in this build, so days are generated. Run the tool with replay harvesting on to collect real ones.</div>`}
 
   <h3 class="sp">Jump to a time</h3>
@@ -2327,6 +2364,7 @@ function wireSetup(){
   });
   $('loadS')&&($('loadS').onclick=()=>startSession($('rsym').value,{symbol:$('rsym').value,date:$('rdate').value}));
   $('anyS')&&($('anyS').onclick=()=>{const p=randomReplay();startSession(p?p.symbol:S.ticker,p);});
+  $('anyT')&&($('anyT').onclick=()=>{const p=randomReplay(S.ticker);startSession(S.ticker,p);});
   $('jgo')&&($('jgo').onclick=()=>{
     const parts=(val('jt')||'').trim().split(':');
     const mm=parseInt(parts[1],10);
@@ -3015,7 +3053,7 @@ const TOUR=[
   {t:null,h:"Practise on real trading days",
    b:"Every candle here is a real 1-minute bar from a recorded session. You step through the day, trade calls, puts or shares, and see how it would have gone, with nothing at risk. This tour takes about a minute."},
   {t:".sessrow",h:"Pick what to practise",
-   b:"The box above switches the ticker. The date picks which recorded day. Restart replays the same day from the 9:30 open; New day loads a different one. Your chart settings carry over."},
+   b:"The box above switches the ticker. The date picks one of the newest twelve recorded days. Restart replays the same day from the 9:30 open; New day draws a random day from the whole library instead -- any day ever recorded, one you have not had before first -- so the practice cannot be learned. Your chart settings carry over."},
   {t:"#cv",h:"The chart",
    b:"Drag to scroll back in time; pinch, or use the mouse wheel, to zoom. Drag the price scale on the right to stretch it and double-tap it to reset. The shaded band that appears at 9:45 is the opening range: the high and low of the first 15 minutes. The tinted candles before 9:30 are the pre-market, and the dotted lines are the levels the day is traded against: yesterday's high, low and close, the pre-market high and low, and the open."},
   {t:"#tfbar",h:"Timeframe",
@@ -3181,12 +3219,14 @@ function renderSessRow(){
   if(!REPLAY.length){sel.innerHTML='<option>Generated day</option>';sel.disabled=true;return;}
   if(S.blind){sel.innerHTML='<option>Blind day · revealed at the bell</option>';sel.disabled=true;return;}
   const ds=PICK.filter(r=>r.symbol===S.ticker).map(r=>r.date).sort().reverse();
+  const cur=S.replay&&S.replay.date;
+  if(cur&&!ds.includes(cur))ds.unshift(cur);   // a library day, older than the picker's twelve
   sel.disabled=false;
   sel.innerHTML=ds.map(d=>{
     // A day with nothing recorded before it opens on a handful of candles with
     // empty higher timeframes. Still pickable, but labelled so it is no surprise.
     const depth=REPLAY.filter(x=>x.symbol===S.ticker&&x.date<d).length;
-    const note=depth===0?' · no history':depth<MIN_HIST?' · thin history':'';
+    const note=!PICK.some(x=>x.symbol===S.ticker&&x.date===d)?' · from the library':depth===0?' · no history':depth<MIN_HIST?' · thin history':'';
     return '<option value="'+d+'"'+(S.replay&&S.replay.date===d?' selected':'')+'>'+dayName(d)+note+'</option>';
   }).join('');
 }
@@ -3203,6 +3243,17 @@ function startSession(ticker,pick,o){
   stopAuto();
   if(S.pendingJournal&&S.pendingJournal.length)flushJournal('session change');
   if(S.pendingLedger)commitSession(false);
+  // A library day is fetched first. If it cannot be, an embedded day stands
+  // in, and the tape says so.
+  if(pick&&pick.lib&&!PACKS[pick.symbol]){
+    hint('Loading '+pick.symbol+' from the library…');
+    loadPack(pick.symbol).then(()=>{markSeen(pick.symbol,pick.date);init(pick.symbol,o.regime??S.regime,o.vm??S.vm,o.seed,pick);})
+      .catch(()=>{const p=PICK.filter(r=>r.symbol===pick.symbol).length?{symbol:pick.symbol,date:PICK.filter(r=>r.symbol===pick.symbol).map(r=>r.date).sort().reverse()[Math.floor(Math.random()*Math.min(12,PICK.filter(r=>r.symbol===pick.symbol).length))]}:null;
+        init(p?p.symbol:ticker,o.regime??S.regime,o.vm??S.vm,o.seed,p);
+        log('The library could not be reached, so this is one of the days built into the page.','y');});
+    return true;
+  }
+  if(pick&&pick.lib)markSeen(pick.symbol,pick.date);
   init(ticker,o.regime??S.regime,o.vm??S.vm,o.seed,pick);
   return true;
 }

@@ -298,6 +298,23 @@ with no rewind and no repeat of a day already traded. Copy or download the
 record to keep it, or to carry it to another device, where pasting it merges
 trade by trade.
 
+### Surprise me, from the whole library
+
+The page embeds only the newest days, so it stays one file that opens from
+disk. Beside it the build publishes **the whole recorded library** as one pack
+per ticker (`site/sessions/<SYM>.json`, with an `index.json` of what is
+there). **Surprise me** in the Session tab -- any ticker, or any day of this
+one -- and **New day** in the header draw a random day from that library:
+fetched on demand, with up to a month of history behind it, preferring days
+with a fortnight of history and days not served before (kept in the browser,
+so the next surprise is one you have not had). The picker stays on the newest
+twelve. Where the packs cannot be fetched -- the page opened from disk -- the
+embedded days stand in and the tape says so.
+
+The library grows by a day per ticker per run and nothing ages out of it, so
+the pool only gets harder to learn. It starts at 21 days per ticker, which is
+Yahoo's reach; after a couple of months of runs it is genuinely large.
+
 ### Blind days and hardcore
 
 Two switches in the Rules tab change the replay itself. **Blind days**, on by

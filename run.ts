@@ -7,7 +7,7 @@ import { analyzeSymbol } from "./src/pipeline.ts";
 import { renderReport, marketPhase } from "./src/report.ts";
 import { discoverMovers } from "./src/movers.ts";
 import { loadRules } from "./src/rules.ts";
-import { renderPractice } from "./src/practice.ts";
+import { renderPractice, writeSessionPacks } from "./src/practice.ts";
 import { harvest, loadForEmbed } from "./src/replay.ts";
 import { harvestVol, loadVolForEmbed, loadCalibrations, loadEvents, recordEvents } from "./src/volindex.ts";
 import { execFileSync } from "node:child_process";
@@ -254,6 +254,7 @@ async function main() {
       rulebook: rules,
     });
     await writeFile(join(REPORTS, "practice.html"), practice, "utf8");
+    await writeSessionPacks(SESSIONS, join(REPORTS, "sessions"));   // the library beside the page, for Surprise me
   } catch (e) {
     console.warn(`  ~ practice page not written (${(e as Error).message})`);
   }

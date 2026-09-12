@@ -1,4 +1,6 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { join } from "node:path";
+import { loadForEmbed } from "./replay.ts";
 import { FONT_CSS } from "./fonts.ts";
 import type { VolEmbed, Calibration, Events } from "./volindex.ts";
 import type { RuleBook } from "./types.ts";
@@ -464,8 +466,8 @@ function bannerFor(reportHref: string, sessions: ReplaySession[], vol?: Practice
        Every candle is a measured 1-minute bar from an actual session, with the pre-market and after-hours in 5-minute bars &mdash;
        ${sessions.length} recorded ${sessions.length === 1 ? "day" : "days"} across
        ${symbols.length} ${symbols.length === 1 ? "symbol" : "symbols"}
-       (${esc(symbols.slice(0, 8).join(", "))}), ${esc(dates[0])} to ${esc(dates[dates.length - 1])}.
-       A random one loads each time.
+       (${esc(symbols.slice(0, 8).join(", "))}), ${esc(dates[0])} to ${esc(dates[dates.length - 1])}
+       to pick from, and <b>Surprise me</b> draws from the whole library beside the page &mdash; every day ever recorded, one you have not had before first.
        <span>Option prices are modelled rather than quoted, but not guessed: the volatility in them is
        the market&rsquo;s own &mdash; that day&rsquo;s VXN or VIX, minute by minute &mdash; scaled to each
        ticker by how its options really traded${vol && vol.calibrations.length ? ` (measured ${esc(vol.calibrations[vol.calibrations.length - 1].date)})` : ""}.
@@ -536,6 +538,33 @@ function compactSession(s: ReplaySession, hist = false) {
   };
   const x = s.ext ? { pre: ext(s.ext.pre), post: ext(s.ext.post) } : undefined;
   return { symbol: s.symbol, date: s.date, carried: s.carried, p: base, z, ...(x ? { x } : {}) };
+}
+
+/**
+ * The whole recorded library, as one pack per ticker beside the page, plus an
+ * index of what is there. The page embeds only the newest days, so it stays
+ * one file that opens from disk; "Surprise me" fetches a random day from the
+ * packs instead -- any day ever recorded, with a fortnight of history behind
+ * it -- and falls back to the embedded days where a fetch cannot work. The
+ * library grows by a day per ticker per run and nothing ages out of it, which
+ * is what keeps the surprise a surprise.
+ */
+export async function writeSessionPacks(sessionsDir: string, outDir: string): Promise<{ symbols: number; days: number }> {
+  const all = await loadForEmbed(sessionsDir, 100000);
+  const by = new Map<string, ReplaySession[]>();
+  for (const s of all) {
+    if (!by.has(s.symbol)) by.set(s.symbol, []);
+    by.get(s.symbol)!.push(s);
+  }
+  await mkdir(outDir, { recursive: true });
+  const index: Record<string, string[]> = {};
+  for (const [sym, list] of by) {
+    list.sort((a, b) => a.date.localeCompare(b.date));
+    index[sym] = list.map((s) => s.date);
+    await writeFile(join(outDir, `${sym}.json`), JSON.stringify(list.map((s) => compactSession(s))), "utf8");
+  }
+  await writeFile(join(outDir, "index.json"), JSON.stringify(index), "utf8");
+  return { symbols: by.size, days: all.length };
 }
 
 export async function renderPractice(

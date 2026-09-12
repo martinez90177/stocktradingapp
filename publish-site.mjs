@@ -10,7 +10,7 @@
 import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { renderPractice } from "./src/practice.ts";
+import { renderPractice, writeSessionPacks } from "./src/practice.ts";
 import { loadForEmbed } from "./src/replay.ts";
 import { loadVolForEmbed, loadCalibrations, loadEvents } from "./src/volindex.ts";
 import { loadJournal } from "./src/journal.ts";
@@ -49,6 +49,9 @@ await writeFile(
   ),
   "utf8",
 );
+
+const packs = await writeSessionPacks(join(HERE, "sessions"), join(SITE, "sessions"));
+console.log(`site/sessions/      ${packs.days} days across ${packs.symbols} tickers, for Surprise me`);
 
 await writeFile(
   join(SITE, "journal.html"),
