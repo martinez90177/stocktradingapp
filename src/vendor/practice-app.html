@@ -1089,14 +1089,25 @@ function barsOf(r){
 /** The days that can be picked: the newest twelve of each ticker. Older ones are history behind them. */
 const PICK=(window.MP_SESSIONS||[]).filter(r=>!r.hist);
 /*
- * The library: every day ever recorded, published beside the page as one
- * pack per ticker, with an index of what is there. Surprise me and New day
- * draw from it, so a day cannot be learned and traded on memory; the picker
- * stays on the newest twelve, which are embedded. Where the packs cannot be
- * fetched -- the page opened from disk -- the embedded days stand in.
+ * The library: every day ever recorded, published beside the page as one pack
+ * per ticker, with an index of what is there. The page embeds only the newest
+ * days, so that it still opens from disk, but the picker lists the whole
+ * library and fetches a pack when an older day is chosen. Nothing is capped at
+ * what happens to be embedded: the point of the library is that it only grows,
+ * and a pool you cannot get to the bottom of is a pool you cannot learn.
+ *
+ * Where the packs cannot be fetched -- the page opened from a file -- the
+ * embedded days stand in and the tape says so.
  */
 let LIB=null;const PACKS={};
-fetch('sessions/index.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&typeof j==='object'){LIB=j;if(S.tab==='setup')pane();}}).catch(()=>{});
+fetch('sessions/index.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{
+  if(!j||typeof j!=='object')return;
+  LIB=j;
+  // The index arrives after the first render, so both pickers are rebuilt on it.
+  if(typeof renderTickers==='function')renderTickers();
+  if(typeof renderSessRow==='function')renderSessRow();
+  if(S.tab==='setup')pane();
+}).catch(()=>{});
 function libDates(sym){return LIB&&LIB[sym]?LIB[sym]:PICK.filter(r=>r.symbol===sym).map(r=>r.date).sort();}
 function libSymbols(){return LIB?Object.keys(LIB).sort():[...new Set(PICK.map(r=>r.symbol))].sort();}
 function libSize(){return libSymbols().reduce((a,s)=>a+libDates(s).length,0);}
@@ -3664,17 +3675,26 @@ function renderSessRow(){
   const sel=$('sdate');if(!sel)return;
   if(!REPLAY.length){sel.innerHTML='<option>Generated day</option>';sel.disabled=true;return;}
   if(S.blind){sel.innerHTML='<option>Blind day · revealed at the bell</option>';sel.disabled=true;return;}
-  const ds=PICK.filter(r=>r.symbol===S.ticker).map(r=>r.date).sort().reverse();
+  // Every day of this ticker in the library, newest first -- not just the ones
+  // embedded in the page. An older one is fetched when it is chosen.
+  const all=libDates(S.ticker).slice().sort().reverse();
   const cur=S.replay&&S.replay.date;
-  if(cur&&!ds.includes(cur))ds.unshift(cur);   // a library day, older than the picker's twelve
+  if(cur&&!all.includes(cur))all.unshift(cur);
   sel.disabled=false;
-  sel.innerHTML=ds.map(d=>{
+  const month=d=>{const x=new Date(d+'T12:00:00Z');
+    return ['January','February','March','April','May','June','July','August','September','October','November','December'][x.getUTCMonth()]+' '+x.getUTCFullYear();};
+  let html='',group=null;
+  for(const d of all){
+    const m=month(d);
+    if(m!==group){if(group)html+='</optgroup>';html+='<optgroup label="'+m+'">';group=m;}
     // A day with nothing recorded before it opens on a handful of candles with
     // empty higher timeframes. Still pickable, but labelled so it is no surprise.
-    const depth=REPLAY.filter(x=>x.symbol===S.ticker&&x.date<d).length;
-    const note=!PICK.some(x=>x.symbol===S.ticker&&x.date===d)?' · from the library':depth===0?' · no history':depth<MIN_HIST?' · thin history':'';
-    return '<option value="'+d+'"'+(S.replay&&S.replay.date===d?' selected':'')+'>'+dayName(d)+note+'</option>';
-  }).join('');
+    const depth=libDates(S.ticker).filter(x=>x<d).length;
+    const note=depth===0?' · no history':depth<MIN_HIST?' · thin history':'';
+    html+='<option value="'+d+'"'+(cur===d?' selected':'')+'>'+dayName(d)+note+'</option>';
+  }
+  if(group)html+='</optgroup>';
+  sel.innerHTML=html;
 }
 /**
  * Every way of leaving a session comes through here: a ticker change, a new
@@ -3706,10 +3726,20 @@ function startSession(ticker,pick,o){
 
 /* ================= wiring ================= */
 const tkSel=$('tk');
-const PICKABLE=PICK.length?[...new Set(PICK.map(r=>r.symbol))].sort():Object.keys(TICKERS);
-PICKABLE.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;tkSel.appendChild(o);});
+/** Every ticker the library has, not only those with days embedded in the page. */
+function renderTickers(){
+  const list=libSymbols().length?libSymbols():Object.keys(TICKERS);
+  const cur=S&&S.ticker;
+  tkSel.innerHTML=list.map(t=>'<option value="'+t+'"'+(t===cur?' selected':'')+'>'+t+'</option>').join('');
+}
+renderTickers();
 tkSel.onchange=()=>{if(!startSession(tkSel.value))tkSel.value=S.ticker;};
-$('sdate').onchange=e=>{if(!startSession(S.ticker,{symbol:S.ticker,date:e.target.value}))renderSessRow();};
+$('sdate').onchange=e=>{
+  const d=e.target.value;
+  // A day the page did not embed has to come from its pack.
+  const lib=!PICK.some(r=>r.symbol===S.ticker&&r.date===d);
+  if(!startSession(S.ticker,{symbol:S.ticker,date:d,lib}))renderSessRow();
+};
 $('sRestart').onclick=()=>startSession(S.ticker,S.replay?{symbol:S.ticker,date:S.replay.date}:null,{seed:S.seed});
 $('sNew').onclick=()=>{
   // A different day for the same ticker, not a reroll that lands on this one.

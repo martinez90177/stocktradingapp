@@ -387,13 +387,23 @@ there). **Surprise me** in the Session tab -- any ticker, or any day of this
 one -- and **New day** in the header draw a random day from that library:
 fetched on demand, with up to a month of history behind it, preferring days
 with a fortnight of history and days not served before (kept in the browser,
-so the next surprise is one you have not had). The picker stays on the newest
-twelve. Where the packs cannot be fetched -- the page opened from disk -- the
-embedded days stand in and the tape says so.
+so the next surprise is one you have not had).
 
-The library grows by a day per ticker per run and nothing ages out of it, so
-the pool only gets harder to learn. It starts at 21 days per ticker, which is
-Yahoo's reach; after a couple of months of runs it is genuinely large.
+**The day picker lists the whole library too**, grouped by month, and fetches
+the pack when a day the page did not embed is chosen. It used to stop at the
+newest twelve, which quietly capped the pool at whatever happened to fit in
+the file however many days had been recorded. The ticker box is the same: every
+symbol the library has, not only those with days embedded. Where the packs
+cannot be fetched -- the page opened from a file -- the embedded days stand in
+and the tape says so.
+
+The library grows by a ticker-day per run and **nothing ages out of it**, which
+is the whole point. A feed only reaches so far back -- about 48 days for
+Schwab's 1-minute bars, 30 for Yahoo's -- but that is a window that moves with
+you, while the library is the union of every window ever fetched. A day not
+recorded while it was in reach is gone for good; a day recorded is kept for
+ever. So the first harvest gets a couple of months per ticker, and after that
+it only ever gets harder to learn.
 
 ### Blind days and hardcore
 
