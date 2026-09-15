@@ -666,10 +666,65 @@ function bs(S0,K,T,iv,type){
  * is scaled by how its own options traded relative to that index, measured
  * from real trades by tools/calibrate-vol.mjs, with the skew measured the same
  * way. Nothing here is a guess about a ticker's volatility.
+ *
+ * The level alone was not enough, because it was held flat across the day on
+ * a clock that ran evenly. A session's variance does not accrue evenly: in the
+ * recorded bars the first half hour carries about a third of the day and the
+ * last half hour about a twentieth (tools/measure-intraday-variance.mjs). A
+ * 0DTE at 3pm has a sixth of the session left but a thirteenth of its
+ * variance, so pricing it on the even clock charged the morning's volatility
+ * all afternoon -- a QQQ 0DTE ran about three times what the market charged.
+ * It cut the other way too: the same expiry measured with a full day left and
+ * with two hours left is a different implied volatility (QQQ, 2026-09-11:
+ * 21.6% against 7.9%), and both were being stored in one field and used as if
+ * they meant the same thing.
+ *
+ * So the anchor is variance, not volatility. The calibration says what one
+ * session of this ticker is worth, converted from whatever time to expiry it
+ * was measured at; the measured curve says how much of that is still ahead at
+ * the minute on screen; and the volatility handed to Black-Scholes is whatever
+ * expresses that variance over the time still on the clock.
  */
 const VOLD=window.MP_VOL||{};
 const VCALS=(window.MP_VOLCAL||[]).slice().sort((a,b)=>a.date<b.date?-1:1);
 const ETFS={SPY:1,QQQ:1,IWM:1,DIA:1};
+/* How a session's variance is spread across its minutes, and what one night
+   between two sessions is worth beside it. Measured from the recorded bars by
+   tools/measure-intraday-variance.mjs; see volatility/intraday.json. */
+const IVAR=window.MP_INTRADAY||null;
+/**
+ * The curve for a ticker: its own where enough of its days have been recorded,
+ * the pooled one otherwise. They are not alike -- the overnight gap is worth
+ * about a tenth of a session on AAPL and a whole one on NVDA -- so pooling
+ * them priced the index ETFs about a third too dear.
+ */
+function ivarFor(sym){
+  if(!IVAR)return null;
+  const own=IVAR.symbols&&IVAR.symbols[sym||S.ticker];
+  return {rem:(own&&own.rem)||IVAR.rem,
+    overnight:own&&own.overnight!=null?own.overnight:IVAR.overnight,
+    ownCurve:!!(own&&own.rem),ownNight:!!(own&&own.overnight!=null),days:own?own.days:0};
+}
+/** The fraction of one session's variance still ahead at minute `m` of it. */
+function varLeft(m,sym){
+  const t=ivarFor(sym);
+  if(!t||!t.rem)return Math.max(0,Math.min(1,(MPD-m)/MPD));   // unmeasured: the even clock
+  return t.rem[Math.max(0,Math.min(MPD,Math.round(m)))];
+}
+/** One overnight gap, in units of a session's variance. */
+function gapVar(sym){const t=ivarFor(sym);return t&&t.overnight!=null?t.overnight:0;}
+/** The variance ahead of minute `m` for a contract expiring `exDays` sessions later. */
+function varAhead(m,exDays,sym){return varLeft(m,sym)+(exDays||0)*(1+gapVar(sym));}
+/**
+ * The same, for a quote measured `tau` trading days from its expiry -- which is
+ * how a calibration records when it was taken. A whole number of days means it
+ * was measured outside the session, so each of those days is a night and a
+ * session; a fraction is the part of a session that was still ahead.
+ */
+function varAtTau(tau,sym){
+  const n=Math.floor(tau+1e-9),f=tau-n;
+  return (f>1e-9?varLeft(MPD*(1-f),sym):0)+n*(1+gapVar(sym));
+}
 /**
  * The calibration to price a ticker with: the latest one measured before the
  * replayed day, so nothing from after it is used. For days older than the first
@@ -695,27 +750,47 @@ function indexAt(name,min){
   if(rec&&rec.o!=null)return {v:rec.o,src:'open'};
   return null;
 }
+/** The horizon the typical-ratio fallback was measured at, since it borrows that calibration. */
+function typicalTau(){
+  const last=VCALS[VCALS.length-1];if(!last)return null;
+  const t=Object.values(last.symbols).map(v=>v.skewT).filter(v=>v>0).sort((a,b)=>a-b);
+  return t.length?t[Math.floor(t.length/2)]:null;
+}
+/**
+ * What one session of this ticker is worth in variance, on the day being
+ * replayed. The calibration measured a volatility at some time to expiry; that
+ * is a quantity of variance, and dividing by how many sessions' worth of
+ * variance stood ahead of it leaves the value of one session.
+ */
 function volModel(min){
   const sym=S.ticker,cal=calFor(sym),name=cal?cal.index:(sym==='SPY'||sym==='IWM'||sym==='DIA'?'VIX':'VXN');
   const lv=indexAt(name,min),last=VCALS[VCALS.length-1];
   const ratio=cal?cal.ratio:typicalRatio(name);
   const level=lv?lv.v:(cal?cal.refLevel:(last&&last.index[name]));
-  if(ratio==null||level==null){
+  const tau=cal?cal.skewT:typicalTau();
+  if(ratio==null||level==null||!(tau>0)){
     // Only reachable in a build with no calibration at all. Say so rather than
     // quietly inventing a number.
-    return {atm:cfg(sym).iv,skew:0,skewT:1,index:name,level:null,src:'none',cal:null,typical:false};
+    const iv=cfg(sym).iv;
+    return {sess:iv*iv/252,vCal:1,atmCal:iv,tau:1,skew:0,index:name,level:null,src:'none',cal:null,typical:false};
   }
-  return {atm:ratio*level/100,skew:cal?cal.skew:0,skewT:cal?cal.skewT:1,index:name,level,
+  const atmCal=ratio*level/100;                  // the volatility the market charged, at the measured horizon
+  const vCal=Math.max(1e-6,varAtTau(tau,sym));   // ... which stood this many sessions' variance from expiry
+  return {sess:atmCal*atmCal*tau/252/vCal,vCal,atmCal,tau,skew:cal?cal.skew:0,index:name,level,
     src:lv?lv.src:'reference',cal,typical:!cal};
 }
+/** The at-the-money volatility at a minute: the variance still ahead, over the time still on the clock. */
+function atmIv(exDays,min){
+  const m=volModel(min),T=Tleft(exDays,min),v=m.sess*varAhead(min,exDays);
+  return T>1e-9&&v>0?Math.sqrt(v/T):1e-6;
+}
 function ivFor(K,S0,exDays,min){
-  const m=volModel(min),x=Math.log(K/S0);
-  // Skew was measured per unit of log-moneyness at skewT days out. The same
-  // move in strike means less as the time left grows, so it scales with 1/sqrt(T).
-  const Td=Math.max(.25,Math.max(0,MPD-min)/MPD+exDays);
-  const k=m.skew*Math.sqrt(m.skewT/Td);
-  const xc=Math.max(-.06,Math.min(.06,x));      // measured within 2% of spot; held flat past 6%
-  return Math.max(m.atm*.5,Math.min(m.atm*2.5,m.atm+k*xc));
+  const m=volModel(min),atm=atmIv(exDays,min);
+  // Skew was measured per unit of log-moneyness at the calibration's own
+  // horizon. The same move in strike means less the more variance is ahead.
+  const k=m.skew*Math.sqrt(m.vCal/Math.max(1e-9,varAhead(min,exDays)));
+  const xc=Math.max(-.06,Math.min(.06,Math.log(K/S0)));   // measured within 2% of spot; held flat past 6%
+  return Math.max(atm*.5,Math.min(atm*2.5,atm+k*xc));
 }
 function Tleft(exDays,min){
   const at=min==null?S.cursor:min;
@@ -736,13 +811,23 @@ function spreadOf(mid){
   const bid=Math.max(0,Math.floor((mid-width/2)/tick+1e-9)*tick);
   return {bid:+bid.toFixed(2),ask:+(bid+width).toFixed(2)};
 }
-/** A quote for one contract. `atMin` prices it at another minute of the day; the default is now. */
+/** What one contract is worth at a given minute, before the spread is put round it. */
+function valueAt(K,type,exDays,under,min){
+  return bs(under,K,Tleft(exDays,min),ivFor(K,under,exDays,min),type);
+}
+/**
+ * A quote for one contract. `atMin` prices it at another minute of the day; the
+ * default is now. Time decay is the next hour of the measured curve rather than
+ * the Black-Scholes theta, which assumes every minute decays alike: on this
+ * clock the first hour of the day costs several times what noon costs.
+ */
 function quote(K,type,exDays,under,atMin){
   const min=atMin==null?S.cursor:atMin;
   const T=Tleft(exDays,min),iv=ivFor(K,under,exDays,min);
   const g=bs(under,K,T,iv,type);
   const mid=Math.max(0,g.price),sp=spreadOf(mid);
-  return {...g,mid,bid:sp.bid,ask:sp.ask,iv,T,thetaHr:g.theta*60};
+  const hr=valueAt(K,type,exDays,under,Math.min(MPD,min+60)).price-g.price;
+  return {...g,mid,bid:sp.bid,ask:sp.ask,iv,T,thetaHr:Math.min(0,hr)};
 }
 /** The same contract at 9:30, on the day's opening price: what "up or down today" is measured from. */
 function openQuote(K,type,exDays){
@@ -778,13 +863,22 @@ function eventNote(exDays){
 function volSource(){
   const m=volModel(S.cursor);
   if(m.src==='none')return 'No volatility calibration is embedded in this build, so option prices fall back to a fixed estimate.';
-  const lvl=m.level.toFixed(2),pct=(m.atm*100).toFixed(1)+'%';
+  const lvl=m.level.toFixed(2),pct=(atmIv(S.exDays,S.cursor)*100).toFixed(1)+'%';
   const where=m.src==='minute'?m.index+' at '+lbl(HIST,S.cursor)+' was '+lvl:
     m.src==='open'?m.index+' opened the day at '+lvl+' (no minute record for this day)':
     m.index+' '+lvl+' from the last calibration (no record for this day)';
   const how=m.typical?S.ticker+' has not been measured yet, so it is priced like the typical measured stock':
     S.ticker+' options trade at '+m.cal.ratio.toFixed(2)+'&times; '+m.index+' ('+(S.blind?'measured from real trades':m.cal.date===(S.replay&&S.replay.date)?'measured at this day&rsquo;s close':'measured '+m.cal.date+(m.cal.carried?', carried back to this earlier day':''))+')';
-  return 'At-the-money volatility <b>'+pct+'</b>: '+where+'; '+how+'.';
+  // The level is one number for the day; what a contract is actually charged
+  // is the share of it still ahead, which is why the figure moves with the clock.
+  const t=ivarFor();
+  const ahead=t&&t.rem
+    ?' <b>'+(varLeft(S.cursor)*100).toFixed(0)+'%</b> of the session&rsquo;s variance is still ahead at '+lbl(HIST,S.cursor)+
+      ' (an even clock would say '+((MPD-S.cursor)/MPD*100).toFixed(0)+'%), from '+
+      (t.ownCurve?S.ticker+'&rsquo;s own '+t.days+' recorded days':'all '+IVAR.sessions+' recorded sessions, since '+S.ticker+' has too few of its own')+
+      '; a night is worth '+gapVar().toFixed(2)+' of a session'+(t.ownNight?'':' (pooled)')+'.'
+    :'';
+  return 'At-the-money volatility <b>'+pct+'</b> for this expiry right now: '+where+'; '+how+'.'+ahead;
 }
 function strikes(under){
   const inc=cfg(S.ticker).inc;

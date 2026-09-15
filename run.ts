@@ -9,7 +9,7 @@ import { discoverMovers } from "./src/movers.ts";
 import { loadRules } from "./src/rules.ts";
 import { renderPractice, writeSessionPacks } from "./src/practice.ts";
 import { harvest, loadForEmbed } from "./src/replay.ts";
-import { harvestVol, loadVolForEmbed, loadCalibrations, loadEvents, recordEvents } from "./src/volindex.ts";
+import { harvestVol, loadVolForEmbed, loadCalibrations, loadEvents, recordEvents, loadIntraday } from "./src/volindex.ts";
 import { execFileSync } from "node:child_process";
 import { loadJournal } from "./src/journal.ts";
 import { renderJournal } from "./src/journalpage.ts";
@@ -242,6 +242,16 @@ async function main() {
     } catch (e) {
       console.warn(`  ~ calibration skipped (${String((e as Error).message).split("\n")[0]})`);
     }
+    // How a session's variance is spread across its minutes: measured from the
+    // sessions just recorded, so the practice terminal charges a 0DTE the
+    // variance still ahead of it rather than a flat volatility. No network.
+    try {
+      const out = execFileSync(process.execPath, [join(ROOT, "tools", "measure-intraday-variance.mjs")], { encoding: "utf8", timeout: 120000 });
+      const lines = out.trim().split("\n");
+      console.log(`  intraday variance: ${lines[0].trim()}`);
+    } catch (e) {
+      console.warn(`  ~ intraday variance skipped (${String((e as Error).message).split("\n")[0]})`);
+    }
   }
 
   try {
@@ -251,6 +261,7 @@ async function main() {
       embed: await loadVolForEmbed(VOL, sessions.map((s) => s.date)),
       calibrations: await loadCalibrations(VOL),
       events: await loadEvents(VOL),
+      intraday: await loadIntraday(VOL),
       rulebook: rules,
     });
     await writeFile(join(REPORTS, "practice.html"), practice, "utf8");

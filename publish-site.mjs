@@ -12,7 +12,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderPractice, writeSessionPacks } from "./src/practice.ts";
 import { loadForEmbed } from "./src/replay.ts";
-import { loadVolForEmbed, loadCalibrations, loadEvents } from "./src/volindex.ts";
+import { loadVolForEmbed, loadCalibrations, loadEvents, loadIntraday } from "./src/volindex.ts";
 import { loadJournal } from "./src/journal.ts";
 import { loadRules } from "./src/rules.ts";
 import { renderJournal } from "./src/journalpage.ts";
@@ -44,6 +44,7 @@ await writeFile(
       embed: await loadVolForEmbed(join(HERE, "volatility"), sessions.map((s) => s.date)),
       calibrations: await loadCalibrations(join(HERE, "volatility")),
       events: await loadEvents(join(HERE, "volatility")),
+      intraday: await loadIntraday(join(HERE, "volatility")),
       rulebook: await loadRules(join(HERE, "rules.json")).catch(() => null),
     },
   ),

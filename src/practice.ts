@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { loadForEmbed } from "./replay.ts";
 import { FONT_CSS } from "./fonts.ts";
-import type { VolEmbed, Calibration, Events } from "./volindex.ts";
+import type { VolEmbed, Calibration, Events, Intraday } from "./volindex.ts";
 import type { RuleBook } from "./types.ts";
 
 /**
@@ -10,7 +10,7 @@ import type { RuleBook } from "./types.ts";
  * the per-ticker calibrations. `rulebook` is Alex's Rules from rules.json,
  * shown in the Rules tab beside the numbers the simulator enforces.
  */
-export interface PracticeVol { embed: VolEmbed; calibrations: Calibration[]; events?: Events; rulebook?: RuleBook | null }
+export interface PracticeVol { embed: VolEmbed; calibrations: Calibration[]; events?: Events; intraday?: Intraday | null; rulebook?: RuleBook | null }
 import type { ReplaySession, ExtBar } from "./replay.ts";
 
 /**
@@ -89,7 +89,9 @@ function dataNote(sessions: ReplaySession[], vol?: PracticeVol): { title: string
        to pick from, and <strong>Surprise me</strong> draws from the whole library beside the page &mdash; every day ever recorded, one you have not had before first.
        Option prices are modelled rather than quoted, but not guessed: the volatility in them is
        the market&rsquo;s own &mdash; that day&rsquo;s VXN or VIX, minute by minute &mdash; scaled to each
-       ticker by how its options really traded${vol && vol.calibrations.length ? ` (measured ${esc(vol.calibrations[vol.calibrations.length - 1].date)})` : ""}.
+       ticker by how its options really traded${vol && vol.calibrations.length ? ` (measured ${esc(vol.calibrations[vol.calibrations.length - 1].date)})` : ""},
+       and spread across the day on the variance curve measured from these same recorded bars${vol && vol.intraday ? ` (${vol.intraday.sessions} sessions)` : ""} &mdash;
+       so a 0DTE is charged the variance still ahead of it rather than a flat volatility on an even clock.
        You buy at the ask and sell at the bid, on realistic spreads.`,
   };
 }
@@ -248,7 +250,7 @@ export async function renderPractice(
 <style>${style}${SKIN}</style>
 </head><body>
 ${data}
-${vol ? `<script>window.MP_VOL=${JSON.stringify(vol.embed)};window.MP_VOLCAL=${JSON.stringify(vol.calibrations).replace(/</g, "\\u003c")};window.MP_EVENTS=${JSON.stringify(vol.events ?? {}).replace(/</g, "\\u003c")};window.MP_RULEBOOK=${JSON.stringify(vol.rulebook ?? null).replace(/</g, "\\u003c")};</script>` : ""}
+${vol ? `<script>window.MP_VOL=${JSON.stringify(vol.embed)};window.MP_VOLCAL=${JSON.stringify(vol.calibrations).replace(/</g, "\\u003c")};window.MP_EVENTS=${JSON.stringify(vol.events ?? {}).replace(/</g, "\\u003c")};window.MP_INTRADAY=${JSON.stringify(vol.intraday ?? null)};window.MP_RULEBOOK=${JSON.stringify(vol.rulebook ?? null).replace(/</g, "\\u003c")};</script>` : ""}
 ${body}
 </body></html>`;
 }

@@ -138,6 +138,35 @@ export async function recordEvents(dir: string, found: Record<string, number[]>)
   return added;
 }
 
+/**
+ * How a session's variance is spread across its minutes, and what one night
+ * beside it is worth. Measured from the recorded bars by
+ * tools/measure-intraday-variance.mjs; the practice terminal prices options on
+ * it, so that a 0DTE is charged the variance still ahead of it rather than a
+ * flat volatility on an even clock.
+ */
+export interface Intraday {
+  measuredAt: string;
+  sessions: number;
+  from: string;
+  to: string;
+  /** Fraction of one session's variance still ahead at each minute, 0 through 390. */
+  rem: number[];
+  /** One overnight gap, in units of one session's variance; null where too few to measure. */
+  overnight: number | null;
+  gaps: number;
+}
+
+/** The measured curve, or null where it has never been measured. */
+export async function loadIntraday(dir: string): Promise<Intraday | null> {
+  try {
+    const j = JSON.parse(await readFile(join(dir, "intraday.json"), "utf8")) as Intraday;
+    return Array.isArray(j.rem) && j.rem.length === 391 ? j : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Every calibration measured so far, newest last. */
 export async function loadCalibrations(dir: string): Promise<Calibration[]> {
   const sub = join(dir, "calibration");

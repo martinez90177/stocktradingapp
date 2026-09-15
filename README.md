@@ -397,18 +397,66 @@ volatility in it, and that is now the market's own, not a guess:
   The local morning run re-measures every ticker each day, so the scaling
   follows the market. A ticker never measured is priced like the typical
   measured stock, and the ticket says so.
+- **The clock** is the one the market keeps, not the one on the wall. A
+  session's variance is not spread evenly across its minutes: measured from the
+  recorded bars by `node tools/measure-intraday-variance.mjs`, the first half
+  hour carries about **a third** of the day and the last half hour about a
+  twentieth. A 0DTE at 3pm has a sixth of the session left but a **thirteenth**
+  of its variance. The measured curve lives in `volatility/intraday.json`.
 - **Spreads** follow the exchange's ticks: SPY and QQQ a cent or two wide, stock
   options in pennies under $3 and nickels above. You buy at the ask and sell at
   the bid.
 
 The ticket says where the volatility came from, e.g. *"VXN at 10:30 was 22.07;
-QQQ options trade at 0.93x VXN (measured 2026-09-10)"*.
+QQQ options trade at 0.93x VXN (measured 2026-09-10); 51% of the session's
+variance is still ahead at 10:30 (an even clock would say 85%)"*.
+
+### The clock, and why a flat volatility was not enough
+
+A calibration is a volatility measured at some particular distance from expiry,
+and that distance was being thrown away. The same QQQ expiry measured at the
+2026-09-10 close, a full day out, was **21.6%**; measured at 13:28 the next day,
+two and a half hours out, it was **7.9%**. Both were stored in one `ratio`
+field and used as if they meant the same thing, held flat across the whole
+replayed day on a clock that ran evenly. So the terminal charged the morning's
+volatility all afternoon: a QQQ 0DTE at 3pm ran about **three times** what the
+market charged for it, and a deep in-the-money contract carried time value it
+had no business carrying.
+
+The anchor is variance now, not volatility:
+
+1. The calibration says what the market charged, at whatever horizon it was
+   taken at. That is a quantity of variance.
+2. Dividing by how many sessions' worth of variance stood ahead of it leaves
+   the value of **one session** for that ticker.
+3. The measured curve says what share of a session is still ahead at the minute
+   on screen, and the volatility handed to Black-Scholes is whatever expresses
+   that variance over the time still on the clock.
+
+Both halves of the curve are measured **per ticker**, because they are nothing
+like each other. The overnight gap is worth 0.11 of a session on AAPL and 1.09
+on NVDA; pooling them priced the index ETFs about a third too dear. A ticker
+with fewer than 15 recorded days falls back to the pooled curve, and the ticket
+says which it used.
+
+**Time decay** is the next hour of that curve rather than the Black-Scholes
+theta, which assumes every minute decays alike. On the measured clock the first
+hour of the day costs several times what noon costs, which is the whole reason
+0DTE holders talk about the morning bleed.
+
+Checked against the real prints from the afternoon of 2026-09-11, which the
+model never saw (it prices that day from the 09-10 calibration): at-the-money
+0DTE implied volatility of **9.1%** against a measured 7.9% on QQQ, 19.5%
+against 21.4% on TSLA, 14.1% against 15.5% on MSFT. It was 2.5x out before.
+The residue is a real thing rather than a modelling error -- the market's view
+of 09-11 genuinely changed between the previous close and that afternoon -- so
+it is left alone rather than tuned away.
 
 What it replaced: a fixed volatility per ticker from when the app was written
 (QQQ 17%, from when QQQ traded near 500; NVDA 50%; any other ticker 35%), marked
 up 55% for 0DTE, with a smile that made every out-of-the-money option dearer.
 On Sep 9 at 9:45 that priced the QQQ 720 call, 0DTE, at $3.48; it is $2.25 on
-the market's volatility.
+the market's volatility, and less again once the clock above is applied.
 
 **How accurate.** Tested against 273 real option trades at the Sep 10 close,
 on expiries the calibration never saw: median error **9%**, against 35% for the
