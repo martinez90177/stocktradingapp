@@ -157,12 +157,46 @@ Chain, Fib, Tape, Journal, Coach, Session and Rules pane alongside. It trades
 the account you actually have, under the rules you wrote for it, and keeps a
 record of every trade; see *Your account, your rules* below.
 
+### The layout
+
+The terminal is **one screen that never scrolls**, on a phone and on a
+desktop alike. The header carries the ticker, the price, the clock and the
+account strip; the chart takes everything that is left; and the panes live
+beside it or over it, scrolling by themselves.
+
+On a **desktop** it is laid out the way a charting terminal is: a toolbar of
+timeframes, chart style and indicator chips above the chart, the drawing
+tools down its left edge, the transport row (rewind, Next, play, speed)
+under it, and a sidebar on the right with the day picker, the eight pane tabs
+as two rows of four, and the pane. A slim masthead above it all holds the
+data note behind a chip, the guide, and the link back to the report.
+
+On a **phone** the same parts are stacked: header, chart, one toolbar row, the
+transport row, and a bar of four buttons along the bottom -- Trade, Chain,
+Session, More. The toolbar shows one of three things at a time, picked by the
+icons at its left: the timeframes, the drawing tools, or the chart style and
+indicator chips. A pane opens as a **sheet** that slides up over the lower part
+of the chart and stops above the transport row, so Next stays under your
+thumb with the ticket open; drag its handle down to close it, up for the full
+height, or tap the button that opened it. The sheet's own tab row reaches
+every pane; More opens the ones the bar does not name and takes that pane's
+name while it is open. The day picker, Restart and the data note sit at the
+top of the Session pane, and the shuffle button in the header is New day.
+
+The app's markup and stylesheet are the single source for both: the build
+adds the report's fonts and the masthead and nothing else. It used to
+replace the stylesheet with a copy kept in `src/practice.ts`, and the two
+drifted until the file opened from disk and the site served were different
+pages.
+
 ### Finding your way
 
 A **guide** walks through the page one control at a time: a spotlight on the
 thing and a card saying what it does. It opens by itself on a first visit, and
-from the **?** button in the header or **How to use this page** after that. The
-dimmed page cannot be clicked while it runs, so the tour cannot place a trade.
+from the **?** beside the day picker (the Session pane on a phone) or **How to
+use this page** in the desktop masthead after that. The dimmed page cannot be
+clicked while it runs, so the tour cannot place a trade. On a phone each step
+opens the sheet or switches the toolbar to the thing it is pointing at.
 
 Every drawing tool is labelled under its icon (Pointer, Trend, Level, Fib, Box,
 Measure, Erase, Undo, Clear) and has a hover description. Picking a tool, or
@@ -494,16 +528,15 @@ Skip the harvest with `--no-replay`.
 ### Reading the chart
 
 Six chart types — candles, hollow, **Heikin Ashi**, OHLC bars, line and area —
-from the picker in the strip under the chart. Heikin Ashi is built from the first
-bar forward, because each of its candles depends on the one before it. The
-chips live in that strip on every screen: floated over the candles they
-covered the first hour, and at ten-pixel mono they were the hardest thing on
-the page to read. Any strip wider than its box -- the chips, the timeframes,
-the draw rail -- gets **arrows** at the edges that scroll it. The pane tabs
-do not scroll at all: all eight sit in view as two rows of four, in the order
-they are reached for -- Trade, Session, Coach, Chain, then Fib, Tape, Journal,
-Rules -- since a strip that scrolled sideways hid Session and Rules past the
-edge, where nobody looked.
+from the picker in the toolbar. Heikin Ashi is built from the first bar
+forward, because each of its candles depends on the one before it. The
+indicator chips sit in the toolbar beside it, never over the candles: floated
+over the chart they covered the first hour of the day. Any strip wider than
+its box -- the chips, the timeframes, the tools and the tab row on a phone --
+gets **arrows** at the edges that scroll it, since a hidden scrollbar is no
+sign that there is more past the edge. On a desktop the eight pane tabs are
+two rows of four, all in view, in the order they are reached for -- Trade,
+Session, Coach, Chain, then Fib, Tape, Journal, Rules.
 
 Indicator chips sit beside it: EMA 9/20/50, VWAP, Bollinger bands, an **RSI 14
 subpanel**, volume, and magnet snapping for the drawing tools. Volume is drawn
@@ -539,7 +572,8 @@ context: pinch, scroll, or drag the time axis.
 
 The price axis is draggable to stretch or squash the scale — the cursor turns
 into a resize arrow over it — and scrolling there zooms the price scale alone.
-Double-tap the axis to reset it, or press **auto fit**.
+Double-tap the axis to reset it, or press **Reset view**, which appears over
+the chart whenever the view is not the automatic one.
 
 Labels along the left edge -- the levels, a stop, a target, the strike, working
 orders, drawn levels -- are laid out together at the end of each frame: sorted
@@ -553,16 +587,23 @@ in clear air instead of on top of the last few bars.
 
 ### On a phone
 
-The chart's height is fixed once per width. Safari's address bar collapses and
-expands as you scroll, which changes `innerHeight` and used to fire a resize
-on every gesture: the chart changed height under your fingers and the whole
-page shifted -- the "unstable" feel. Only a rotation resizes it now. The page
-itself never pinch-zooms (iOS ignores `user-scalable=no`, so a pinch with one
-finger off the canvas zoomed the page and the chart went with it), a
-two-finger drag on the chart never scrolls the page underneath, and tapping a
-tab past the edge scrolls the tab strip sideways only. The bar readout lives
-in the chart's corner, TradingView style, instead of a line in the sticky
-header, which was already tall.
+The page itself never scrolls, so Safari's address bar no longer collapses and
+expands under a gesture, which used to change the chart's height mid-drag and
+shift the whole page. The chart is exactly the box the layout gives it, on
+every screen, and re-sizes only when that box does.
+
+**Zoom.** iOS ignores `user-scalable=no`, and the old page had several ways
+into Safari's page zoom and none out: a pinch with one finger off the canvas,
+a double-tap on a strip, and -- the usual one -- tapping any input or select
+smaller than 16px, which Safari zooms into and never zooms back out of. Every
+control on a phone is 16px now, pinches and double-taps are intercepted, a
+two-finger drag on the chart never scrolls anything underneath, and if the
+page is ever found zoomed anyway a **Zoomed in · tap to reset** pill appears
+at the top and puts it back.
+
+The bar readout lives in the chart's corner, TradingView style, and the
+position bar floats there too, under Reset view, so neither costs the chart
+a line of header.
 
 ### Maintaining it
 
