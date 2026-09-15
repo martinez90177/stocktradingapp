@@ -30,6 +30,7 @@ interface Config {
     moversLimit: number;
     moversMinPrice: number;
     moversMinDollarVolume: number;
+    harvestDays: number;
   };
 }
 
@@ -79,6 +80,9 @@ async function loadConfig(flags: Record<string, string | boolean>): Promise<Conf
       moversLimit: o.moversLimit === 0 ? 0 : Number(o.moversLimit) || 12,
       moversMinPrice: Number(o.moversMinPrice) || 3,
       moversMinDollarVolume: Number(o.moversMinDollarVolume) || 20e6,
+      // How far back the replay harvest reaches. Schwab serves about 48 days of
+      // 1-minute bars; Yahoo clamps itself to 29 however much is asked for.
+      harvestDays: Number(o.harvestDays) || 60,
     },
   };
 }
@@ -221,7 +225,7 @@ async function main() {
       // pool at six tickers however long the watchlist grew.
       const recorded = await readdir(SESSIONS).catch(() => [] as string[]);
       const toRecord = [...new Set([...config.practice, ...recorded])];
-      const h = await harvest(toRecord, SESSIONS, CACHE, (m) => console.warn(`  ~ ${m}`));
+      const h = await harvest(toRecord, SESSIONS, CACHE, (m) => console.warn(`  ~ ${m}`), config.options.harvestDays);
       console.log(`  replay library: ${h.added} new${h.extended ? `, ${h.extended} given extended hours` : ""}, ${h.total} sessions total`);
     } catch (e) {
       console.warn(`  ~ replay harvest skipped (${(e as Error).message})`);

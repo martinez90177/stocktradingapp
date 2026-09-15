@@ -228,7 +228,12 @@ export async function harvest(
   dir: string,
   cacheDir: string | null,
   onWarn?: (m: string) => void,
-  days = 29,
+  // How far back to ask for. 29 was Yahoo's ceiling, and it stayed the default
+  // long enough to become our own: Schwab serves roughly 48 days of 1-minute
+  // bars, so asking for 29 left nearly three weeks per ticker on the table.
+  // Yahoo's own path clamps itself to 29 whatever is passed, so this only
+  // reaches further where Schwab is answering.
+  days = 60,
 ): Promise<{ added: number; extended: number; total: number }> {
   let added = 0;
   let extended = 0;
