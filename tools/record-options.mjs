@@ -28,6 +28,10 @@
  * are actually live before committing a session to them.
  *
  * Credentials come from the environment, and a feed without them is skipped:
+ *   SCHWAB_APP_KEY, SCHWAB_APP_SECRET   thinkorswim, via api.schwabapi.com. The best
+ *                            of these: real-time for account holders, and it is the only
+ *                            one that says outright whether what it gave you was delayed.
+ *                            Needs a one-time login: node tools/schwab-login.mjs
  *   TRADIER_TOKEN            api.tradier.com; real-time with a brokerage account
  *   TRADIER_ENV=sandbox      ... or the free sandbox, which is delayed
  *   POLYGON_KEY              api.polygon.io
@@ -46,6 +50,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const { authedJson } = await import(pathToFileURL(join(ROOT, "src", "catalysts.ts")).href);
 const { emptyDay, merge, cents, typicalLag, sourceShare } =
   await import(pathToFileURL(join(ROOT, "src", "optionsfile.ts")).href);
+const SCHWAB = await import(pathToFileURL(join(ROOT, "src", "schwab.ts")).href);
 
 const OPEN = 570, CLOSE = 960;   // minutes into the day, New York
 
@@ -128,6 +133,54 @@ function band(rows, spot) {
  * what makes the lag measurable; a feed that will not say gets -1 recorded
  * against it, which is itself worth knowing.
  */
+
+/**
+ * Schwab, which is what thinkorswim is built on. One call brings the whole
+ * chain back, already narrowed to the strikes around the money, and the
+ * response carries `isDelayed` -- the only feed here that admits it, rather
+ * than leaving it to be measured.
+ */
+async function schwab(symbol) {
+  const token = await SCHWAB.accessToken(join(ROOT, SCHWAB.TOKEN_FILE));
+  if (!token) return null;
+  const today = nowET().date;
+  const to = new Date(Date.parse(today) + 20 * 86400_000).toISOString().slice(0, 10);
+  const j = await getJson(
+    `https://api.schwabapi.com/marketdata/v1/chains?symbol=${encodeURIComponent(symbol)}` +
+    `&contractType=ALL&strikeCount=${MAX_SIDE * 2 + 1}&includeUnderlyingQuote=true` +
+    `&fromDate=${today}&toDate=${to}`,
+    { Authorization: `Bearer ${token}` });
+  const spot = j?.underlyingPrice ?? j?.underlying?.last;
+  if (!(spot > 0) || (!j.callExpDateMap && !j.putExpDateMap)) return null;
+
+  // Both maps are keyed "YYYY-MM-DD:daysToExpiry", then by strike, then a list
+  // of one contract.
+  const rows = new Map();
+  let at = null;
+  const take = (map, type) => {
+    for (const [key, byStrike] of Object.entries(map ?? {})) {
+      const date = key.split(":")[0];
+      for (const list of Object.values(byStrike ?? {})) {
+        for (const c of [].concat(list ?? [])) {
+          if (!rows.has(date)) rows.set(date, []);
+          rows.get(date).push({ strike: c.strikePrice, type, bid: c.bid, ask: c.ask });
+          if (c.quoteTimeInLong > 0 && (at == null || c.quoteTimeInLong > at)) at = c.quoteTimeInLong;
+        }
+      }
+    }
+  };
+  take(j.callExpDateMap, "call");
+  take(j.putExpDateMap, "put");
+
+  const out = [];
+  for (const d of [...rows.keys()].filter((x) => x >= today).sort().slice(0, EXPIRIES)) {
+    const b = band(rows.get(d), spot);
+    if (b) out.push({ date: d, ...b });
+  }
+  // Schwab saying it is delayed is worth more than any timestamp: a stamp can
+  // look recent on data that is a quarter of an hour old.
+  return out.length ? { spot, at, expiries: out, delayed: j.isDelayed === true } : null;
+}
 
 /** Yahoo. No credentials, and no promise of freshness: usually delayed. */
 async function yahoo(symbol) {
@@ -263,6 +316,7 @@ async function alpaca(symbol) {
  * which makes it a fallback rather than a source.
  */
 const FEEDS = [
+  { name: "schwab", read: schwab, needs: ["SCHWAB_APP_KEY", "SCHWAB_APP_SECRET"] },
   { name: "tradier", read: tradier, needs: ["TRADIER_TOKEN"] },
   { name: "polygon", read: polygon, needs: ["POLYGON_KEY"] },
   { name: "alpaca", read: alpaca, needs: ["ALPACA_KEY", "ALPACA_SECRET"] },
@@ -304,14 +358,17 @@ async function readFresh(feeds, symbol) {
     if (!sweep) continue;
     const lagS = sweep.at ? (Date.now() - sweep.at) / 1000 : null;
     const tagged = { ...sweep, source: f.name, lagS };
-    if (lagS == null || lagS <= MAX_LAG_S) return tagged;
-    if (!stale || (stale.lagS ?? 1e9) > lagS) stale = tagged;
+    // A feed that declares itself delayed is stale however recent its stamp
+    // looks: a delayed quote is restamped as it is handed out.
+    if (!sweep.delayed && (lagS == null || lagS <= MAX_LAG_S)) return tagged;
+    const rank = sweep.delayed ? Math.max(lagS ?? 0, MAX_LAG_S + 1) : lagS;
+    if (!stale || (stale.rank ?? 1e9) > rank) stale = { ...tagged, rank };
   }
   return stale;
 }
 
 /** The feeds themselves, exported so their field mapping can be tested without a market. */
-export { FEEDS, band, yahoo, tradier, polygon, alpaca, readFresh };
+export { FEEDS, band, yahoo, tradier, polygon, alpaca, schwab, readFresh };
 
 async function main() {
   const feeds = chosenFeeds();
@@ -325,6 +382,12 @@ async function main() {
   /* --check: one sweep of every feed, side by side, so you can see which is live. */
   if (flag("check") === true) {
     const sym = syms[0];
+    if (feeds.some((f) => f.name === "schwab")) {
+      const t = await SCHWAB.loadTokens(join(ROOT, SCHWAB.TOKEN_FILE));
+      console.log(t
+        ? `schwab login has about ${SCHWAB.refreshHoursLeft(t).toFixed(0)}h left`
+        : "schwab is configured but not logged in -- run: node tools/schwab-login.mjs");
+    }
     console.log(`Checking ${feeds.map((f) => f.name).join(", ")} on ${sym}\n`);
     console.log("feed          spot         lag  expiries  strikes  a sample quote");
     for (const f of feeds) {
@@ -332,7 +395,7 @@ async function main() {
       let s = null, err = null;
       try { s = await f.read(sym); } catch (e) { err = e.message; }
       if (!s) { console.log(`${f.name.padEnd(12)} ${err ? `failed: ${err}` : "no data"}`); continue; }
-      const lag = s.at ? `${((Date.now() - s.at) / 1000).toFixed(0)}s` : "not said";
+      const lag = s.delayed === true ? "DELAYED" : s.at ? `${((Date.now() - s.at) / 1000).toFixed(0)}s` : "not said";
       const e0 = s.expiries[0], mid = Math.floor(e0.strikes.length / 2);
       const bid = e0.call[mid * 2], ask = e0.call[mid * 2 + 1];
       console.log(`${f.name.padEnd(12)}${s.spot.toFixed(2).padStart(8)}${lag.padStart(12)}` +
@@ -369,6 +432,15 @@ async function main() {
 
   console.log(`Recording ${syms.length} symbol(s): ${syms.join(", ")}`);
   console.log(`  feeds, in order: ${feeds.map((f) => f.name).join(" -> ")}`);
+  // A Schwab login lasts a week, and finding that out at 9:31 is too late.
+  if (feeds.some((f) => f.name === "schwab")) {
+    const t = await SCHWAB.loadTokens(join(ROOT, SCHWAB.TOKEN_FILE));
+    const h = t ? SCHWAB.refreshHoursLeft(t) : 0;
+    if (!t) console.warn("  ! schwab is configured but not logged in. Run: node tools/schwab-login.mjs");
+    else if (h <= 0) console.warn("  ! the schwab login has expired. Run: node tools/schwab-login.mjs");
+    else if (h < 12) console.warn(`  ! the schwab login runs out in about ${h.toFixed(0)}h, during or soon after this session.`);
+    else console.log(`  schwab login good for about another ${Math.floor(h / 24)}d ${Math.round(h % 24)}h`);
+  }
   console.log(`  ${EXPIRIES} expiry/expiries, strikes within ${(BAND * 100).toFixed(1)}% of spot, anything over ${MAX_LAG_S}s old falls through`);
   console.log(`  roughly ${(0.54 * EXPIRIES * syms.length / 7).toFixed(1)} MB a day in the repository at this setting`);
   console.log("  Leave this running until the 4:00 bell. Ctrl-C stops it; restarting merges into the same file.\n");

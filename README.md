@@ -419,8 +419,9 @@ scale from is worse than useless. So the option prices are recorded too, the
 same way the candles are:
 
 ```bash
-node tools/record-options.mjs --check     # which feeds are live, and how far behind?
-npm run record-options                    # then record until the bell
+npm run schwab-login      # once a week: sign in to thinkorswim
+npm run check-feeds       # which feeds are live, and how far behind?
+npm run record-options    # then record until the bell
 ```
 
 Start it before the open and leave it until the bell. Every minute it reads the
@@ -445,10 +446,40 @@ wired in, and none of them is taken at its word:
 
 | Feed | Needs | Real-time? |
 | --- | --- | --- |
+| `schwab` | `SCHWAB_APP_KEY`, `SCHWAB_APP_SECRET`, plus a login | **yes**, for account holders, and it says so in the response |
 | `tradier` | `TRADIER_TOKEN` | yes with a funded brokerage account; the free sandbox is delayed |
 | `polygon` | `POLYGON_KEY` | on a paid options plan |
 | `alpaca` | `ALPACA_KEY`, `ALPACA_SECRET` | with `ALPACA_OPTIONS_FEED=opra`; the free indicative feed is delayed |
 | `yahoo` | nothing | no, and it will not admit it |
+
+**Schwab is the one to use**, because thinkorswim is built on it: the data is
+the same data the platform shows, it is real-time for account holders, and
+alone among these it returns an `isDelayed` flag rather than leaving you to
+infer it. A feed that declares itself delayed is treated as stale however
+recent its timestamp looks, because a delayed quote is re-stamped as it is
+handed out.
+
+#### Setting Schwab up
+
+At [developer.schwab.com](https://developer.schwab.com): create an app, add the
+**Market Data Production** product, and note the callback URL you register
+(`https://127.0.0.1` will do). Then:
+
+```bash
+export SCHWAB_APP_KEY=...  SCHWAB_APP_SECRET=...
+npm run schwab-login
+```
+
+That prints a link; you sign in with your Schwab credentials, approve, and the
+browser lands on a page that will not load -- expected, the callback is not a
+real server -- and you paste the address back. Tokens go to
+`.schwab-tokens.json`, which git ignores and which is written readable only by
+you.
+
+An access token lasts thirty minutes and the recorder refreshes it by itself,
+about a dozen times a session. **The refresh token lasts seven days**, so the
+login is a weekly job; the recorder says how long it has left when it starts,
+and warns if it will run out during the session.
 
 Every feed is asked for **its own timestamp**, the gap from the clock is
 measured on every single sweep, and that lag is written into the file beside
