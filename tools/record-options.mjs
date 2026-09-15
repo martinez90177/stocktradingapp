@@ -141,7 +141,7 @@ function band(rows, spot) {
  * than leaving it to be measured.
  */
 async function schwab(symbol) {
-  const token = await SCHWAB.accessToken(join(ROOT, SCHWAB.TOKEN_FILE));
+  const token = await SCHWAB.accessToken(SCHWAB.TOKEN_FILE);
   if (!token) return null;
   const today = nowET().date;
   const to = new Date(Date.parse(today) + 20 * 86400_000).toISOString().slice(0, 10);
@@ -385,7 +385,7 @@ async function main() {
   if (flag("check") === true) {
     const sym = syms[0];
     if (feeds.some((f) => f.name === "schwab")) {
-      const t = await SCHWAB.loadTokens(join(ROOT, SCHWAB.TOKEN_FILE));
+      const t = await SCHWAB.loadTokens(SCHWAB.TOKEN_FILE);
       console.log(t
         ? `schwab login has about ${SCHWAB.refreshHoursLeft(t).toFixed(0)}h left`
         : "schwab is configured but not logged in -- run: node tools/schwab-login.mjs");
@@ -436,7 +436,7 @@ async function main() {
   console.log(`  feeds, in order: ${feeds.map((f) => f.name).join(" -> ")}`);
   // A Schwab login lasts a week, and finding that out at 9:31 is too late.
   if (feeds.some((f) => f.name === "schwab")) {
-    const t = await SCHWAB.loadTokens(join(ROOT, SCHWAB.TOKEN_FILE));
+    const t = await SCHWAB.loadTokens(SCHWAB.TOKEN_FILE);
     const h = t ? SCHWAB.refreshHoursLeft(t) : 0;
     if (!t) console.warn("  ! schwab is configured but not logged in. Run: node tools/schwab-login.mjs");
     else if (h <= 0) console.warn("  ! the schwab login has expired. Run: node tools/schwab-login.mjs");

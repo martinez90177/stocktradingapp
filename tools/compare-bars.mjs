@@ -35,7 +35,7 @@ const symbols = typeof flag("symbols") === "string"
   ? String(flag("symbols")).split(",").map((s) => s.trim().toUpperCase())
   : JSON.parse(await (await import("node:fs/promises")).readFile(join(ROOT, "watchlist.json"), "utf8")).symbols.slice(0, 3);
 
-const token = await SCHWAB.accessToken(join(ROOT, SCHWAB.TOKEN_FILE)).catch((e) => { console.error(e.message); return null; });
+const token = await SCHWAB.accessToken(SCHWAB.TOKEN_FILE).catch((e) => { console.error(e.message); return null; });
 if (!token) {
   console.error("Schwab is not logged in, so there is nothing to compare against. Run: node tools/schwab-login.mjs");
   process.exit(1);
@@ -45,7 +45,7 @@ const money = (x) => (x < 0.005 ? `${(x * 100).toFixed(2)}c` : `$${x.toFixed(2)}
 
 for (const symbol of symbols) {
   console.log(`\n${symbol}`);
-  const s = await SCHWAB.minuteBars(symbol, days + 2, join(ROOT, SCHWAB.TOKEN_FILE));
+  const s = await SCHWAB.minuteBars(symbol, days + 2, SCHWAB.TOKEN_FILE);
   const y = await REPLAY.fetchMinuteBars(symbol, days + 2, join(ROOT, "cache"), true).catch(() => null);
   if (!s?.length || !y?.length) {
     console.log(`  ${!s?.length ? "schwab" : "yahoo"} returned nothing; cannot compare`);

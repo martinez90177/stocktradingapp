@@ -4,9 +4,11 @@
  *   node tools/schwab-login.mjs
  *
  * Before the first run, at https://developer.schwab.com: create an app, add
- * the "Accounts and Trading Production" and "Market Data Production" products,
- * and set its callback URL. Then put the app's key and secret in the
- * environment, with the callback URL if it is not the default:
+ * the "Market Data Production" product, and set its callback URL. A new app
+ * sits at "Approved - Pending" for a day or two before it turns "Ready For
+ * Use", and nothing here works until it does -- the login will simply be
+ * refused. Then put the app's key and secret in the environment, with the
+ * callback URL if it is not the default:
  *
  *   SCHWAB_APP_KEY=...  SCHWAB_APP_SECRET=...  [SCHWAB_REDIRECT_URI=https://127.0.0.1]
  *
@@ -32,11 +34,13 @@ if (!creds) {
   console.error("SCHWAB_APP_KEY and SCHWAB_APP_SECRET are not set.\n");
   console.error("Create an app at https://developer.schwab.com, add the Market Data Production");
   console.error("product, then set them in your environment along with the callback URL you");
-  console.error("registered (SCHWAB_REDIRECT_URI, default https://127.0.0.1).");
+  console.error("registered (SCHWAB_REDIRECT_URI, default https://127.0.0.1).\n");
+  console.error("A new app is not usable straight away: it stays 'Approved - Pending' for a day");
+  console.error("or two and only works once it reads 'Ready For Use'.");
   process.exit(1);
 }
 
-const existing = await S.loadTokens(join(ROOT, S.TOKEN_FILE));
+const existing = await S.loadTokens(S.TOKEN_FILE);
 if (existing) {
   const h = S.refreshHoursLeft(existing);
   console.log(h > 0
@@ -80,7 +84,7 @@ if (!tokens) {
   process.exit(1);
 }
 
-await S.saveTokens(tokens, join(ROOT, S.TOKEN_FILE));
+await S.saveTokens(tokens, S.TOKEN_FILE);
 console.log(`\nLogged in. Tokens written to ${S.TOKEN_FILE} (git ignores it, and it is readable only by you).`);
 console.log(`The refresh token lasts about ${S.refreshHoursLeft(tokens).toFixed(0)}h; run this again when it runs out.\n`);
 console.log("Check the feed is live:   node tools/record-options.mjs --check");

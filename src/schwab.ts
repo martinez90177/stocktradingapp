@@ -15,12 +15,20 @@
  * git and written readable only by its owner.
  */
 import { readFile, writeFile, chmod } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const AUTH = "https://api.schwabapi.com/v1/oauth/authorize";
 const TOKEN = "https://api.schwabapi.com/v1/oauth/token";
 
-/** Where the tokens live. Ignored by git; see .gitignore. */
-export const TOKEN_FILE = ".schwab-tokens.json";
+/**
+ * Where the tokens live: beside the repository, not beside whatever directory
+ * a tool happened to be run from. Resolving it against the working directory
+ * meant a login done from the repo root was invisible to a tool run from
+ * anywhere else, which reads as "not logged in" rather than as the path
+ * problem it is. Ignored by git; see .gitignore.
+ */
+export const TOKEN_FILE = join(dirname(fileURLToPath(import.meta.url)), "..", ".schwab-tokens.json");
 
 export interface SchwabTokens {
   access: string;

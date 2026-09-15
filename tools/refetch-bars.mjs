@@ -47,7 +47,7 @@ if (!symbols.length) {
 }
 
 let token = null;
-try { token = await SCHWAB.accessToken(join(ROOT, SCHWAB.TOKEN_FILE)); } catch (e) { console.error(e.message); }
+try { token = await SCHWAB.accessToken(SCHWAB.TOKEN_FILE); } catch (e) { console.error(e.message); }
 if (!token) {
   console.error("Schwab is not logged in. Run: node tools/schwab-login.mjs");
   process.exit(1);
@@ -65,7 +65,7 @@ for (const symbol of symbols) {
   } catch { continue; }
   if (!files.length) continue;
 
-  const bars = await SCHWAB.minuteBars(symbol, days, join(ROOT, SCHWAB.TOKEN_FILE));
+  const bars = await SCHWAB.minuteBars(symbol, days, SCHWAB.TOKEN_FILE);
   if (!bars?.length) {
     console.log(`${symbol.padEnd(6)} schwab returned nothing; every day left as it is`);
     totals.unreachable += files.length;
