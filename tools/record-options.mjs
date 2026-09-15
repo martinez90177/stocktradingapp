@@ -82,6 +82,17 @@ const MAX_LAG_S = num("max-lag", 90);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ok = (x) => typeof x === "number" && Number.isFinite(x) && x >= 0;
 
+/** Says a feed's complaint once rather than once a minute for the rest of the day. */
+const said = new Set();
+function shout(feed, message) {
+  const key = `${feed}|${message}`;
+  if (said.has(key)) return;
+  said.add(key);
+  console.warn(`\n  !! ${feed}: ${message}`);
+  console.warn("     The other feeds are carrying on, but they may be delayed. Fix this and restart;");
+  console.warn("     restarting merges into the same file, so only the minutes in between are lost.\n");
+}
+
 const et = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
   hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
@@ -355,7 +366,11 @@ async function symbols() {
 async function readFresh(feeds, symbol) {
   let stale = null;
   for (const f of feeds) {
-    const sweep = await f.read(symbol).catch(() => null);
+    // A feed that throws is not the same as a feed with nothing to say. An
+    // expired Schwab login throws, and swallowing it would quietly hand the
+    // rest of the session to a delayed feed without anyone noticing until the
+    // recording was already made.
+    const sweep = await f.read(symbol).catch((e) => { shout(f.name, e.message); return null; });
     await sleep(SPACING_MS);
     if (!sweep) continue;
     const lagS = sweep.at ? (Date.now() - sweep.at) / 1000 : null;

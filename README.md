@@ -516,8 +516,16 @@ you.
 
 An access token lasts thirty minutes and the recorder refreshes it by itself,
 about a dozen times a session. **The refresh token lasts seven days**, so the
-login is a weekly job; the recorder says how long it has left when it starts,
-and warns if it will run out during the session.
+login is a weekly job. That is Schwab's rule, not a setting: refreshing does
+not extend it, and there is no way to make it last longer.
+
+What there is instead is no way to lose a session to it quietly. The recorder
+says how long the login has left when it starts and warns if it will run out
+mid-session; if it dies anyway, the expiry is printed once, loudly, naming the
+command that fixes it, rather than the run sliding silently onto a delayed
+feed. The same goes for the harvest, which would otherwise fall back to Yahoo
+and reach 30 days instead of 48 without saying so. Restarting merges into the
+same file, so a mid-session re-login costs only the minutes it took.
 
 Every feed is asked for **its own timestamp**, the gap from the clock is
 measured on every single sweep, and that lag is written into the file beside

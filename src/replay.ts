@@ -193,10 +193,23 @@ export function splitExtended(bars: Bar[]): Map<string, { pre: ExtBar[]; post: E
  * comes back in one request rather than five. Yahoo is the fallback, and was
  * the only source for everything recorded before 2026-09-15.
  */
+/** Said once per run, not once per ticker: twenty identical warnings help nobody. */
+let schwabComplained = false;
 export async function fetchMinuteBarsTagged(
   symbol: string, days: number, cacheDir: string | null, prePost = false,
 ): Promise<{ bars: Bar[]; source: string }> {
-  const fromSchwab = await schwabMinuteBars(symbol, days).catch(() => null);
+  const fromSchwab = await schwabMinuteBars(symbol, days).catch((e: Error) => {
+    // An expired login throws. Falling back to Yahoo silently would record a
+    // whole harvest from the wrong feed and only reach 30 days instead of 48,
+    // which is exactly the sort of thing you find out about a month later.
+    if (!schwabComplained) {
+      schwabComplained = true;
+      console.warn(`\n  !! schwab: ${e.message}`);
+      console.warn("     Falling back to Yahoo, which reaches 30 days rather than 48 and is a");
+      console.warn("     different feed from the rest of the library.\n");
+    }
+    return null;
+  });
   if (fromSchwab && fromSchwab.length) return { bars: fromSchwab, source: "schwab" };
   return { bars: await yahooMinuteBars(symbol, days, cacheDir, prePost), source: "yahoo" };
 }
