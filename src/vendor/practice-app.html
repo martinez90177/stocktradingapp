@@ -618,7 +618,7 @@ function cfg(t){
 }
 const TFS=[{k:'1m',m:1},{k:'2m',m:2},{k:'5m',m:5},{k:'10m',m:10},{k:'15m',m:15},
   {k:'30m',m:30},{k:'1H',m:60},{k:'4H',m:240},{k:'1D',m:'D'}];
-const MPD=390,HIST=34,OR_MIN=15,LV=[0,.236,.382,.5,.618,.786,1],YEAR=252*390;
+const MPD=390,HIST=34,OR_MIN=15,LV=[0,.382,.618,1],YEAR=252*390;
 let S={};
 const $=id=>document.getElementById(id);
 const val=id=>{const e=$(id);return e?e.value:'';};
@@ -1085,8 +1085,10 @@ function setRange(){
   const hi=Math.max(...seg.map(b=>b.h)),lo=Math.min(...seg.map(b=>b.l)),r=hi-lo;
   S.or={hi,lo,r};
   const F={};LV.forEach(p=>F[(p*100).toFixed(1).replace('.0','')+'%']=lo+r*p);
-  F['127.2%']=hi+r*.272;F['161.8%']=hi+r*.618;F['261.8%']=hi+r*1.618;
-  F['-27.2%']=lo-r*.272;F['-61.8%']=lo-r*.618;F['-161.8%']=lo-r*1.618;
+  // The levels that get used: 0, 38.2, 61.8 and 100, then the 127.2 and 161.8
+  // extensions each way. 23.6, 50, 78.6 and 261.8 were clutter.
+  F['127.2%']=hi+r*.272;F['161.8%']=hi+r*.618;
+  F['-27.2%']=lo-r*.272;F['-61.8%']=lo-r*.618;
   S.fib=F;
 }
 
@@ -1122,7 +1124,7 @@ function autoFib(){
   else return null;
   const r=b.p-a.p,up=r>0,lv={};
   LV.forEach(p=>lv[(p*100).toFixed(1).replace('.0','')+'%']=b.p-r*p);
-  lv['127.2%']=b.p+r*.272;lv['161.8%']=b.p+r*.618;lv['261.8%']=b.p+r*1.618;
+  lv['127.2%']=b.p+r*.272;lv['161.8%']=b.p+r*.618;
   return {a:{m:s+a.i,p:a.p},b:{m:s+b.i,p:b.p},up,lv,src,thr,live:src==='swing'&&b===cur};
 }
 /** The auto fib for the bars on screen, computed once per revealed minute. */
@@ -1479,7 +1481,7 @@ function scale(){
   // is to clear the auto-fib labels, which are right-aligned to the axis; with
   // those off, the candles get the room instead.
   cx.font=cfont(F-1,600);
-  const RGAP=S.ind.fib?Math.ceil(cx.measureText('-161.8%').width)+18:16;
+  const RGAP=S.ind.fib?Math.ceil(cx.measureText('161.8%').width)+18:16;
   const cw=(G.w-padL-padR-RGAP)/count;
   G={...G,padL,padR,padT,padB,volH,rsiH,ph,lo,hi,cw,left,right,count,B,RGAP,
     x:i=>padL+(i-left+.5)*cw,
@@ -1612,7 +1614,7 @@ function draw(){
   // swing itself drawn faintly from its start to its end
   const AF=S.ind.fib&&todayVis?getAutoFib():null;
   if(AF){
-    const prio=['0%','100%','161.8%','127.2%','50%','61.8%','38.2%','261.8%','78.6%','23.6%'];
+    const prio=['0%','100%','161.8%','127.2%','61.8%','38.2%'];
     const x0=G.x(barIdxForMin(AF.a.m)),x1=G.x(barIdxForMin(AF.b.m));
     ln(x0,G.y(AF.a.p),x1,G.y(AF.b.p),'rgba(180,143,173,.45)',1.2,[4,3]);
     [[x0,AF.a.p],[x1,AF.b.p]].forEach(([X,p])=>{cx.beginPath();cx.arc(X,G.y(p),3,0,6.284);cx.fillStyle='#b48ead';cx.fill();});
@@ -2346,7 +2348,7 @@ function wireTrade(){
     const q=b.dataset.q,need=(what)=>{log(what,'y');return;};
     if(['far','mid','t127','t161','mm'].includes(q)&&!S.or)return need('The opening range forms at 9:45.');
     if(q==='far')$('stop').value=(bull?S.or.lo:S.or.hi).toFixed(2);
-    if(q==='mid')$('stop').value=S.fib['50%'].toFixed(2);
+    if(q==='mid')$('stop').value=((S.or.hi+S.or.lo)/2).toFixed(2);
     if(q==='t127')$('tgt').value=(bull?S.fib['127.2%']:S.fib['-27.2%']).toFixed(2);
     if(q==='t161')$('tgt').value=(bull?S.fib['161.8%']:S.fib['-61.8%']).toFixed(2);
     if(q==='mm')$('tgt').value=(bull?S.or.hi+S.or.r:S.or.lo-S.or.r).toFixed(2);
@@ -2411,7 +2413,7 @@ function paneFib(){
   const c=price();
   const AF=getAutoFib();let auto='';
   if(AF){
-    const aorder=['261.8%','161.8%','127.2%','0%','23.6%','38.2%','50%','61.8%','78.6%','100%'];
+    const aorder=['161.8%','127.2%','0%','38.2%','61.8%','100%'];
     let an=null,ad=1e9;aorder.forEach(k=>{const d=Math.abs(AF.lv[k]-c);if(d<ad){ad=d;an=k;}});
     const when=m=>{const d=Math.floor(m/MPD),mm=m-d*MPD;return (d===HISTN?'':dayLbl(d)+' ')+tlbl(mm+1);};
     const what=AF.src==='swing'?(AF.up?'the last swing up':'the last swing down')+(AF.live?', still running':''):AF.src==='day'?'the day\'s range so far':'yesterday\'s range';
@@ -2421,7 +2423,7 @@ function paneFib(){
       return `<div class="fibrow ${ext?'ext':''} ${edge?'edge':''} ${k===an?'near':''}"><span class="k">${k}${edge?`<small>${k==='0%'?'end of the move':'start of the move'}</small>`:''}</span><span>${AF.lv[k].toFixed(2)}<small>${dist>0?'+':''}${dist}%</small></span></div>`;}).join('');
   }
   if(!S.fib)return auto+'<h3 class="sp">Opening range</h3><div class="empty">Forms at 9:45, from the first 15 minutes. Its levels appear here then.</div>';
-  const order=['261.8%','161.8%','127.2%','100%','78.6%','61.8%','50%','38.2%','23.6%','0%','-27.2%','-61.8%','-161.8%'];
+  const order=['161.8%','127.2%','100%','61.8%','38.2%','0%','-27.2%','-61.8%'];
   let near=null,nd=1e9;order.forEach(k=>{const d=Math.abs(S.fib[k]-c);if(d<nd){nd=d;near=k;}});
   return auto+`<h3 class="${auto?'sp':''}">Levels from the 9:30–9:45 range</h3>`+order.map(k=>{
     const ext=k.includes('127')||k.includes('161')||k.includes('261')||k.startsWith('-');
@@ -2492,7 +2494,7 @@ function paneCoach(){
       const inR=t.stopU<=S.or.hi&&t.stopU>=S.or.lo;
       add(inR?'ok':'mid',inR
         ?'Stop sat inside the opening range — a move back inside invalidates the breakout, so that is logical placement.'
-        :'Stop was outside the range entirely. Anchoring to the 50% or the far edge gives tighter, more defensible risk.');
+        :'Stop was outside the range entirely. Anchoring to the mid-range or the far edge gives tighter, more defensible risk.');
     }
     const ext=t.exits.some(e=>e.why.includes('127')||e.why.includes('161'));
     if(ext)add('ok','You scaled out at the fib extensions — exactly what those levels are for.');

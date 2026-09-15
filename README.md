@@ -582,7 +582,7 @@ label to its line, which stays exactly at its price. Three levels within a
 dollar of each other used to print three labels on top of one another.
 
 There is deliberate empty space between the newest candle and the price axis. It
-is sized to clear the level labels drawn along that edge, so 261.8% and PDH sit
+is sized to clear the level labels drawn along that edge, so 161.8% and PDH sit
 in clear air instead of on top of the last few bars.
 
 ### On a phone
