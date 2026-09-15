@@ -19,7 +19,10 @@ const REPORTS = join(ROOT, "reports");
 const CACHE = join(ROOT, "cache");
 
 interface Config {
+  /** The morning report: what gets analysed and written up. */
   symbols: string[];
+  /** The replay library: every ticker whose sessions are recorded for practice. */
+  practice: string[];
   options: {
     dailyLookbackDays: number;
     intradayDays: number;
@@ -54,13 +57,21 @@ async function loadConfig(flags: Record<string, string | boolean>): Promise<Conf
     ? flags.symbols.split(",").map((s) => s.trim()).filter(Boolean)
     : null;
 
-  const symbols = (fromFlag ?? file.symbols ?? ["SPY", "QQQ", "AAPL"])
+  const clean = (list: string[]) => list
     .map((s: string) => s.trim().toUpperCase())
     .filter((s: string, i: number, arr: string[]) => s.length > 0 && arr.indexOf(s) === i);
+
+  const symbols = clean(fromFlag ?? file.symbols ?? ["SPY", "QQQ", "AAPL"]);
+  // The replay library wants far more tickers than a morning report does: a
+  // pool you cannot get familiar with is the point of practising on it. A
+  // watchlist with no `practice` list keeps the old behaviour and records the
+  // report's own symbols. --symbols overrides both, for a one-off run.
+  const practice = clean(fromFlag ?? file.practice ?? file.symbols ?? symbols);
 
   const o = file.options ?? {};
   return {
     symbols,
+    practice,
     options: {
       dailyLookbackDays: Number(o.dailyLookbackDays) || 180,
       intradayDays: Number(o.intradayDays) || 2,
@@ -204,11 +215,12 @@ async function main() {
     // Harvesting is an extra, and it runs after the report is already on disk.
     // A network hiccup here must not throw away a finished run.
     try {
-      // The first six watchlist names, plus every ticker already in the library.
-      // Taking only the first six silently stopped recording TSLA once it moved
-      // down the watchlist -- its days ran out at Sep 4 while the rest carried on.
+      // Every ticker on the practice list, plus everything already in the
+      // library. It used to be the first six of the watchlist, which silently
+      // stopped recording TSLA once it slipped to eighth, and which capped the
+      // pool at six tickers however long the watchlist grew.
       const recorded = await readdir(SESSIONS).catch(() => [] as string[]);
-      const toRecord = [...new Set([...config.symbols.slice(0, 6), ...recorded])];
+      const toRecord = [...new Set([...config.practice, ...recorded])];
       const h = await harvest(toRecord, SESSIONS, CACHE, (m) => console.warn(`  ~ ${m}`));
       console.log(`  replay library: ${h.added} new${h.extended ? `, ${h.extended} given extended hours` : ""}, ${h.total} sessions total`);
     } catch (e) {

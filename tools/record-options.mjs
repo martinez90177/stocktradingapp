@@ -338,6 +338,8 @@ async function symbols() {
   const fromFlag = flag("symbols");
   if (typeof fromFlag === "string") return fromFlag.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
   try {
+    // `symbols`, not `practice`: quotes are the expensive half of a recording,
+    // so this follows the shorter report list. --symbols narrows it further.
     const w = JSON.parse(await readFile(join(ROOT, "watchlist.json"), "utf8"));
     return (w.symbols ?? []).map((s) => s.trim().toUpperCase()).filter(Boolean);
   } catch {

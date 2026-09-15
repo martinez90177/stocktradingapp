@@ -1,19 +1,33 @@
 {
-  "_comment": "Edit this file to change what gets analyzed. Symbols are Yahoo Finance tickers.",
+  "_comment": "Symbols are ticker symbols, read by Yahoo and by Schwab alike. `symbols` is the morning report: what you actually look at before the open, so keep it short enough to read. `practice` is the replay library the practice terminal draws from, and wants to be as long as you can afford -- a pool you cannot get familiar with is the whole point. Option quotes are recorded for `symbols` only, since they are the expensive part; use --symbols on tools/record-options.mjs to narrow that further.",
+
   "symbols": [
     "SPY",
     "QQQ",
     "IWM",
-    "AAPL",
     "NVDA",
+    "TSLA",
+    "AAPL",
+    "AMD",
+    "META",
     "MSFT",
     "AMZN",
-    "META",
-    "TSLA",
-    "AMD",
     "GOOGL",
-    "MU"
+    "PLTR"
   ],
+
+  "practice": [
+    "SPY", "QQQ", "IWM", "SMH",
+
+    "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "AVGO", "NFLX",
+
+    "AMD", "MU", "TSM", "QCOM", "ARM", "MRVL", "INTC", "AMAT", "LRCX", "ON",
+
+    "CRM", "ORCL", "ADBE", "PANW", "CRWD", "SNOW",
+
+    "TSLA", "PLTR", "COIN", "SMCI", "UBER", "SHOP", "ANET", "DELL"
+  ],
+
   "options": {
     "dailyLookbackDays": 180,
     "intradayDays": 2,
