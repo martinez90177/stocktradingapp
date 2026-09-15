@@ -503,13 +503,22 @@ At [developer.schwab.com](https://developer.schwab.com): create an app, add the
 **Market Data Production** product, and note the callback URL you register
 (`https://127.0.0.1` will do).
 
-**Two sign-ins are involved, and they may not be the same account.** The
-developer portal can want its own developer registration to create and manage
-the app. The OAuth approval that `schwab-login` sends you to is the other one,
-and it has to be the **brokerage login your thinkorswim account sits under**:
-market data entitlements follow the brokerage account, not the developer
-profile. Approving with the wrong one is how a login succeeds and then quietly
-serves delayed quotes, which `npm run check-feeds` will show as `DELAYED`.
+**There are two different accounts here, and this catches everyone out.**
+
+| | Account | Used for |
+| --- | --- | --- |
+| developer.schwab.com | **its own registration**, separate from your brokerage login | creating and managing the app, getting the key and secret |
+| the OAuth approval | your **Schwab brokerage** login, the thinkorswim one | approving the app and choosing which account it may read |
+
+The developer portal will not accept your brokerage credentials, so sign up for
+it separately. The brokerage login is used later, at the approval screen that
+`schwab-login` sends you to, and that is also where you pick which brokerage
+account the app can see.
+
+The brokerage account also has to be **thinkorswim-enabled**, and the market
+data entitlements follow it rather than the developer profile. Approving with
+the wrong account is how a login succeeds and then quietly serves delayed
+quotes, which `npm run check-feeds` shows as `DELAYED`.
 
 Then:
 

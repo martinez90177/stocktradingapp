@@ -12,13 +12,14 @@
  *
  *   SCHWAB_APP_KEY=...  SCHWAB_APP_SECRET=...  [SCHWAB_REDIRECT_URI=https://127.0.0.1]
  *
- * Two sign-ins are involved and they are not necessarily the same account.
- * The developer portal may want its own developer registration to create and
- * manage the app. The link this prints is the other one: that is the OAuth
- * approval, and it must be signed in with the **brokerage** login the
- * thinkorswim account sits under, because market data entitlements follow the
- * brokerage account rather than the developer profile. Approving with the
- * wrong one is how a login succeeds and then serves delayed quotes.
+ * TWO DIFFERENT ACCOUNTS ARE INVOLVED, and this catches everyone out.
+ * developer.schwab.com needs its own registration, separate from the Schwab
+ * brokerage login -- a different username and password, created just to hold
+ * the app. The link this prints is the other one: the OAuth approval, signed
+ * in with the **brokerage** credentials, the ones used for thinkorswim. That
+ * is also where the brokerage account to expose is chosen. Market data
+ * entitlements follow that account, not the developer profile, and the
+ * brokerage account has to be thinkorswim-enabled.
  *
  * So: this prints a link, you sign in with your trading credentials and
  * approve, the browser lands on a page that will not load -- that is expected,
@@ -44,8 +45,11 @@ if (!creds) {
   console.error("Create an app at https://developer.schwab.com, add the Market Data Production");
   console.error("product, then set them in your environment along with the callback URL you");
   console.error("registered (SCHWAB_REDIRECT_URI, default https://127.0.0.1).\n");
-  console.error("A new app is not usable straight away: it stays 'Approved - Pending' for a day");
-  console.error("or two and only works once it reads 'Ready For Use'.");
+  console.error("The developer portal needs its OWN registration, separate from your Schwab");
+  console.error("brokerage login. The app lives there; the brokerage login is used later, when");
+  console.error("you approve the app and pick which account it may read.\n");
+  console.error("A new app is not usable straight away either: it stays 'Approved - Pending' for");
+  console.error("a day or two and only works once it reads 'Ready For Use'.");
   process.exit(1);
 }
 
