@@ -838,12 +838,27 @@ function loadRecordedOptions(sym,date){
     .then(j=>{
       if(ROPTfor!==key||!j||!j.minutes||!j.minutes.length)return;
       ROPT=j;
-      const n=j.minutes.length;
+      const n=j.minutes.length,lg=recLag();
       log('Recorded option quotes for this day: '+n+' minute'+(n===1?'':'s')+' of real bid and ask across '+
-        j.expiries.map(e=>e.date).join(', ')+'. Contracts nobody recorded are still modelled, and marked.','hl');
+        j.expiries.map(e=>e.date).join(', ')+
+        (j.sources&&j.sources.length?', from '+j.sources.join(' and '):'')+
+        (lg==null?'':', typically '+lg+'s behind the clock when read')+
+        '. Contracts nobody recorded are still modelled, and marked.',lg!=null&&lg>90?'y':'hl');
       renderAll();
     })
     .catch(()=>{});
+}
+/** How far behind the clock the feed was, typically, across the recorded day. */
+function recLag(){
+  const v=((ROPT&&ROPT.lag)||[]).filter(x=>x>=0).sort((a,b)=>a-b);
+  return v.length?v[Math.floor(v.length/2)]:null;
+}
+/** Which feed supplied the minute a quote came from. */
+function recSource(min){
+  if(!ROPT||!ROPT.src||!ROPT.sources)return null;
+  let row=-1;
+  for(let i=0;i<ROPT.minutes.length;i++){if(ROPT.minutes[i]<=min)row=i;else break;}
+  return row>=0?ROPT.sources[ROPT.src[row]]||null:null;
 }
 /** The recorded expiry a tenor means on the replayed day, or nothing where none was recorded. */
 function recExpiry(exDays){
@@ -973,11 +988,21 @@ function volSource(){
     :'';
   const modelled='At-the-money volatility <b>'+pct+'</b> for this expiry right now: '+where+'; '+how+'.'+ahead;
   const r=ROPT&&recQuote(S.strike,'call',S.exDays,S.cursor);
-  if(r)return '<b>Recorded quotes.</b> This contract&rsquo;s bid and ask are the real ones, read from the chain at '+
-    lbl(HIST,r.at)+(r.age?' ('+r.age+' minute'+(r.age===1?'':'s')+' before this bar; that minute was not recorded)':'')+
-    ' on the day being replayed, not modelled. '+
-    (ROPT.minutes.length<MPD?'<i>'+ROPT.minutes.length+' of '+MPD+' minutes of this session were recorded.</i> ':'')+
-    'Anything the recording missed falls back to the model: '+modelled;
+  if(r){
+    const src=recSource(r.at),lg=recLag();
+    // A feed that was minutes behind did not record this minute's price, whatever
+    // minute it was filed under, and that has to be on the ticket rather than buried.
+    const late=lg!=null&&lg>90
+      ?' <b class="rl bad">The feed was about '+Math.round(lg/60)+' minute'+(Math.round(lg/60)===1?'':'s')+
+        ' behind the clock, so these are its prices from around '+lbl(HIST,Math.max(0,r.at-Math.round(lg/60)))+'.</b>'
+      :lg!=null?' The feed was '+lg+'s behind when it was read.':'';
+    return '<b>Recorded quotes.</b> This contract&rsquo;s bid and ask are the real ones'+
+      (src?', from '+src:'')+', read at '+lbl(HIST,r.at)+
+      (r.age?' ('+r.age+' minute'+(r.age===1?'':'s')+' before this bar; that minute was not recorded)':'')+
+      ' on the day being replayed, not modelled.'+late+' '+
+      (ROPT.minutes.length<MPD?'<i>'+ROPT.minutes.length+' of '+MPD+' minutes of this session were recorded.</i> ':'')+
+      'Anything the recording missed falls back to the model: '+modelled;
+  }
   if(ROPT)return '<b>Modelled.</b> This day has recorded quotes, but none for this contract at this minute'+
     (recExpiry(S.exDays)?'':' (no recording of this expiry)')+', so it is priced by the model. '+modelled;
   return modelled;

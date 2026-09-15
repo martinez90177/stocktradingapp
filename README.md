@@ -419,7 +419,8 @@ scale from is worse than useless. So the option prices are recorded too, the
 same way the candles are:
 
 ```bash
-npm run record-options          # or: node tools/record-options.mjs
+node tools/record-options.mjs --check     # which feeds are live, and how far behind?
+npm run record-options                    # then record until the bell
 ```
 
 Start it before the open and leave it until the bell. Every minute it reads the
@@ -429,17 +430,49 @@ day it runs, the practice terminal quotes those numbers: a fill is the ask that
 was really showing at 10:07, and an exit is the bid that was really there at
 11:52.
 
-It is a long-running process, not a cron job, and that is the whole catch.
-**Yahoo serves the chain as it stands and keeps no history at all**, so a
-session nobody recorded is gone for good. That is why `options/` is committed,
-like `sessions/`. It is also why the days already in the library stay modelled:
-they cannot be recovered at any price short of buying the history from a vendor
-who kept it.
+It is a long-running process, not a cron job, and that is the catch. **No free
+feed serves option history**, so a session nobody recorded is gone for good.
+That is why `options/` is committed, like `sessions/`, and why the days already
+in the library stay modelled: they cannot be recovered short of buying the
+history from a vendor who kept it.
+
+#### Which feed, and is it telling you about now?
+
+Freshness is the whole game. A quote recorded at 10:07 is worthless if the feed
+handed out 9:52's prices, and **Yahoo's option chain is usually about a quarter
+of an hour behind** with nothing in the response to say so. So four feeds are
+wired in, and none of them is taken at its word:
+
+| Feed | Needs | Real-time? |
+| --- | --- | --- |
+| `tradier` | `TRADIER_TOKEN` | yes with a funded brokerage account; the free sandbox is delayed |
+| `polygon` | `POLYGON_KEY` | on a paid options plan |
+| `alpaca` | `ALPACA_KEY`, `ALPACA_SECRET` | with `ALPACA_OPTIONS_FEED=opra`; the free indicative feed is delayed |
+| `yahoo` | nothing | no, and it will not admit it |
+
+Every feed is asked for **its own timestamp**, the gap from the clock is
+measured on every single sweep, and that lag is written into the file beside
+the quotes. Each minute goes to the first feed that answers fresh and falls
+down the list when one is stale or down, so a session can be recorded from more
+than one; the file records which feed supplied which minute.
+
+`--check` sweeps every configured feed once and prints spot, lag, expiries,
+strikes and a sample quote side by side, so you can see which are actually live
+before committing a session to them. `--source tradier,yahoo` sets the order by
+hand, and `--max-lag` (90 seconds by default) decides what counts as stale.
+
+None of this is hidden afterwards. The tape says which feed a day came from and
+how far behind it typically was, and where a recording was materially delayed
+the ticket says so on the contract: *"the feed was about 15 minutes behind the
+clock, so these are its prices from around 10:15."* A late quote clearly
+labelled as late is worth having. A late quote passed off as this minute's is
+not, and would be the same lie as generating it.
 
 What it costs: about **1.6 MB a day** in the repository for three expiries
-across seven tickers, once git has compressed it. `--expiries 1` records only
-what expires today and cuts that to a third; `--band` narrows the strikes;
-`--symbols` limits it to the tickers you actually trade.
+across seven tickers, once git has compressed it, so roughly 400 MB a year.
+`--expiries 1` records only what expires today and cuts that to a third;
+`--band` narrows the strikes; `--symbols` limits it to the tickers you actually
+trade.
 
 **Nothing is presented as a real quote unless it is one.** A strike, an expiry
 or a minute nobody recorded falls back to the model, and the ticket says which

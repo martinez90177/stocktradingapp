@@ -29,21 +29,36 @@ export interface OptionDay {
   symbol: string;
   /** The session, YYYY-MM-DD. */
   date: string;
+  /** The feeds this day was recorded from, in the order `src` indexes them. */
+  sources?: string[];
+  /** Which feed supplied each recorded minute, as an index into `sources`. */
+  src?: number[];
   /** Minutes from the 9:30 open that were recorded, ascending. */
   minutes: number[];
   /** The underlying at each of those minutes, in cents. */
   spot: number[];
+  /**
+   * How far behind the clock the feed's own timestamp was, in seconds, at each
+   * recorded minute; -1 where the feed did not say. This is the difference
+   * between a quote being this minute's and being a quarter of an hour old,
+   * and no feed should be trusted about it without being asked.
+   */
+  lag?: number[];
   expiries: OptionExpiry[];
 }
 
 /** What one sweep of the chain saw: the same shape, for a single minute. */
 export interface OptionSweep {
   spot: number;
+  /** The feed's own timestamp for this data, epoch ms, where it gives one. */
+  at?: number | null;
+  /** Which feed this came from. */
+  source?: string;
   expiries: { date: string; strikes: number[]; call: number[]; put: number[] }[];
 }
 
 export const emptyDay = (symbol: string, date: string): OptionDay =>
-  ({ symbol, date, minutes: [], spot: [], expiries: [] });
+  ({ symbol, date, sources: [], minutes: [], spot: [], lag: [], src: [], expiries: [] });
 
 /** Cents, or -1 for a price that is missing rather than zero. */
 export const cents = (x: unknown): number =>
@@ -54,14 +69,27 @@ export const cents = (x: unknown): number =>
  * has moved far enough to bring new strikes into range. Re-recording a minute
  * replaces it, so a restart mid-session costs nothing.
  */
-export function merge(day: OptionDay, minute: number, sweep: OptionSweep): OptionDay {
+export function merge(day: OptionDay, minute: number, sweep: OptionSweep, wallMs = Date.now()): OptionDay {
+  if (!day.lag) day.lag = day.minutes.map(() => -1);
+  if (!day.sources) day.sources = [];
+  if (!day.src) day.src = day.minutes.map(() => -1);
+  const lag = sweep.at ? Math.max(0, Math.round((wallMs - sweep.at) / 1000)) : -1;
+  let si = -1;
+  if (sweep.source) {
+    si = day.sources.indexOf(sweep.source);
+    if (si < 0) si = day.sources.push(sweep.source) - 1;
+  }
   const at = day.minutes.indexOf(minute);
   const row = at >= 0 ? at : day.minutes.length;
   if (at < 0) {
     day.minutes.push(minute);
     day.spot.push(cents(sweep.spot));
+    day.lag.push(lag);
+    day.src.push(si);
   } else {
     day.spot[row] = cents(sweep.spot);
+    day.lag[row] = lag;
+    day.src[row] = si;
   }
 
   for (const e of sweep.expiries) {
@@ -94,6 +122,8 @@ export function merge(day: OptionDay, minute: number, sweep: OptionSweep): Optio
     }
   }
 
+  while (day.lag.length < day.minutes.length) day.lag.push(-1);
+  while (day.src!.length < day.minutes.length) day.src!.push(-1);
   // An expiry that appeared late keeps nulls for the minutes before it, which
   // read as "not recorded" rather than as a quote of nothing.
   for (const slot of day.expiries) {
@@ -102,6 +132,22 @@ export function merge(day: OptionDay, minute: number, sweep: OptionSweep): Optio
     }
   }
   return day;
+}
+
+/** The feed's typical lag in seconds across a recorded day, or null where it never said. */
+export function typicalLag(day: OptionDay): number | null {
+  const v = (day.lag ?? []).filter((x) => x >= 0).sort((a, b) => a - b);
+  return v.length ? v[Math.floor(v.length / 2)] : null;
+}
+
+/** How many minutes each feed supplied, for a day recorded from more than one. */
+export function sourceShare(day: OptionDay): Record<string, number> {
+  const out: Record<string, number> = {};
+  (day.src ?? []).forEach((i) => {
+    const name = i >= 0 ? (day.sources ?? [])[i] ?? "unknown" : "unknown";
+    out[name] = (out[name] ?? 0) + 1;
+  });
+  return out;
 }
 
 /** The recorded bid and ask for one contract at one minute, in dollars, or null where none was seen. */
