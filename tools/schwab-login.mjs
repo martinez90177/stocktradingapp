@@ -12,10 +12,19 @@
  *
  *   SCHWAB_APP_KEY=...  SCHWAB_APP_SECRET=...  [SCHWAB_REDIRECT_URI=https://127.0.0.1]
  *
- * This prints a link, you log in with your Schwab credentials and approve, the
- * browser lands on a page that will not load -- that is expected, the callback
- * is not a real server -- and you paste the address bar back here. The one-time
- * code in it is traded for tokens, which are written to .schwab-tokens.json.
+ * Two sign-ins are involved and they are not necessarily the same account.
+ * The developer portal may want its own developer registration to create and
+ * manage the app. The link this prints is the other one: that is the OAuth
+ * approval, and it must be signed in with the **brokerage** login the
+ * thinkorswim account sits under, because market data entitlements follow the
+ * brokerage account rather than the developer profile. Approving with the
+ * wrong one is how a login succeeds and then serves delayed quotes.
+ *
+ * So: this prints a link, you sign in with your trading credentials and
+ * approve, the browser lands on a page that will not load -- that is expected,
+ * the callback is not a real server -- and you paste the address bar back here.
+ * The one-time code in it is traded for tokens, written to
+ * .schwab-tokens.json.
  *
  * The refresh token lasts seven days, so this is about a weekly job. The
  * recorder refreshes the short-lived access token by itself, and says how long

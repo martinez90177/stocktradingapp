@@ -501,7 +501,17 @@ chart thinkorswim would have drawn, and the whole page runs on one feed.
 
 At [developer.schwab.com](https://developer.schwab.com): create an app, add the
 **Market Data Production** product, and note the callback URL you register
-(`https://127.0.0.1` will do). Then:
+(`https://127.0.0.1` will do).
+
+**Two sign-ins are involved, and they may not be the same account.** The
+developer portal can want its own developer registration to create and manage
+the app. The OAuth approval that `schwab-login` sends you to is the other one,
+and it has to be the **brokerage login your thinkorswim account sits under**:
+market data entitlements follow the brokerage account, not the developer
+profile. Approving with the wrong one is how a login succeeds and then quietly
+serves delayed quotes, which `npm run check-feeds` will show as `DELAYED`.
+
+Then:
 
 ```bash
 export SCHWAB_APP_KEY=...  SCHWAB_APP_SECRET=...
