@@ -68,16 +68,22 @@ async function tokenPost(body: Record<string, string>): Promise<SchwabTokens | n
       body: new URLSearchParams(body).toString(),
       signal: AbortSignal.timeout(20_000),
     });
-  } catch {
-    return null;
+  } catch (e) {
+    // A network failure is not a refusal, and saying so saves hunting for a
+    // credential problem that is not there.
+    throw new Error(`Could not reach Schwab (${(e as Error).message}). Check the connection and try again.`);
   }
   if (!r.ok) {
-    // The body can name the reason (an expired refresh token, a redirect URI
-    // that does not match what was registered) but can also carry the grant, so
-    // only the status and Schwab's short error field are surfaced.
-    let why = "";
-    try { why = ((await r.json()) as { error?: string })?.error ?? ""; } catch { /* no body */ }
-    throw new Error(`Schwab refused the token request (HTTP ${r.status}${why ? `, ${why}` : ""})`);
+    // The body names the reason. It can also carry a grant, so only the two
+    // documented error fields are read out of it, never the whole thing.
+    let code = "", detail = "";
+    try {
+      const j = (await r.json()) as { error?: string; error_description?: string };
+      code = j?.error ?? "";
+      detail = j?.error_description ?? "";
+    } catch { /* no body */ }
+    throw new Error(`Schwab refused the token request (HTTP ${r.status}` +
+      `${code ? `, ${code}` : ""}${detail ? `: ${detail}` : ""}).` + explain(r.status, code));
   }
   const j = (await r.json()) as { access_token: string; refresh_token?: string; expires_in?: number };
   if (!j.access_token) return null;
@@ -91,6 +97,32 @@ async function tokenPost(body: Record<string, string>): Promise<SchwabTokens | n
     // here for a fresh authorization; refresh() carries the old one forward.
     refreshExpiresAt: now + 7 * 86400_000,
   };
+}
+
+/**
+ * What Schwab's refusals actually mean. The codes are terse and two of them are
+ * routinely misread: an unapproved app and a bad secret both come back as
+ * invalid_client, and a stale paste and a mismatched callback URL both come
+ * back as invalid_grant.
+ */
+function explain(status: number, code: string): string {
+  if (code === "invalid_client" || status === 401) {
+    return "\n  Usually one of: the app key or secret is wrong, or the app is not live yet." +
+      "\n  A new app sits at 'Approved - Pending' for a day or two; it only works at 'Ready For Use'.";
+  }
+  if (code === "invalid_grant") {
+    return "\n  Usually one of: the code was already used (they are single-use, so start again from the link)," +
+      "\n  the code went stale (they last a few minutes), or SCHWAB_REDIRECT_URI does not match the callback" +
+      "\n  URL registered on the app exactly -- including https, any port, and any trailing slash.";
+  }
+  if (code === "unsupported_token_type") {
+    return "\n  This usually means the app is not fully provisioned yet. Check it reads 'Ready For Use'" +
+      "\n  on developer.schwab.com, and that the Market Data Production product is added to it.";
+  }
+  if (String(code).includes("refresh_token")) {
+    return "\n  The seven days are up. Run: node tools/schwab-login.mjs";
+  }
+  return "";
 }
 
 /** Trades the one-time code from the redirect for a pair of tokens. */

@@ -514,6 +514,21 @@ real server -- and you paste the address back. Tokens go to
 `.schwab-tokens.json`, which git ignores and which is written readable only by
 you.
 
+If any of that does not work:
+
+```bash
+npm run schwab-doctor
+```
+
+It checks each precondition in turn -- credentials set and free of stray quotes
+or spaces, the callback URL, whether Schwab can be reached at all, whether there
+is a login and whether Schwab still accepts it -- and stops at the first thing
+actually wrong. It prints no secrets, only a length and the last four
+characters, which is enough to spot a truncated paste. Schwab's own refusals are
+translated: `invalid_client` usually means the app is not live yet rather than a
+bad secret, and `invalid_grant` usually means a spent code or a callback URL
+that differs by a trailing slash.
+
 An access token lasts thirty minutes and the recorder refreshes it by itself,
 about a dozen times a session. **The refresh token lasts seven days**, so the
 login is a weekly job. That is Schwab's rule, not a setting: refreshing does
