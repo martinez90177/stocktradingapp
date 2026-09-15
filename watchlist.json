@@ -17,15 +17,26 @@
   ],
 
   "practice": [
-    "SPY", "QQQ", "IWM", "SMH",
-
-    "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "AVGO", "NFLX",
-
-    "AMD", "MU", "TSM", "QCOM", "ARM", "MRVL", "INTC", "AMAT", "LRCX", "ON",
-
-    "CRM", "ORCL", "ADBE", "PANW", "CRWD", "SNOW",
-
-    "TSLA", "PLTR", "COIN", "SMCI", "UBER", "SHOP", "ANET", "DELL"
+    "SPY",
+    "QQQ",
+    "IWM",
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+    "GOOGL",
+    "META",
+    "AMD",
+    "MU",
+    "QCOM",
+    "INTC",
+    "CRWD",
+    "SNOW",
+    "TSLA",
+    "PLTR",
+    "UBER",
+    "SHOP",
+    "DELL"
   ],
 
   "options": {

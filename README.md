@@ -88,9 +88,8 @@ practice library want opposite things:
   quotes are recorded for. Keep it short enough to actually read.
 - **`practice`** is the replay library. It wants to be as long as you can
   afford. A pool you cannot get familiar with is the whole point of practising
-  on it, and candles are cheap. Ships with 36 liquid tech names: the mega-caps,
-  the semis, the software complex, the high-beta movers, and SPY/QQQ/IWM/SMH
-  for index context.
+  on it, and candles are cheap. Ships with 20 tech names Alex actually trades,
+  plus SPY/QQQ/IWM for index context.
 
 A watchlist with no `practice` list behaves as it always did and records its
 report symbols. `--symbols` on a run overrides both.
@@ -99,7 +98,7 @@ What it costs per trading day, in the repository:
 
 | | tickers | per day |
 | --- | --- | --- |
-| Candles (`practice`) | 36 | about 0.7 MB |
+| Candles (`practice`) | 20 | about 0.4 MB |
 | Option quotes (`symbols`, 3 expiries) | 12 | about 2.8 MB |
 
 Option quotes are the expensive half by four to one, so narrow them to the
