@@ -137,3 +137,36 @@ export async function accessToken(file = TOKEN_FILE): Promise<string | null> {
 export function refreshHoursLeft(t: SchwabTokens): number {
   return Math.max(0, (t.refreshExpiresAt - Date.now()) / 3600_000);
 }
+
+/**
+ * Minute bars from Schwab, the same series thinkorswim charts from.
+ *
+ * Returns null where Schwab is not set up, so a caller can fall back rather
+ * than fail; an empty array means it answered and had nothing, which is a
+ * different thing and worth not confusing.
+ */
+export async function minuteBars(
+  symbol: string,
+  days: number,
+  file = TOKEN_FILE,
+): Promise<{ t: number; o: number; h: number; l: number; c: number; v: number }[] | null> {
+  const token = await accessToken(file);
+  if (!token) return null;
+  const end = Date.now(), start = end - Math.max(1, days) * 86400_000;
+  const url = "https://api.schwabapi.com/marketdata/v1/pricehistory" +
+    `?symbol=${encodeURIComponent(symbol)}&periodType=day&frequencyType=minute&frequency=1` +
+    `&needExtendedHoursData=true&startDate=${start}&endDate=${end}`;
+  let r: Response;
+  try {
+    r = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }, signal: AbortSignal.timeout(30_000) });
+  } catch {
+    return null;
+  }
+  if (!r.ok) return null;
+  const j = (await r.json()) as { candles?: { open: number; high: number; low: number; close: number; volume: number; datetime: number }[] };
+  if (!Array.isArray(j?.candles)) return null;
+  return j.candles
+    .filter((c) => c.datetime > 0 && c.open > 0)
+    .map((c) => ({ t: c.datetime, o: c.open, h: c.high, l: c.low, c: c.close, v: c.volume ?? 0 }))
+    .sort((a, b) => a.t - b.t);
+}

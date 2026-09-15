@@ -459,6 +459,10 @@ infer it. A feed that declares itself delayed is treated as stale however
 recent its timestamp looks, because a delayed quote is re-stamped as it is
 handed out.
 
+**The candles come from Schwab too**, once it is logged in: `fetchMinuteBars`
+tries it first and falls back to Yahoo. So the chart being replayed is the
+chart thinkorswim would have drawn, and the whole page runs on one feed.
+
 #### Setting Schwab up
 
 At [developer.schwab.com](https://developer.schwab.com): create an app, add the
@@ -512,6 +516,38 @@ before it, but only for two minutes: a quote from 1:58 shown as the price at
 3:00 would be the same lie as generating it. Where a quote is real, the greeks
 beside it come from the volatility that price implies rather than from the
 model.
+
+### One feed, not two
+
+Everything recorded before 2026-09-15 came from Yahoo. That matters more than
+it looks: the intraday variance curve and the overnight gap ratios are measured
+across the **whole** library, and those numbers set option prices, so a library
+with two vendors in it puts a seam inside the pricing.
+
+So the library is meant to be replaced rather than mixed. Every session now
+carries the feed it came from, `measure-intraday-variance` reports the mix and
+warns when there is more than one, and two tools handle the switch:
+
+```bash
+node tools/compare-bars.mjs               # how far apart are the two feeds, really?
+node tools/refetch-bars.mjs               # what would change; writes nothing
+node tools/refetch-bars.mjs --write       # re-record the library from Schwab
+node tools/measure-intraday-variance.mjs  # then re-measure what is derived from it
+```
+
+`compare-bars` fetches the same recent days from both and reports the worst and
+median difference in the closes, the minutes one has and the other does not,
+and how far apart the volumes are. Pennies and a few percent is two vendors
+consolidating the same tape, and is fine. Dollars, or missing minutes, means the
+seam is real.
+
+`refetch-bars` re-records each day from Schwab, and is careful: a day is only
+replaced where Schwab's session is **at least as complete** as the one on disk,
+so a short or gappy answer can never quietly degrade a good recording. It
+separates a day Schwab cannot reach at all from one it served with too many
+minutes missing -- the second is worth trying again, the first is not -- and
+leaves both alone, still tagged as Yahoo's. Nothing is written without
+`--write`, and the library is committed, so a replacement is a reviewable diff.
 
 ### The clock, and why a flat volatility was not enough
 

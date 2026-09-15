@@ -54,6 +54,7 @@ const MIN_GAPS = 10;
 const shape = new Float64Array(MPD);          // summed per-session shapes, every ticker
 const perSymbol = {};                          // and the same per ticker
 const days = {};                               // symbol -> date -> { open, close, total }
+const feeds = {};                              // which feed each measured session came from
 let used = 0, skipped = 0, from = "9999", to = "0000";
 
 /** Turns summed per-session shapes into the fraction still ahead at each minute. */
@@ -97,6 +98,9 @@ for (const symbol of dirs.sort()) {
     let total = 0;
     for (let i = 0; i < MPD; i++) total += r[i] * r[i];
     days[symbol][s.date] = { open: s.bars[0][0], close: s.bars[MPD - 1][3], total };
+    // Sessions recorded before 2026-09-15 carry no tag and are all Yahoo's.
+    const feed = s.source ?? "yahoo";
+    feeds[feed] = (feeds[feed] ?? 0) + 1;
     // A session that never moved carries no shape; including it would divide by zero.
     if (!(total > 0)) { skipped++; continue; }
     for (let i = 0; i < MPD; i++) {
@@ -177,13 +181,20 @@ const out = {
   gaps,
   checkpoints,
   symbols,
+  /** Which feed the measured sessions came from. One name means one series. */
+  feeds,
 };
 
 await mkdir(join(ROOT, "volatility"), { recursive: true });
 await writeFile(join(ROOT, "volatility", "intraday.json"), JSON.stringify(out), "utf8");
 
 const pct = (x) => (x * 100).toFixed(1).padStart(5) + "%";
-console.log(`  ${used} sessions, ${from} to ${to}${skipped ? `, ${skipped} skipped` : ""}`);
+const mix = Object.entries(feeds).map(([k, v]) => `${v} ${k}`).join(", ");
+console.log(`  ${used} sessions, ${from} to ${to}${skipped ? `, ${skipped} skipped` : ""}  (${mix})`);
+if (Object.keys(feeds).length > 1) {
+  console.warn("  ! this curve is measured across more than one feed. node tools/compare-bars.mjs says how far");
+  console.warn("    apart they are; node tools/refetch-bars.mjs re-records the library from Schwab alone.");
+}
 console.log(`  variance still ahead:  9:45 ${pct(rem[15])}   10:30 ${pct(rem[60])}   12:30 ${pct(rem[180])}   15:00 ${pct(rem[330])}`);
 console.log(`  first 30 min carry ${pct(1 - rem[30])}, last 30 min ${pct(rem[360])}`);
 console.log(`  overnight gap = ${overnight == null ? "not measured" : overnight.toFixed(3) + " x a session"} pooled (${gaps} gaps)`);

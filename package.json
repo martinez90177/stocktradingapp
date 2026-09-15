@@ -12,6 +12,8 @@
     "fonts": "node tools/build-fonts.mjs",
     "record-options": "node tools/record-options.mjs",
     "schwab-login": "node tools/schwab-login.mjs",
-    "check-feeds": "node tools/record-options.mjs --check"
+    "check-feeds": "node tools/record-options.mjs --check",
+    "compare-bars": "node tools/compare-bars.mjs",
+    "refetch-bars": "node tools/refetch-bars.mjs"
   }
 }

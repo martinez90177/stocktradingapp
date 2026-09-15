@@ -2,6 +2,7 @@ import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import type { Bar } from "./types.ts";
 import { fetchSeries } from "./yahoo.ts";
+import { minuteBars as schwabMinuteBars } from "./schwab.ts";
 import { etDate } from "./intraday.ts";
 
 /**
@@ -40,6 +41,11 @@ export interface ReplaySession {
   ext?: { pre: ExtBar[]; post: ExtBar[] };
   /** Which cleaning the extended bars had. 2 = bad prints dropped and stray wicks clipped. */
   extv?: number;
+  /**
+   * Which feed these candles came from. Absent on everything recorded before
+   * 2026-09-15, all of which is Yahoo.
+   */
+  source?: string;
 }
 export const EXT_VERSION = 3;
 
@@ -179,7 +185,27 @@ export function splitExtended(bars: Bar[]): Map<string, { pre: ExtBar[]; post: E
  * served from the cache instead of asking again. `prePost` asks for the
  * extended session too, which is cached apart from the regular one.
  */
+/**
+ * Minute bars, and which feed they came from.
+ *
+ * Schwab first, where it is set up: it is the series thinkorswim charts from,
+ * so the practice candles are the ones Alex actually trades against, and it
+ * comes back in one request rather than five. Yahoo is the fallback, and was
+ * the only source for everything recorded before 2026-09-15.
+ */
+export async function fetchMinuteBarsTagged(
+  symbol: string, days: number, cacheDir: string | null, prePost = false,
+): Promise<{ bars: Bar[]; source: string }> {
+  const fromSchwab = await schwabMinuteBars(symbol, days).catch(() => null);
+  if (fromSchwab && fromSchwab.length) return { bars: fromSchwab, source: "schwab" };
+  return { bars: await yahooMinuteBars(symbol, days, cacheDir, prePost), source: "yahoo" };
+}
+
 export async function fetchMinuteBars(symbol: string, days: number, cacheDir: string | null, prePost = false): Promise<Bar[]> {
+  return (await fetchMinuteBarsTagged(symbol, days, cacheDir, prePost)).bars;
+}
+
+async function yahooMinuteBars(symbol: string, days: number, cacheDir: string | null, prePost = false): Promise<Bar[]> {
   const newest = await fetchSeries(symbol, { range: "7d", interval: "1m", prePost, cacheDir: cacheDir ?? undefined, cacheTtl: 1800 });
   const byT = new Map<number, Bar>(newest.bars.map((b) => [b.t, b]));
   const DAY = 86400, anchor = Math.floor(Date.now() / 1000 / DAY) * DAY;
@@ -208,8 +234,9 @@ export async function harvest(
   let extended = 0;
   for (const symbol of symbols) {
     try {
-      const bars = await fetchMinuteBars(symbol, days, cacheDir, true);
+      const { bars, source } = await fetchMinuteBarsTagged(symbol, days, cacheDir, true);
       const sessions = splitSessions(symbol, bars);
+      for (const s of sessions) s.source = source;
       const ext = splitExtended(bars);
       const symDir = join(dir, symbol.replace(/[^A-Z0-9_.-]/gi, "_"));
       await mkdir(symDir, { recursive: true });
