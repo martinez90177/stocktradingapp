@@ -195,17 +195,24 @@ under it, and a sidebar on the right with the day picker, the eight pane tabs
 as two rows of four, and the pane. A slim masthead above it all holds the
 data note behind a chip, the guide, and the link back to the report.
 
-On a **phone** the same parts are stacked: header, chart, one toolbar row, the
-transport row, and a bar of four buttons along the bottom -- Trade, Chain,
-Session, More. The toolbar shows one of three things at a time, picked by the
-icons at its left: the timeframes, the drawing tools, or the chart style and
-indicator chips. A pane opens as a **sheet** that slides up over the lower part
-of the chart and stops above the transport row, so Next stays under your
-thumb with the ticket open; drag its handle down to close it, up for the full
-height, or tap the button that opened it. The sheet's own tab row reaches
-every pane; More opens the ones the bar does not name and takes that pane's
-name while it is open. The day picker, Restart and the data note sit at the
-top of the Session pane, and the shuffle button in the header is New day.
+On a **phone** nothing scrolls sideways and everything is one tap deep. The
+header is two rows: the ticker, the price and the clock, then the day, New
+day and the account as a two-line chip. The ticker and the day are **menus**
+-- every symbol in the library, every recorded day of it grouped by month,
+with New day, Surprise me and Restart at the top of the day menu. Above the
+chart sit four labelled pills, each a menu: Timeframe, Chart (the style),
+Indicators (switches; the menu stays open while you flip them) and Draw (the
+tools, then Undo and Clear). Under the chart is the transport row, and along
+the bottom four buttons: Trade, Chain, Session, More. A pane opens as a
+**sheet** that slides up over the lower part of the chart and stops above the
+transport row, so Next stays under your thumb with the ticket open; drag its
+handle down to close it, up for the full height, or tap the button that
+opened it. The pane's name at the head of the sheet is a menu of every pane,
+and so is More. The dots at the top right hold the guide, the track record,
+End the day and the link back to the report; the data note is at the top of
+the Session pane. A pinch zooms one axis: side by side zooms time, one finger
+above the other stretches the price scale, and Reset view or a double-tap on
+the price axis puts it back on auto.
 
 The app's markup and stylesheet are the single source for both: the build
 adds the report's fonts and the masthead and nothing else. It used to
@@ -871,18 +878,17 @@ a line of header.
 
 The app lives at `src/vendor/practice-app.html` and is now **maintained here** —
 it started as an import but has since been patched for recorded data, the
-scaling defaults and the axis behaviour. `src/practice.ts` swaps its stylesheet
-and wraps it in the report's chrome; every class name in the app is load-bearing,
-because its script builds panes by writing those classes, so the markup is left
-alone.
+scaling defaults and the axis behaviour. `src/practice.ts` wraps it in the
+report's chrome; every class name in the app is load-bearing, because its
+script builds panes by writing those classes, so the markup is left alone.
 
-> **Styles for the shipped page live in `SKIN` in `src/practice.ts`, not in the
-> app's own `<style>` block.** `renderPractice()` replaces that block wholesale, so
-> CSS edited in `practice-app.html` changes nothing on the built page — markup and
-> script edits there *do* apply, which makes the failure quietly confusing: the new
-> elements appear unstyled, laid out by rules written for the old ones. The app's own
-> `<style>` is kept in step only so the raw file still renders when opened directly.
-> **Change layout in both, or change it in `SKIN` and verify there.**
+> **The app's own `<style>` block is the stylesheet of the shipped page.**
+> `renderPractice()` carries it over as is and adds only `SKIN` from
+> `src/practice.ts`: the report's fonts, the desktop masthead and the phone's
+> copy of the data note. It used to replace the block with a copy kept in
+> `SKIN`, and the two drifted until the file opened from disk and the page the
+> site served were different pages. Edit layout in `practice-app.html`, and put
+> in `SKIN` only what the build adds.
 
 ## Journal
 

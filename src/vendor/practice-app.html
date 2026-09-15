@@ -8,8 +8,9 @@
 <style>
 /* =====================================================================
    The terminal is one fixed shell that fills the screen: the chart takes
-   whatever is left after the header, the toolbar and the transport row,
-   and the panes open beside it (desktop) or over it as a sheet (phone).
+   whatever is left after the header, the toolbar (a row of menus, on a
+   phone) and the transport row, and the panes open beside it (desktop)
+   or over it as a sheet (phone).
    The page itself never scrolls. That is what makes a phone stop zooming:
    every pinch, double-tap and 15px input used to be a way into Safari's
    page zoom, and there was no way back out.
@@ -79,9 +80,6 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .stage{flex:1;min-height:0;position:relative}
 .chartcol{min-width:0;min-height:0}
 .toolbar{background:var(--panel);border-bottom:1px solid var(--line)}
-.modes{display:flex;flex:0 0 auto}
-.modes button{width:44px;min-height:0;border:none;border-radius:0;background:transparent;padding:0;display:grid;place-items:center;color:var(--dim)}
-.modes button.on{background:var(--accs);color:var(--text);box-shadow:inset 0 -2px 0 var(--acc)}
 .tools{display:flex;align-items:stretch;min-width:0}
 .tfbar,.ov,.rail{display:flex;gap:6px;overflow-x:auto;padding:0 10px;align-items:center;scrollbar-width:none;
   -webkit-overflow-scrolling:touch;height:100%}
@@ -371,51 +369,119 @@ svg.eq{display:block;width:100%;height:auto}
 .simx.gen{border-color:rgba(245,165,36,.4);background:rgba(245,165,36,.08)} .simx.gen summary{color:var(--fib)}
 
 /* =====================================================================
-   PHONE. Header, chart, one toolbar that switches between timeframes,
-   drawing and indicators, the transport row, and four buttons along the
-   bottom. Panes are a sheet that slides up over the chart and stops
-   above the transport row, so Next is always under your thumb.
+   The phone's pills and the menu they open.
+
+   A pill is one labelled control: what it sets in small capitals, what it
+   is set to underneath, and a chevron. Everything the phone used to reach
+   by scrolling a strip of chips -- the timeframes, the chart style, the
+   indicators, the drawing tools, the ticker, the day, the panes -- is one
+   tap into a menu instead. Nothing on the phone scrolls sideways.
+   ===================================================================== */
+.pill{display:none;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;min-width:0;min-height:0;
+  padding:5px 24px 5px 10px;border:1px solid var(--line2);border-radius:9px;background:var(--p2);color:var(--text);text-align:left;
+  position:relative;font-weight:600;font-size:13px;line-height:1.2}
+.pill::after{content:"";position:absolute;right:11px;top:50%;width:6px;height:6px;margin-top:-5px;
+  border-right:1.6px solid var(--dim);border-bottom:1.6px solid var(--dim);transform:rotate(45deg)}
+.pill small{font-size:9.5px;font-weight:650;letter-spacing:.7px;text-transform:uppercase;color:var(--dim2);white-space:nowrap}
+.pill b{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block}
+.pill b i{font-style:normal;color:var(--dim);font-weight:500}
+.pill:disabled{opacity:.6}
+.pill.on{border-color:var(--acc);background:var(--accs)}
+.pills{display:none;gap:6px;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel);flex:0 0 auto}
+.pills .pill{flex:1 1 0;display:flex;padding:5px 19px 5px 9px}
+.pills .pill::after{right:8px}
+/* The menu: a sheet up from the bottom of the screen with a title, a list,
+   and a tick on what is set. A choice closes it; a menu of switches (the
+   indicators) stays open while they are flipped; tapping outside closes. */
+.menu{position:fixed;inset:0;z-index:150;display:flex;flex-direction:column;justify-content:flex-end}
+.menu[hidden]{display:none}
+.menu-bg{position:absolute;inset:0;background:rgba(3,5,10,.62)}
+.menu-card{position:relative;background:var(--panel);border:1px solid var(--line2);border-bottom:none;border-radius:16px 16px 0 0;
+  max-height:min(74vh,640px);display:flex;flex-direction:column;box-shadow:0 -12px 40px rgba(0,0,0,.55);padding-bottom:var(--sab);
+  animation:menuUp .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes menuUp{from{transform:translateY(40px);opacity:.5}to{transform:none;opacity:1}}
+.menu-head{display:flex;align-items:center;gap:10px;padding:13px 16px 10px;border-bottom:1px solid var(--line)}
+.menu-head b{font-size:15.5px;letter-spacing:-.2px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu-head b i{font-style:normal;color:var(--dim);font-weight:500;font-size:12.5px;margin-left:8px}
+.menu-head button{min-height:32px;padding:0 13px;font-size:12.5px;background:var(--accs);border-color:var(--acc);flex:0 0 auto}
+.menu-list{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 8px 12px}
+.mh{padding:12px 10px 5px;font-size:10.5px;font-weight:650;letter-spacing:1px;text-transform:uppercase;color:var(--dim2)}
+.mi{display:flex;align-items:center;gap:12px;width:100%;min-height:46px;padding:7px 10px;border:none;border-radius:9px;background:transparent;
+  color:var(--text);text-align:left;font-weight:500;font-size:14.5px}
+.mi:active:not(:disabled){background:var(--accs);transform:none}
+.mi .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mi .t em{font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi .t small{color:var(--dim);font-size:11.5px;font-weight:500;line-height:1.35}
+.mi .k{flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line2);display:grid;place-items:center;color:transparent;font-size:12px;font-weight:700}
+.mi.on{font-weight:650}
+.mi.on .k{background:var(--acc);border-color:var(--acc);color:#fff}
+.mi.sw .k{width:38px;height:22px;border-radius:11px;background:var(--line2);border:none;position:relative;color:transparent}
+.mi.sw .k::after{content:"";position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:var(--dim);transition:transform .15s,background .15s}
+.mi.sw.on .k{background:var(--acc)}
+.mi.sw.on .k::after{transform:translateX(16px);background:#fff}
+.mi.act{color:var(--acc);font-weight:600}
+.mi.act .k,.mi.plain .k{display:none}
+.mi:disabled{opacity:.45}
+.mi svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;color:var(--dim)}
+.mi.on svg{color:var(--text)}
+.mi.danger{color:var(--dn)}
+.mnote{padding:8px 10px 4px;font-size:12px;color:var(--dim);line-height:1.5}
+.sheetbar{display:none;align-items:center;gap:8px}
+
+/* =====================================================================
+   PHONE. Two header rows -- the ticker, the price and the clock; then the
+   day, restart, new day and the account -- a row of four labelled pills
+   above the chart (timeframe, chart style, indicators, drawing), the
+   transport row, and four buttons along the bottom. Every pill and the
+   ticker and day are menus. Panes are a sheet that slides up over the
+   chart and stops above the transport row, so Next is always under your
+   thumb, with a menu of every pane at its head.
    ===================================================================== */
 @media(max-width:899px){
   /* iOS zooms into any control smaller than 16px the moment it gets focus,
-     and does not zoom back out. Every control is 16px here. */
-  input,select,textarea,.tksel,.ssel,.ctsel,.stepper select,.stepper input,.actions select{font-size:16px}
-  .tksel{padding:3px 28px 3px 10px}
-  .px{font-size:18px}
-  .chg{font-size:11px;padding:2px 6px}
-  .ohlc,#sub{display:none}
+     and never zooms back out. Every control is 16px here, whatever a later
+     rule says: the debrief's 14px textarea was enough to zoom the page, and
+     from then on the header, the price axis and the speed box hung off the
+     right edge of the screen. */
+  input,select,textarea{font-size:16px!important}
+  /* Nothing in the chrome may push the shell wider than the screen. */
+  .top,.pills,.actions,.tabbar,.row1,.row2,.sheetbar{min-width:0;overflow:hidden}
+  .top{padding:calc(var(--sat) + 6px) 12px 6px}
+  .row1{gap:7px;min-height:38px}
+  .tksel,.ohlc,#sub{display:none}
   #sess::before{content:none!important}
-  /* The header has room for the ticker, the price and the clock. New day is an icon. */
-  .row1{gap:8px}
+  .pill.tk{display:flex;flex-direction:row;padding:0 25px 0 11px;min-height:36px;font-size:17px;letter-spacing:-.3px;flex:0 0 auto}
   .px{font-size:17px}
-  .row1 .tbtn{width:38px;padding:0;display:grid;place-items:center}
-  .row1 .tbtn span{display:none}
-  .row1 .tbtn svg{display:block!important}
-  .acct{gap:8px;font-size:10.5px;padding:3px 8px}
+  .chg{font-size:11.5px;padding:2px 6px}
+  .clk{margin-left:auto}
+  .clk #clk{font-size:13.5px}
+  #moreTop{display:grid;place-items:center;width:38px;min-height:36px;padding:0;flex:0 0 auto}
+  .row2 .tbtn{min-height:36px;flex:0 0 auto}
+  .row2{gap:6px;margin-top:6px}
+  .pill.day{display:flex;flex-direction:row;padding:0 25px 0 11px;min-height:36px;font-size:13px;flex:0 1 auto}
+  /* The account as a two-line chip: the balance and today on the first
+     line, what the rules have left on the second. Tap it for the record. */
+  .acct{flex:1 1 0;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:3px 10px;min-height:36px;
+    overflow:hidden;white-space:nowrap;font-size:12.5px}
+  .acct .l1{display:flex;gap:7px;align-items:baseline}
+  .acct .l2{display:block;font-size:10px;color:var(--dim2);max-width:100%;overflow:hidden;text-overflow:ellipsis;letter-spacing:.1px}
+  .acct .lnk{display:none}
   .hint{top:40px}
-  .clk #clk{font-size:13px}
   .stage{display:flex;overflow:hidden}
-  .chartcol{flex:1;display:flex;flex-direction:column}
-  .toolbar{display:flex;align-items:stretch;height:46px;flex:0 0 auto}
-  .modes{border-right:1px solid var(--line)}
-  .tools{flex:1}
-  .tools .strip{flex:1}
-  .toolbar>.strip-rail,.toolbar>#rail{flex:1;min-width:0}
-  .shell[data-mode=tf] .strip-ov,.shell[data-mode=tf] .strip-rail,.shell[data-mode=tf] #ov,.shell[data-mode=tf] #rail,
-  .shell[data-mode=ind] .strip-tfbar,.shell[data-mode=ind] .strip-rail,.shell[data-mode=ind] #tfbar,.shell[data-mode=ind] #rail,
-  .shell[data-mode=draw] .tools{display:none}
+  .chartcol{flex:1;display:flex;flex-direction:column;min-width:0}
+  .toolbar{display:none}
+  .pills{display:flex}
   .chartbox{flex:1}
   .side{position:absolute;left:0;right:0;bottom:0;height:62%;max-height:100%;border-top:1px solid var(--line2);border-radius:16px 16px 0 0;
     box-shadow:0 -12px 40px rgba(0,0,0,.55);transform:translateY(106%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:10;visibility:hidden}
   .side.open{transform:none;visibility:visible}
   .side.tall{height:100%;border-radius:0}
-  .grabrow{display:flex}
-  .shead{padding:0 12px 8px;border-bottom:1px solid var(--line)}
-  .sessrow{display:none;margin-bottom:8px}
-  .side[data-tab=setup] .sessrow{display:flex}
-  .tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
-  .tabs::-webkit-scrollbar{display:none}
-  .tab{flex:0 0 auto;min-height:34px;padding:0 13px}
+  .grabrow{display:flex;height:22px}
+  .sheetbar{display:flex;padding-bottom:8px}
+  .pill.pane{display:flex;flex-direction:row;padding:0 25px 0 11px;min-height:36px;font-size:15px;flex:0 1 auto}
+  .sheetbar #sClose{position:static;margin-left:auto;width:36px;height:36px;min-height:36px;border:1px solid var(--line2);border-radius:8px;font-size:14px}
+  .shead{padding:0 12px 0;border-bottom:1px solid var(--line)}
+  .sessrow,.tabs,.pickday{display:none}
   .pane{padding:12px 12px 28px}
   .foot{display:none}
   .actions{padding:8px 10px}
@@ -436,7 +502,6 @@ svg.eq{display:block;width:100%;height:auto}
   .stage{display:grid;grid-template-columns:minmax(0,1fr) 372px}
   .chartcol{display:grid;grid-template-columns:50px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto}
   .toolbar{display:contents}
-  .modes{display:none}
   .tools{grid-column:1/-1;grid-row:1;height:44px;border-bottom:1px solid var(--line);background:var(--panel)}
   .tools .strip-tfbar,.tools>#tfbar{flex:0 0 auto}
   .tools .strip-ov,.tools>#ov{flex:1;min-width:0;border-left:1px solid var(--line)}
@@ -452,25 +517,28 @@ svg.eq{display:block;width:100%;height:auto}
   .side{border-left:1px solid var(--line)}
   .shead{padding:10px 12px 0}
   .tabs{padding:10px 0}
-  .row1 .tbtn{display:none}
+  .row2 .tbtn,#moreTop{display:none}
   .sidebody{padding:0}
 }
 @media(prefers-reduced-motion:reduce){button:active:not(:disabled){transform:none} .side{transition:none}}
 </style>
 </head>
 <body>
-<div class="shell" id="shell" data-mode="tf">
+<div class="shell" id="shell">
 <!--MP:HEAD-->
 <header class="top">
   <div class="row1">
     <select class="tksel dd" id="tk" title="Change ticker (loads a new session)" aria-label="Ticker"></select>
+    <button class="pill tk" id="tkPill" type="button" title="Change ticker (loads a new session)" aria-label="Ticker"><b>—</b></button>
     <span class="px" id="px">—</span>
     <span class="chg u" id="chg">—</span>
     <div class="ohlc" id="ohlc"></div>
     <div class="clk"><span id="clk">9:45</span><span class="clkx"><span id="sub">5m · live</span><span id="sess"></span></span></div>
-    <button class="tbtn prim" id="newTop" type="button" title="Load a different recorded day" aria-label="New day"><svg class="i" viewBox="0 0 24 24" style="display:none"><path d="M4 7h3.5c2 0 3 1 4 2.5l2 3c1 1.5 2 2.5 4 2.5H20M4 17h3.5c1.3 0 2.2-.4 3-1.2M13.5 8.2c.8-.8 1.7-1.2 3-1.2H20"/><path d="M18 4.5L20.5 7 18 9.5M18 14.5l2.5 2.5-2.5 2.5"/></svg><span>New day</span></button>
+    <button id="moreTop" type="button" title="Guide, track record, the report" aria-label="More"><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/></svg></button>
   </div>
   <div class="row2">
+    <button class="pill day" id="dayPill" type="button" title="Which recorded day to practise" aria-label="Which recorded day"><b>—</b></button>
+    <button class="tbtn prim" id="newTop" type="button" title="Load a different recorded day" aria-label="New day"><svg class="i" viewBox="0 0 24 24" style="display:none"><path d="M4 7h3.5c2 0 3 1 4 2.5l2 3c1 1.5 2 2.5 4 2.5H20M4 17h3.5c1.3 0 2.2-.4 3-1.2M13.5 8.2c.8-.8 1.7-1.2 3-1.2H20"/><path d="M18 4.5L20.5 7 18 9.5M18 14.5l2.5 2.5-2.5 2.5"/></svg><span>New day</span></button>
     <button class="acct" id="acct" type="button" title="Your account, under your rules. Tap for the track record."></button>
   </div>
 </header>
@@ -478,11 +546,6 @@ svg.eq{display:block;width:100%;height:auto}
 <div class="stage">
   <div class="chartcol">
     <div class="toolbar" id="toolbar">
-      <div class="modes" id="modes">
-        <button type="button" data-mode="tf" class="on" title="Timeframe" aria-label="Timeframe"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></button>
-        <button type="button" data-mode="draw" title="Drawing tools" aria-label="Drawing tools"><svg class="i" viewBox="0 0 24 24"><path d="M4 20l4-1 10.5-10.5a2.1 2.1 0 00-3-3L5 16z"/><path d="M13 7l3 3"/></svg></button>
-        <button type="button" data-mode="ind" title="Indicators and chart style" aria-label="Indicators and chart style"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 12h3M11 12h9M4 17h12M20 17h0"/><circle cx="16" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="18" cy="17" r="2"/></svg></button>
-      </div>
       <div class="tools">
         <div class="tfbar" id="tfbar"></div>
         <div class="ov" id="ov"></div>
@@ -499,6 +562,13 @@ svg.eq{display:block;width:100%;height:auto}
         <button class="tool" id="undo" title="Undo the last drawing (U)" aria-label="Undo last drawing"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h9a6 6 0 010 12H8"/></svg><small>Undo</small></button>
         <button class="tool" id="clear" title="Clear every drawing" aria-label="Clear all drawings"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><small>Clear</small></button>
       </div>
+    </div>
+
+    <div class="pills" id="pills">
+      <button class="pill" id="tfPill" type="button" aria-label="Timeframe"><small>Timeframe</small><b>5m</b></button>
+      <button class="pill" id="ctPill" type="button" aria-label="Chart style"><small>Chart</small><b>Candles</b></button>
+      <button class="pill" id="indPill" type="button" aria-label="Indicators"><small>Indicators</small><b>—</b></button>
+      <button class="pill" id="drawPill" type="button" aria-label="Drawing tools"><small>Draw</small><b>Pointer</b></button>
     </div>
 
     <div class="chartbox">
@@ -525,7 +595,9 @@ svg.eq{display:block;width:100%;height:auto}
 
   <aside class="side" id="side" data-tab="trade">
     <div class="shead">
-      <div class="grabrow"><div class="grab" id="grab" title="Drag down to close, up for the full height"><span></span></div>
+      <div class="grabrow"><div class="grab" id="grab" title="Drag down to close, up for the full height"><span></span></div></div>
+      <div class="sheetbar">
+        <button class="pill pane" id="panePill" type="button" title="Which pane" aria-label="Which pane"><b>Trade</b></button>
         <button id="sClose" class="sbtn sq" type="button" aria-label="Close">✕</button></div>
       <div class="sessrow">
         <!--MP:BACK-->
@@ -558,6 +630,14 @@ svg.eq{display:block;width:100%;height:auto}
   <button type="button" data-l="more"><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/></svg><small>More</small></button>
 </nav>
 <button class="unzoom" id="unzoom" type="button" hidden>Zoomed in · tap to reset</button>
+</div>
+
+<div class="menu" id="menu" hidden>
+  <div class="menu-bg" id="menuBg"></div>
+  <div class="menu-card" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+    <div class="menu-head"><b id="menuTitle"></b><button type="button" id="menuDone">Done</button></div>
+    <div class="menu-list" id="menuList"></div>
+  </div>
 </div>
 
 <div class="tour" id="tour" hidden>
@@ -2090,14 +2170,19 @@ function setTool(t,quiet){
   document.querySelectorAll('.tool[data-t]').forEach(x=>x.classList.toggle('on',x.dataset.t===t));
   S.tool=t;if(!quiet)hint(TOOL_HINT[t]);
   cv.style.cursor=t==='cursor'?'crosshair':'default';
+  paintPills();
 }
 
 cv.addEventListener('pointerdown',e=>{
   cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,pos(e));
   const{mx,my}=pos(e);
   if(pts.size===2){const[a,b]=[...pts.values()];
-    pinch={dx:Math.max(1,Math.abs(a.mx-b.mx)),dy:Math.max(1,Math.abs(a.my-b.my)),
-      count:S.view.count,lo:G.lo,hi:G.hi};S.pend=null;return;}
+    const dx=Math.max(1,Math.abs(a.mx-b.mx)),dy=Math.max(1,Math.abs(a.my-b.my));
+    // A pinch zooms one axis, decided by how the fingers sit when it starts:
+    // side by side zooms time, one above the other stretches the price scale.
+    // It used to do both at once, so any pinch left the price scale locked,
+    // and the candles that came after it walked off the bottom of the chart.
+    pinch={dx,dy,axis:dy>dx*1.6?'y':'x',count:S.view.count,lo:G.lo,hi:G.hi};S.pend=null;return;}
   if(inYAxis(mx)){
     const now=Date.now();
     if(now-lastTapAxis<300){S.yMan=null;lastTapAxis=0;draw();return;}
@@ -2122,8 +2207,8 @@ cv.addEventListener('pointermove',e=>{
   if(pinch&&pts.size===2){
     const[a,b]=[...pts.values()];
     const dx=Math.max(1,Math.abs(a.mx-b.mx)),dy=Math.max(1,Math.abs(a.my-b.my));
-    S.view.count=Math.max(12,Math.min(400,Math.round(pinch.count*pinch.dx/dx)));
-    if(Math.abs(dy/pinch.dy-1)>.06){
+    if(pinch.axis==='x')S.view.count=Math.max(12,Math.min(400,Math.round(pinch.count*pinch.dx/dx)));
+    else{
       lockY();const mid=(pinch.lo+pinch.hi)/2,r=(pinch.hi-pinch.lo)*pinch.dy/dy;
       S.yMan={lo:mid-r/2,hi:mid+r/2};}
     draw();return;
@@ -2197,7 +2282,7 @@ function seg(px,py,x1,y1,x2,y2){const dx=x2-x1,dy=y2-y1,L=dx*dx+dy*dy;
   return Math.hypot(px-(x1+t*dx),py-(y1+t*dy));}
 
 /* ================= UI ================= */
-function renderAll(){draw();headline();pane();btns();}
+function renderAll(){draw();headline();pane();btns();paintPills();}
 /**
  * What you hold and how it is doing, in the header, so it stays in view while
  * you watch the chart instead of sitting in the ticket below it on a phone.
@@ -2219,7 +2304,9 @@ function headline(){
   $('px').textContent='$'+b.c.toFixed(2);
   const open=S.mins[todayStart()].o,d=b.c-open;
   const e=$('chg');e.className='chg '+(d>=0?'u':'d');
-  e.textContent=(d>=0?'+':'')+d.toFixed(2)+' ('+(d>=0?'+':'')+(d/open*100).toFixed(2)+'%)';
+  // The phone's header has room for the percent; the dollars are in the title.
+  const pct=(d>=0?'+':'')+(d/open*100).toFixed(2)+'%',dol=(d>=0?'+':'')+d.toFixed(2);
+  e.textContent=isPhone()?pct:dol+' ('+pct+')';e.title=dol+' since the 9:30 open';
   $('clk').textContent=lbl(HIST,S.cursor)+(S.cursor>=MPD?' close':'');
   $('sub').textContent=S.tf+' · '+(S.mode==='options'?'options':'shares');
   const B=bars(),L=B[B.length-1];
@@ -2768,7 +2855,7 @@ function paneSetup(){
   const pend=S.pendingJournal.length;
   const recorded=REPLAY.length>0;
 
-  return `<h3>Pick a day</h3>
+  return `<div class="pickday"><h3>Pick a day</h3>
   ${recorded?`<div class="setup">
     <select id="rsym">${syms.map(x=>`<option value="${x}"${x===S.ticker?' selected':''}>${x}</option>`).join('')}</select>
     <select id="rdate">${dates.map(d=>`<option value="${d}"${S.replay&&S.replay.date===d?' selected':''}>${d}</option>`).join('')}</select>
@@ -2785,7 +2872,7 @@ function paneSetup(){
   <div class="empty" style="margin-bottom:4px">${LIB?'A random day from the whole library: <b>'+libSize()+' days</b> across '+libSymbols().length+' tickers, every one with a fortnight of history behind it, and days you have not had before first. The library grows by a day per ticker per run and nothing ages out, so it cannot be learned.'
     :'A random day from the days built into the page. The full library could not be reached from here'+(location.protocol==='file:'?' (the page is open from disk)':'')+'.'}
     ${seenDays().length?' <span style="opacity:.8">'+seenDays().length+' served so far.</span>':''}</div>`
-  :`<div class="empty">No recorded sessions are embedded in this build, so days are generated. Run the tool with replay harvesting on to collect real ones.</div>`}
+  :`<div class="empty">No recorded sessions are embedded in this build, so days are generated. Run the tool with replay harvesting on to collect real ones.</div>`}</div>
 
   <h3 class="sp">Jump to a time</h3>
   <div class="setup">
@@ -2825,7 +2912,7 @@ function paneSetup(){
     <button id="replayS" style="flex:1">Restart this one</button>
   </div>
   <div class="setup"><span class="seed">${S.ticker}-${S.seed}</span><button id="cp">Copy code</button></div>
-  <div class="empty">Drag the price axis to stretch vertically, drag the time axis to stretch horizontally, pinch to do both, and double-tap the price axis to snap back to auto.</div>`;
+  <div class="empty">Pinch sideways to zoom in and out of time. Pinch up and down, or drag the price axis, to stretch the price scale; double-tap the price axis, or tap Reset view, to snap it back to auto.</div>`;
 }
 function wireSetup(){
   $('regime').value=S.regime;$('vm').value=String(S.vm);
@@ -3148,15 +3235,31 @@ function paintAcct(){
   const use=dayUse(),open=openPnl(),live=acctLive()+open,today=use.realized+open;
   const lossCls=use.realized<=-RULES.maxLoss?'bad':use.realized<=-RULES.maxLoss*.6?'warn':'';
   const cd=cooldownLeft();
-  // A phone gets the same facts in fewer characters, so Record stays on screen.
-  const tight=window.innerWidth<600,d0=n=>'$'+Math.round(n);
-  e.innerHTML='<span>'+(tight?'':'Acct ')+'<b>'+usd(live)+'</b></span>'+
-    '<span class="'+(today>=0?'tup':'tdn')+'">'+(tight?'':'today ')+sgn(today)+'</span>'+
+  const d0=n=>'$'+Math.round(n);
+  // On a phone the strip is a two-line chip beside the day: the balance and
+  // today on the first line, what the rules have left on the second. The
+  // whole chip opens the record. It used to be the desktop strip in 10px type.
+  if(isPhone()){
+    const l2=[];
+    if(RULES.on){
+      l2.push('<span class="'+(use.count>=RULES.maxTrades?'warn':'')+'">'+use.count+'/'+RULES.maxTrades+' trades</span>');
+      l2.push('<span class="'+(use.outlay>=RULES.cap-1e-9?'bad':'')+'">'+d0(use.outlay)+'/'+d0(RULES.cap)+'</span>');
+      if(lossCls)l2.push('<span class="'+lossCls+'">limit −'+d0(RULES.maxLoss)+'</span>');
+      if(cd>0)l2.push('<span class="warn">cool-off '+cd+' min</span>');
+    }else l2.push('<span class="off">rules off</span>');
+    if(S.blind)l2.push('<span class="warn">blind</span>');
+    if(S.ended)l2.push('<span>ended</span>');
+    e.innerHTML='<span class="l1"><b>'+usd(live)+'</b><span class="'+(today>=0?'tup':'tdn')+'">'+sgn(today)+'</span></span>'+
+      '<span class="l2">'+l2.join(' · ')+'</span>';
+    return;
+  }
+  e.innerHTML='<span>Acct <b>'+usd(live)+'</b></span>'+
+    '<span class="'+(today>=0?'tup':'tdn')+'">today '+sgn(today)+'</span>'+
     (RULES.on
-      ?'<span class="'+(use.outlay>=RULES.cap-1e-9?'bad':'')+'">'+(tight?d0(use.outlay)+'/'+d0(RULES.cap):usd(use.outlay)+' / '+usd(RULES.cap)+' bought')+'</span>'+
-       '<span class="'+(use.count>=RULES.maxTrades?'warn':'')+'">'+use.count+(tight?'/':' / ')+RULES.maxTrades+(tight?'':' trades')+'</span>'+
-       '<span class="'+lossCls+'">'+(tight?'lim −'+d0(RULES.maxLoss):'limit '+usd(-RULES.maxLoss))+'</span>'+
-       (cd>0?'<span class="warn">'+(tight?'wait ':'cool-off ')+cd+' min</span>':'')
+      ?'<span class="'+(use.outlay>=RULES.cap-1e-9?'bad':'')+'">'+usd(use.outlay)+' / '+usd(RULES.cap)+' bought</span>'+
+       '<span class="'+(use.count>=RULES.maxTrades?'warn':'')+'">'+use.count+' / '+RULES.maxTrades+' trades</span>'+
+       '<span class="'+lossCls+'">limit '+usd(-RULES.maxLoss)+'</span>'+
+       (cd>0?'<span class="warn">cool-off '+cd+' min</span>':'')
       :'<span class="off">rules off</span>')+
     (S.blind?'<span class="warn">blind</span>':'')+(S.ended?'<span>ended</span>':'')+
     '<span class="lnk">Record &rsaquo;</span>';
@@ -3524,15 +3627,15 @@ function wireRecord(){
 const TOUR=[
   {t:null,h:"Practise on real trading days",
    b:"Every candle here is a real 1-minute bar from a recorded session. You step through the day, trade calls, puts or shares, and see how it would have gone, with nothing at risk. This tour takes about a minute."},
-  {t:".sessrow",tab:"setup",h:"Pick what to practise",
-   b:"The ticker box in the header switches the symbol. The date here picks one of the newest twelve recorded days. Restart replays the same day from the 9:30 open; New day draws a random day from the whole library instead -- any day ever recorded, one you have not had before first -- so the practice cannot be learned. Your chart settings carry over."},
+  {t:".sessrow",p:".row2",tab:"setup",h:"Pick what to practise",
+   b:"The ticker is a menu: any symbol in the library. The day is a menu too: every recorded day of that ticker, by month. Restart replays the same day from the 9:30 open; New day draws a random day from the whole library instead -- any day ever recorded, one you have not had before first -- so the practice cannot be learned. Your chart settings carry over."},
   {t:"#cv",h:"The chart",
-   b:"Drag to scroll back in time; pinch, or use the mouse wheel, to zoom. Drag the price scale on the right to stretch it and double-tap it to reset. The shaded band that appears at 9:45 is the opening range: the high and low of the first 15 minutes. The tinted candles before 9:30 are the pre-market, and the dotted lines are the levels the day is traded against: yesterday's high, low and close, the pre-market high and low, and the open."},
-  {t:"#tfbar",mode:"tf",h:"Timeframe",
+   b:"Drag to scroll back in time; pinch sideways, or use the mouse wheel, to zoom. Pinch up and down, or drag the price scale on the right, to stretch it; double-tap the scale to reset. The shaded band that appears at 9:45 is the opening range: the high and low of the first 15 minutes. The tinted candles before 9:30 are the pre-market, and the dotted lines are the levels the day is traded against: yesterday's high, low and close, the pre-market high and low, and the open."},
+  {t:"#tfbar",p:"#tfPill",h:"Timeframe",
    b:"How much time each candle covers. The replay still moves a minute at a time underneath, so you can switch whenever you like."},
-  {t:"#ov",mode:"ind",h:"Indicators and chart style",
-   b:"Tap a chip to switch an indicator on or off; a short note explains each one as it turns on. The first box changes the chart style: candles, Heikin Ashi, line and so on."},
-  {t:"#rail",mode:"draw",h:"Drawing tools",
+  {t:"#ov",p:"#indPill",h:"Indicators and chart style",
+   b:"Switch an indicator on or off here; a short note explains each one as it turns on. The box beside it changes the chart style: candles, Heikin Ashi, line and so on."},
+  {t:"#rail",p:"#drawPill",h:"Drawing tools",
    b:"Pick a tool, then drag on the chart: trend lines, price levels, fib retracements, boxes, and a ruler that measures a move in dollars and percent. After each drawing the pointer comes back by itself, and every drawing can be picked up: drag an end to reshape it, the body to move it, Delete to remove it. Undo and Clear are at the end."},
   {t:".trow",h:"Move through the day",
    b:"Next steps forward one candle. The play button runs on its own at the speed beside it. The back arrow rewinds one candle and undoes anything you did in it: that is how you go back and try the other decision."},
@@ -3540,8 +3643,8 @@ const TOUR=[
    b:"This is where you trade. Choose the expiration, strike and size, then write the plan: which setup this is, and a stop and a target on the stock price. Only then tap the Call card if you think the stock will rise, or the Put card if you think it will fall. Each shows what it costs and what tapping it will do. Your open position sits below. Switch to Shares and the cards become Long and Short."},
   {t:"#acct",h:"Your account, your rules",
    b:"The account you actually trade -- $1,000 to start, or set it to whatever yours holds -- under the rules you wrote for it: how much you may buy in a day, the loss that ends the day, the trade count, the most a stop may risk. A card refuses anything outside them and says which rule, on the card. Tap this strip for your track record. The Rules tab changes the numbers and the balance."},
-  {t:"#tabs",sheet:true,h:"Everything else",
-   b:"Every pane is here; on a phone the bar along the bottom opens them. Session picks the day, has today's stats, ends the day and opens the record. Coach grades each trade against the rules and the setup, and shows what the day offered at the bell. Chain lists every strike. Fib has the swing levels and the opening range. Tape logs everything that happened. Journal is today's trades. Rules is the account."},
+  {t:"#tabs",p:"#tabbar",sheet:true,h:"Everything else",
+   b:"Every pane is here; on a phone the bar along the bottom opens them, More lists them all, and the name at the top of an open pane is a menu of the rest. Session has today's stats, jumps to a time, ends the day and opens the record. Coach grades each trade against the rules and the setup, and shows what the day offered at the bell. Chain lists every strike. Fib has the swing levels and the opening range. Tape logs everything that happened. Journal is today's trades. Rules is the account."},
   {t:null,h:"Your trades are kept",
    b:"Closed trades go to your Journal at the 4:00 bell, or when you send them from the Session tab. They are marked as practice, so they never mix with your real results. Open this guide again any time with the ? button."}
 ];
@@ -3549,15 +3652,16 @@ let tourI=-1;
 function tourShow(i){
   if(i<0)return;
   if(i>=TOUR.length){tourEnd();return;}
-  stopAuto();
+  stopAuto();closeMenu();
   tourI=i;
-  const st=TOUR[i];
-  // On a phone the thing being pointed at may live in the sheet or behind a
-  // toolbar mode, so the step opens what it needs and closes what is in the way.
-  if(st.tab){if(isPhone())openSheet(st.tab);else if(S.tab!==st.tab)setTab(st.tab);}
-  else if(st.sheet&&isPhone())openSheet();
-  else if(isPhone()&&st.t){const el=document.querySelector(st.t);if(el&&!$('side').contains(el))closeSheet();}
-  if(st.mode&&isPhone())setMode(st.mode);
+  const st=TOUR[i],phone=isPhone();
+  // On a phone the thing being pointed at may live in the sheet, or have a
+  // phone form of its own (`p`) outside it, so the step opens what it needs
+  // and closes what is in the way.
+  if(phone&&st.p)closeSheet();
+  else if(st.tab){if(phone)openSheet(st.tab);else if(S.tab!==st.tab)setTab(st.tab);}
+  else if(st.sheet&&phone)openSheet();
+  else if(phone&&st.t){const el=document.querySelector(st.t);if(el&&!$('side').contains(el))closeSheet();}
   $('tour').hidden=false;
   $('tourStep').textContent=(i+1)+' of '+TOUR.length;
   $('tourTitle').textContent=st.h;
@@ -3577,7 +3681,7 @@ function tourShow(i){
 function tourPlace(){
   if(tourI<0)return;
   const st=TOUR[tourI],spot=$('tourSpot'),card=$('tourCard'),box=$('tour');
-  const el=st.t?document.querySelector(st.t):null;
+  const sel=isPhone()&&st.p?st.p:st.t,el=sel?document.querySelector(sel):null;
   const vw=document.documentElement.clientWidth,vh=innerHeight,cw=Math.min(360,vw-24);
   card.style.width=cw+'px';
   if(!el){
@@ -3681,21 +3785,22 @@ function renderSessRow(){
   const cur=S.replay&&S.replay.date;
   if(cur&&!all.includes(cur))all.unshift(cur);
   sel.disabled=false;
-  const month=d=>{const x=new Date(d+'T12:00:00Z');
-    return ['January','February','March','April','May','June','July','August','September','October','November','December'][x.getUTCMonth()]+' '+x.getUTCFullYear();};
   let html='',group=null;
   for(const d of all){
-    const m=month(d);
+    const m=monthName(d);
     if(m!==group){if(group)html+='</optgroup>';html+='<optgroup label="'+m+'">';group=m;}
     // A day with nothing recorded before it opens on a handful of candles with
     // empty higher timeframes. Still pickable, but labelled so it is no surprise.
-    const depth=libDates(S.ticker).filter(x=>x<d).length;
-    const note=depth===0?' · no history':depth<MIN_HIST?' · thin history':'';
-    html+='<option value="'+d+'"'+(cur===d?' selected':'')+'>'+dayName(d)+note+'</option>';
+    html+='<option value="'+d+'"'+(cur===d?' selected':'')+'>'+dayName(d)+depthNote(S.ticker,d)+'</option>';
   }
   if(group)html+='</optgroup>';
   sel.innerHTML=html;
+  paintPills();
 }
+function monthName(d){const x=new Date(d+'T12:00:00Z');
+  return ['January','February','March','April','May','June','July','August','September','October','November','December'][x.getUTCMonth()]+' '+x.getUTCFullYear();}
+/** How deep the history behind a day runs, for the note beside it in the pickers. */
+function depthNote(sym,d){const depth=libDates(sym).filter(x=>x<d).length;return depth===0?' · no history':depth<MIN_HIST?' · thin history':'';}
 /**
  * Every way of leaving a session comes through here: a ticker change, a new
  * day, a restart, or the Session pane. Closed practice trades wait in a queue
@@ -3731,6 +3836,7 @@ function renderTickers(){
   const list=libSymbols().length?libSymbols():Object.keys(TICKERS);
   const cur=S&&S.ticker;
   tkSel.innerHTML=list.map(t=>'<option value="'+t+'"'+(t===cur?' selected':'')+'>'+t+'</option>').join('');
+  paintPills();
 }
 renderTickers();
 tkSel.onchange=()=>{if(!startSession(tkSel.value))tkSel.value=S.ticker;};
@@ -3774,10 +3880,11 @@ function renderBadges(){
       CTYPES.map(([k,l])=>'<option value="'+k+'"'+(S.ctype===k?' selected':'')+'>'+l+'</option>').join('')+
     '</select>'+
     INDS.map(([k,l,d])=>'<button class="badge'+(S.ind[k]?' on':'')+'" data-i="'+k+'" title="'+d+'" aria-label="'+l+': '+d+'">'+l+'</button>').join('');
-  $('ctsel').onchange=e=>{S.ctype=e.target.value;draw();};
+  $('ctsel').onchange=e=>{S.ctype=e.target.value;draw();paintPills();};
+  paintPills();
 }
 $('ov').addEventListener('click',e=>{const b=e.target.closest('.badge');if(!b)return;
-  const k=b.dataset.i;S.ind[k]=!S.ind[k];b.classList.toggle('on',!!S.ind[k]);resize();
+  const k=b.dataset.i;S.ind[k]=!S.ind[k];b.classList.toggle('on',!!S.ind[k]);resize();paintPills();
   if(S.ind[k]){const e=INDS.find(x=>x[0]===k);if(e)hint(e[2]);}});
 $('rail').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(b.id==='undo'){hint(S.draw.length?'Removed the last drawing.':'Nothing to undo.');S.draw.pop();S.sel=null;return draw();}
@@ -3798,6 +3905,7 @@ function stopAuto(){if(S.auto){clearInterval(S.auto);S.auto=null;$('auto').textC
 $('auto').onclick=()=>{if(S.auto)return stopAuto();$('auto').textContent='❚❚';
   S.auto=setInterval(()=>{if(S.cursor>=MPD)return stopAuto();stepBar();},Math.round(700/(S.speed||1)));};
 document.addEventListener('keydown',e=>{
+  if(MENU){if(e.key==='Escape')closeMenu();return;}
   if($('rec')&&!$('rec').hidden){if(e.key==='Escape')closeRecord();return;}
   if($('dbf')&&!$('dbf').hidden){if(e.key==='Escape')$('dbf').hidden=true;return;}
   if(tourI>=0){
@@ -3828,15 +3936,10 @@ document.addEventListener('keydown',e=>{
  * elements sit side by side and none of this moves.
  */
 const isPhone=()=>window.innerWidth<900;
-function setMode(m){
-  $('shell').dataset.mode=m;
-  document.querySelectorAll('#modes button').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
-}
-document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 function setTab(t){
   S.tab=t;
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.p===t));
-  pane();
+  pane();paintPills();
   // The tab that was picked is scrolled into view where the row scrolls.
   const on=document.querySelector('.tab.on');if(on&&on.scrollIntoView)on.scrollIntoView({block:'nearest',inline:'nearest'});
 }
@@ -3856,11 +3959,124 @@ function paintLaunchers(){
 $('tabbar').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   const l=b.dataset.l,open=$('side').classList.contains('open');
-  if(l==='more'){if(open&&!MAIN[S.tab])closeSheet();else openSheet(MAIN[S.tab]?'coach':S.tab);return;}
+  if(l==='more'){paneMenu();return;}
   if(open&&S.tab===l)closeSheet();else openSheet(l);
 });
 $('sClose').onclick=closeSheet;
 $('newTop').onclick=()=>$('sNew').click();
+
+/* ================= the phone's menus ================= */
+/**
+ * One menu for everything the phone picks: a sheet from the bottom with a
+ * title, a list and a tick on what is set. `items` is a list, or a function
+ * returning one so a menu that stays open (the indicators) repaints from the
+ * state after every tap. An item is {l, s, on, sw, act, dis, icon, group,
+ * pick} -- label, sub-line, ticked, drawn as a switch, an action rather than
+ * a choice, disabled, an svg, a group heading, what tapping does -- or
+ * {note} for a line of explanation. A choice closes the menu; a switch does
+ * not; tapping outside, Done or Escape does.
+ */
+let MENU=null;
+function openMenu(o){
+  MENU=o;$('menuTitle').innerHTML=o.title+(o.sub?'<i>'+o.sub+'</i>':'');
+  paintMenu();$('menu').hidden=false;$('menuList').scrollTop=0;
+}
+function paintMenu(){
+  const o=MENU;if(!o)return;
+  const items=typeof o.items==='function'?o.items():o.items;
+  let h='',g=null;
+  items.forEach((it,i)=>{
+    if(it.group!==undefined&&it.group!==g){g=it.group;if(g)h+='<div class="mh">'+it.group+'</div>';}
+    if(it.note){h+='<div class="mnote">'+it.note+'</div>';return;}
+    h+='<button type="button" class="mi'+(it.on?' on':'')+(it.sw?' sw':'')+(it.act?' act':'')+(it.danger?' danger':'')+'" data-i="'+i+'"'+(it.dis?' disabled':'')+'>'+
+      (it.icon||'')+'<span class="t"><em>'+it.l+'</em>'+(it.s?'<small>'+it.s+'</small>':'')+'</span><span class="k">✓</span></button>';
+  });
+  $('menuList').innerHTML=h;
+}
+function closeMenu(){MENU=null;$('menu').hidden=true;}
+$('menuList').onclick=e=>{
+  const b=e.target.closest('.mi');if(!b||!MENU)return;
+  const items=typeof MENU.items==='function'?MENU.items():MENU.items,it=items[+b.dataset.i];if(!it)return;
+  if(MENU.stay&&!it.act){if(it.pick)it.pick();paintMenu();return;}
+  closeMenu();if(it.pick)it.pick();
+};
+$('menuBg').onclick=closeMenu;$('menuDone').onclick=closeMenu;
+
+/** The labels on the pills, from the state. Cheap, so it runs with every render. */
+const TOOLS=[['cursor','Pointer'],['trend','Trend line'],['hline','Level'],['fib','Fib retracement'],['rect','Box'],['measure','Measure'],['erase','Eraser']];
+const PANES=[['trade','Trade','The ticket: expiry, strike, size, the plan, and the cards that buy'],
+  ['chain','Chain','Every strike, calls and puts, bid and ask'],
+  ['setup','Session','Jump to a time, end the day, send trades to the journal, the record'],
+  ['coach','Coach','Grades each trade against the rules and the setup; what the day offered, at the bell'],
+  ['fib','Fib','The swing levels and the opening range'],
+  ['tape','Tape','Everything that happened, in order'],
+  ['journal','Journal','Today\'s closed trades'],
+  ['rules','Rules','The account, and the rules it trades under']];
+function dayPillLabel(){
+  if(!S.replay)return REPLAY.length?'—':'Generated day';
+  if(S.blind)return 'Blind day';
+  return dayName(S.replay.date);
+}
+function paintPills(){
+  if(!S||!S.ind)return;
+  const set=(id,t)=>{const e=$(id);if(!e)return;const b=e.querySelector('b');if(b&&b.innerHTML!==t)b.innerHTML=t;};
+  set('tkPill',escHtml(S.ticker));
+  set('dayPill',escHtml(dayPillLabel()));
+  set('tfPill',S.tf);
+  const ct=CTYPES.find(c=>c[0]===S.ctype);set('ctPill',ct?ct[1]:'Candles');
+  const n=INDS.filter(([k])=>S.ind[k]).length;set('indPill',n?n+' on':'None');
+  const tool=TOOLS.find(t=>t[0]===S.tool);set('drawPill',tool?tool[1]:'Pointer');
+  const pn=PANES.find(p=>p[0]===S.tab);set('panePill',pn?pn[1]:'Trade');
+}
+function paneMenu(){openMenu({title:'Panes',items:PANES.map(([k,l,s])=>({l,s,on:S.tab===k,pick:()=>openSheet(k)}))});}
+$('panePill').onclick=paneMenu;
+$('tkPill').onclick=()=>{
+  const list=libSymbols().length?libSymbols():Object.keys(TICKERS);
+  openMenu({title:'Ticker',sub:LIB?libSize()+' days in the library':'',items:list.map(t=>{const n=libDates(t).length;
+    return {l:t,s:n?n+' recorded day'+(n===1?'':'s'):'generated days',on:t===S.ticker,
+      pick:()=>{if(t===S.ticker)return;if(startSession(t))tkSel.value=t;}};})});
+};
+$('dayPill').onclick=()=>{
+  const restart={l:'Restart this day',s:'The same day again, from the 9:30 open',act:1,pick:()=>$('sRestart').click()};
+  if(!REPLAY.length){openMenu({title:'Day',items:[{note:'No recorded sessions are in this build, so the days are generated. The Session pane builds a new one.'},restart]});return;}
+  const fresh={l:'New '+S.ticker+' day',s:'A random recorded day you have not had before',act:1,pick:()=>$('sNew').click()};
+  const any={l:'Any ticker, any day',s:'Surprise me, from the whole library',act:1,pick:()=>{const p=randomReplay();startSession(p?p.symbol:S.ticker,p);}};
+  if(S.blind){openMenu({title:'Blind day',items:[
+    {note:'Which date this is stays hidden until the 4:00 bell, so nothing you remember about the day can help. The Rules pane turns blind days off, from the next session.'},fresh,any,restart]});return;}
+  const all=libDates(S.ticker).slice().sort().reverse(),cur=S.replay&&S.replay.date;
+  if(cur&&!all.includes(cur))all.unshift(cur);
+  openMenu({title:S.ticker+' days',sub:all.length+' recorded',items:[fresh,any,restart,
+    ...all.map(d=>({group:monthName(d),l:dayName(d),s:d+depthNote(S.ticker,d),on:d===cur,
+      pick:()=>{if(d===cur)return;const lib=!PICK.some(r=>r.symbol===S.ticker&&r.date===d);startSession(S.ticker,{symbol:S.ticker,date:d,lib});}}))]});
+};
+$('moreTop').onclick=()=>{
+  const back=document.querySelector('a.mp-back2');
+  openMenu({title:'Practice',sub:S.replay&&!S.blind?S.ticker+' · '+S.replay.date:S.ticker,items:[
+    {l:'How to use this page',s:'A one-minute tour of every control',act:1,pick:()=>tourShow(0)},
+    {l:'Track record',s:usd(acctLive())+' · every practice trade, in order',act:1,pick:openRecord},
+    {l:'End the day & debrief',s:S.pos?'Close the position first':S.ended?'The day is over':'Write the day to the record and grade it',act:1,dis:!!(S.pos||S.ended),pick:()=>{stopAuto();bell();}},
+    ...(back?[{l:'Back to the report',s:'The morning\'s watchlist and levels',act:1,pick:()=>{location.href=back.getAttribute('href');}}]:[])]});
+};
+const TFDESC={'1m':'A candle a minute','2m':'Two minutes a candle','5m':'Five minutes a candle · the playbook timeframe','10m':'Ten minutes a candle',
+  '15m':'A quarter hour a candle','30m':'Half an hour a candle','1H':'An hour a candle','4H':'Four hours a candle','1D':'A day a candle'};
+$('tfPill').onclick=()=>openMenu({title:'Timeframe',sub:'the replay still moves a minute at a time',
+  items:TFS.map(t=>({l:t.k,s:TFDESC[t.k],on:S.tf===t.k,pick:()=>{const b=[...document.querySelectorAll('.tf')].find(x=>x.textContent===t.k);if(b)b.click();}}))});
+const CTDESC={candle:'Open, high, low and close; green up, red down',hollow:'Candles with hollow bodies on the up bars',heikin:'Averaged candles that smooth the trend',
+  bar:'Open and close as ticks on a high-low bar',line:'The closes, joined',area:'The closes, joined and shaded'};
+$('ctPill').onclick=()=>openMenu({title:'Chart style',
+  items:CTYPES.map(([k,l])=>({l,s:CTDESC[k],on:S.ctype===k,pick:()=>{S.ctype=k;const s=$('ctsel');if(s)s.value=k;draw();paintPills();}}))});
+const INDNAME={fib:'Auto fib',or:'Opening range',lvl:'Key levels',ext:'Extended hours',vwap:'VWAP',ema9:'EMA 9',ema20:'EMA 20',ema50:'EMA 50',bb:'Bollinger bands',rsi:'RSI 14',vol:'Volume',magnet:'Magnet'};
+$('indPill').onclick=()=>openMenu({title:'Indicators',sub:'tap to switch on or off',stay:true,
+  items:()=>INDS.map(([k,l,d])=>({l:INDNAME[k]||l,s:d,sw:1,on:!!S.ind[k],
+    pick:()=>{S.ind[k]=!S.ind[k];renderBadges();resize();paintPills();}}))});
+$('drawPill').onclick=()=>{
+  const icon=t=>{const b=document.querySelector('.tool[data-t='+t+'] svg');return b?b.outerHTML:'';};
+  const n=S.draw.length;
+  openMenu({title:'Draw',sub:n?n+' drawing'+(n===1?'':'s')+' on the chart':'',items:[
+    ...TOOLS.map(([k,l])=>({l,s:TOOL_HINT[k].replace(/^[^:]+: /,''),icon:icon(k),on:S.tool===k,pick:()=>{S.sel=null;setTool(k);}})),
+    {group:'Drawings',l:'Undo the last drawing',act:1,dis:!n,pick:()=>$('undo').click()},
+    {group:'Drawings',l:'Clear every drawing',act:1,danger:1,dis:!n,pick:()=>$('clear').click()}]});
+};
 // The grabber: drag down to close, up for the full height, double-tap to toggle.
 (function(){
   const g=$('grab'),side=$('side');let y0=null;
