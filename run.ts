@@ -7,7 +7,7 @@ import { analyzeSymbol } from "./src/pipeline.ts";
 import { renderReport, marketPhase } from "./src/report.ts";
 import { discoverMovers } from "./src/movers.ts";
 import { loadRules } from "./src/rules.ts";
-import { renderPractice, writeSessionPacks } from "./src/practice.ts";
+import { renderPractice, writeSessionPacks, writeOptionPacks } from "./src/practice.ts";
 import { harvest, loadForEmbed } from "./src/replay.ts";
 import { harvestVol, loadVolForEmbed, loadCalibrations, loadEvents, recordEvents, loadIntraday } from "./src/volindex.ts";
 import { execFileSync } from "node:child_process";
@@ -266,6 +266,9 @@ async function main() {
     });
     await writeFile(join(REPORTS, "practice.html"), practice, "utf8");
     await writeSessionPacks(SESSIONS, join(REPORTS, "sessions"));   // the library beside the page, for Surprise me
+    // The real option quotes, for the days somebody recorded them.
+    const op = await writeOptionPacks(join(ROOT, "options"), join(REPORTS, "options"));
+    if (op.days) console.log(`  recorded option quotes: ${op.days} day(s) across ${op.symbols} ticker(s)`);
   } catch (e) {
     console.warn(`  ~ practice page not written (${(e as Error).message})`);
   }

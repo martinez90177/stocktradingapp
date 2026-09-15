@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir, copyFile } from "node:fs/promises";
 import { join } from "node:path";
 import { loadForEmbed } from "./replay.ts";
 import { FONT_CSS } from "./fonts.ts";
@@ -192,6 +192,38 @@ export async function writeSessionPacks(sessionsDir: string, outDir: string): Pr
   }
   await writeFile(join(outDir, "index.json"), JSON.stringify(index), "utf8");
   return { symbols: by.size, days: all.length };
+}
+
+/**
+ * The recorded option quotes, copied beside the page so it can fetch the day it
+ * is replaying. They are far too large to embed -- a session of three expiries
+ * is about a megabyte per ticker -- so the page asks for one day at a time and
+ * falls back to the model for any day, strike or minute nobody recorded.
+ */
+export async function writeOptionPacks(optionsDir: string, outDir: string): Promise<{ symbols: number; days: number }> {
+  let symbols: string[];
+  try {
+    symbols = await readdir(optionsDir);
+  } catch {
+    return { symbols: 0, days: 0 };   // nothing recorded yet
+  }
+  let days = 0, n = 0;
+  for (const symbol of symbols) {
+    let files: string[];
+    try {
+      files = (await readdir(join(optionsDir, symbol))).filter((f) => f.endsWith(".json"));
+    } catch {
+      continue;
+    }
+    if (!files.length) continue;
+    await mkdir(join(outDir, symbol), { recursive: true });
+    for (const f of files) {
+      await copyFile(join(optionsDir, symbol, f), join(outDir, symbol, f));
+      days++;
+    }
+    n++;
+  }
+  return { symbols: n, days };
 }
 
 export async function renderPractice(

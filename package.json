@@ -9,6 +9,7 @@
     "lookup": "node lookup.ts",
     "serve": "node serve.mjs",
     "site": "node publish-site.mjs",
-    "fonts": "node tools/build-fonts.mjs"
+    "fonts": "node tools/build-fonts.mjs",
+    "record-options": "node tools/record-options.mjs"
   }
 }

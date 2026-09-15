@@ -382,9 +382,10 @@ a day already traded before, so the filters can leave them out.
 
 ### Option prices
 
-The candles are recorded; option prices are modelled, because historical
-intraday option quotes are not free. What makes a model honest is the
-volatility in it, and that is now the market's own, not a guess:
+The candles are recorded. Option prices are recorded too on any day the
+recorder above was running; on every other day they are modelled, because
+Yahoo keeps no history to fetch. What makes a model honest is the volatility
+in it, and that is the market's own, not a guess:
 
 - **The level** comes from the day being replayed: VXN (Nasdaq-100 options) for
   most tickers, VIX (S&P 500 options) for SPY, read at the minute on screen and
@@ -410,6 +411,43 @@ volatility in it, and that is now the market's own, not a guess:
 The ticket says where the volatility came from, e.g. *"VXN at 10:30 was 22.07;
 QQQ options trade at 0.93x VXN (measured 2026-09-10); 51% of the session's
 variance is still ahead at 10:30 (an even clock would say 85%)"*.
+
+### Recording the real quotes
+
+A model can be made honest. It cannot be made exact, and a size you cannot
+scale from is worse than useless. So the option prices are recorded too, the
+same way the candles are:
+
+```bash
+npm run record-options          # or: node tools/record-options.mjs
+```
+
+Start it before the open and leave it until the bell. Every minute it reads the
+real chain for each watchlist symbol and files the **actual bid and ask** of
+every strike near the money into `options/<SYMBOL>/<DATE>.json`. From the first
+day it runs, the practice terminal quotes those numbers: a fill is the ask that
+was really showing at 10:07, and an exit is the bid that was really there at
+11:52.
+
+It is a long-running process, not a cron job, and that is the whole catch.
+**Yahoo serves the chain as it stands and keeps no history at all**, so a
+session nobody recorded is gone for good. That is why `options/` is committed,
+like `sessions/`. It is also why the days already in the library stay modelled:
+they cannot be recovered at any price short of buying the history from a vendor
+who kept it.
+
+What it costs: about **1.6 MB a day** in the repository for three expiries
+across seven tickers, once git has compressed it. `--expiries 1` records only
+what expires today and cuts that to a third; `--band` narrows the strikes;
+`--symbols` limits it to the tickers you actually trade.
+
+**Nothing is presented as a real quote unless it is one.** A strike, an expiry
+or a minute nobody recorded falls back to the model, and the ticket says which
+it is giving you, every time. A minute the recorder missed may borrow the one
+before it, but only for two minutes: a quote from 1:58 shown as the price at
+3:00 would be the same lie as generating it. Where a quote is real, the greeks
+beside it come from the volatility that price implies rather than from the
+model.
 
 ### The clock, and why a flat volatility was not enough
 

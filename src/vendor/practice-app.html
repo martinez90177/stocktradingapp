@@ -815,20 +815,113 @@ function spreadOf(mid){
 function valueAt(K,type,exDays,under,min){
   return bs(under,K,Tleft(exDays,min),ivFor(K,under,exDays,min),type);
 }
+/* ================= recorded quotes ================= */
+/**
+ * The real bid and ask, where somebody was watching.
+ *
+ * Everything above is a model, and a model cannot be exact. Yahoo serves the
+ * chain as it stands and keeps no history, so the only way to have the real
+ * price of a contract at 11:04 is to have been reading the chain at 11:04 --
+ * which is what tools/record-options.mjs does, filing options/<SYM>/<DATE>.json
+ * beside the candles. A day that was recorded quotes those numbers; a day, a
+ * strike or a minute that was not falls back to the model and says so. Nothing
+ * is shown as a real quote unless it is one.
+ */
+let ROPT=null,ROPTfor=null;
+function loadRecordedOptions(sym,date){
+  const key=sym+'|'+date;
+  if(ROPTfor===key)return;
+  ROPTfor=key;ROPT=null;
+  if(!date)return;
+  fetch('options/'+encodeURIComponent(sym)+'/'+date+'.json',{cache:'force-cache'})
+    .then(r=>r.ok?r.json():null)
+    .then(j=>{
+      if(ROPTfor!==key||!j||!j.minutes||!j.minutes.length)return;
+      ROPT=j;
+      const n=j.minutes.length;
+      log('Recorded option quotes for this day: '+n+' minute'+(n===1?'':'s')+' of real bid and ask across '+
+        j.expiries.map(e=>e.date).join(', ')+'. Contracts nobody recorded are still modelled, and marked.','hl');
+      renderAll();
+    })
+    .catch(()=>{});
+}
+/** The recorded expiry a tenor means on the replayed day, or nothing where none was recorded. */
+function recExpiry(exDays){
+  if(!ROPT||!ROPT.expiries||!ROPT.expiries.length)return null;
+  const d=S.replay&&S.replay.date;if(!d)return null;
+  if(!exDays)return ROPT.expiries.some(e=>e.date===d)?d:null;
+  const want=addTradingDays(d,exDays);
+  let best=null,bd=1e9;
+  for(const e of ROPT.expiries){
+    if(e.date<=d)continue;
+    const gap=Math.abs((Date.parse(e.date)-Date.parse(want))/86400000);
+    if(gap<bd){bd=gap;best=e.date;}
+  }
+  // A tenor with no expiry near it was never listed, so say nothing rather than
+  // quoting a contract that is not the one being asked for.
+  return bd<=3?best:null;
+}
+/**
+ * How stale a recorded quote may be before the model takes over. A minute the
+ * recorder missed can borrow the one before it -- an option does not move much
+ * in sixty seconds -- but only just. Anything older is not this minute's price,
+ * and presenting it as one would be the same lie as generating it: a quote from
+ * 1:58 shown as the price at 3:00 is worse than an honest model.
+ */
+const MAXSTALE=2;
+/** The recorded bid and ask for one contract at one minute, or nothing. */
+function recQuote(K,type,exDays,min){
+  const exp=recExpiry(exDays);if(!exp)return null;
+  const e=ROPT.expiries.find(x=>x.date===exp);if(!e)return null;
+  const k=e.strikes.indexOf(K);if(k<0)return null;
+  let row=-1;
+  for(let i=0;i<ROPT.minutes.length;i++){if(ROPT.minutes[i]<=min)row=i;else break;}
+  for(;row>=0;row--){
+    if(min-ROPT.minutes[row]>MAXSTALE)return null;
+    const line=e[type][row];if(!line)continue;
+    const b=line[k*2],a=line[k*2+1];
+    if(b>=0&&a>0)return {bid:b/100,ask:a/100,at:ROPT.minutes[row],age:min-ROPT.minutes[row]};
+  }
+  return null;
+}
+/** The volatility a real price implies, so the greeks beside it are its own and not the model's. */
+function ivFromPrice(px,K,S0,T,type){
+  if(!(px>0)||!(T>0))return null;
+  let lo=.005,hi=5;
+  if(bs(S0,K,T,hi,type).price<px||bs(S0,K,T,lo,type).price>px)return null;
+  for(let i=0;i<60;i++){const m=(lo+hi)/2;bs(S0,K,T,m,type).price>px?hi=m:lo=m;}
+  return lo;
+}
 /**
  * A quote for one contract. `atMin` prices it at another minute of the day; the
- * default is now. Time decay is the next hour of the measured curve rather than
- * the Black-Scholes theta, which assumes every minute decays alike: on this
- * clock the first hour of the day costs several times what noon costs.
+ * default is now.
+ *
+ * A recorded bid and ask is used exactly as recorded, and the greeks beside it
+ * come from the volatility that price implies rather than from the model.
+ * Otherwise the model prices it, and time decay is the next hour of the measured
+ * variance curve rather than the Black-Scholes theta, which assumes every minute
+ * decays alike: on this clock the first hour of the day costs several times noon.
  */
 function quote(K,type,exDays,under,atMin){
   const min=atMin==null?S.cursor:atMin;
-  const T=Tleft(exDays,min),iv=ivFor(K,under,exDays,min);
+  const T=Tleft(exDays,min);
+  const rec=recQuote(K,type,exDays,min);
+  if(rec){
+    const mid=(rec.bid+rec.ask)/2;
+    const iv=ivFromPrice(mid,K,under,T,type)||ivFor(K,under,exDays,min);
+    const g=bs(under,K,T,iv,type);
+    const then=recQuote(K,type,exDays,Math.min(MPD,min+60));
+    const hr=then?(then.bid+then.ask)/2-mid:valueAt(K,type,exDays,under,Math.min(MPD,min+60)).price-g.price;
+    return {...g,mid,bid:rec.bid,ask:rec.ask,iv,T,thetaHr:Math.min(0,hr),rec:true,recAt:rec.at,recAge:rec.age};
+  }
+  const iv=ivFor(K,under,exDays,min);
   const g=bs(under,K,T,iv,type);
   const mid=Math.max(0,g.price),sp=spreadOf(mid);
   const hr=valueAt(K,type,exDays,under,Math.min(MPD,min+60)).price-g.price;
-  return {...g,mid,bid:sp.bid,ask:sp.ask,iv,T,thetaHr:Math.min(0,hr)};
+  return {...g,mid,bid:sp.bid,ask:sp.ask,iv,T,thetaHr:Math.min(0,hr),rec:false};
 }
+/** Whether the ticket is quoting recorded prices for the contract on it right now. */
+function recNow(){return !!(ROPT&&recQuote(S.strike,'call',S.exDays,S.cursor));}
 /** The same contract at 9:30, on the day's opening price: what "up or down today" is measured from. */
 function openQuote(K,type,exDays){
   return quote(K,type,exDays,S.mins[todayStart()].o,0);
@@ -878,9 +971,29 @@ function volSource(){
       (t.ownCurve?S.ticker+'&rsquo;s own '+t.days+' recorded days':'all '+IVAR.sessions+' recorded sessions, since '+S.ticker+' has too few of its own')+
       '; a night is worth '+gapVar().toFixed(2)+' of a session'+(t.ownNight?'':' (pooled)')+'.'
     :'';
-  return 'At-the-money volatility <b>'+pct+'</b> for this expiry right now: '+where+'; '+how+'.'+ahead;
+  const modelled='At-the-money volatility <b>'+pct+'</b> for this expiry right now: '+where+'; '+how+'.'+ahead;
+  const r=ROPT&&recQuote(S.strike,'call',S.exDays,S.cursor);
+  if(r)return '<b>Recorded quotes.</b> This contract&rsquo;s bid and ask are the real ones, read from the chain at '+
+    lbl(HIST,r.at)+(r.age?' ('+r.age+' minute'+(r.age===1?'':'s')+' before this bar; that minute was not recorded)':'')+
+    ' on the day being replayed, not modelled. '+
+    (ROPT.minutes.length<MPD?'<i>'+ROPT.minutes.length+' of '+MPD+' minutes of this session were recorded.</i> ':'')+
+    'Anything the recording missed falls back to the model: '+modelled;
+  if(ROPT)return '<b>Modelled.</b> This day has recorded quotes, but none for this contract at this minute'+
+    (recExpiry(S.exDays)?'':' (no recording of this expiry)')+', so it is priced by the model. '+modelled;
+  return modelled;
 }
 function strikes(under){
+  // Where the chain was recorded, offer the strikes that were actually
+  // recorded around the price: a strike nobody caught cannot be quoted for real.
+  const exp=recExpiry(S.exDays);
+  if(exp){
+    const e=ROPT.expiries.find(x=>x.date===exp);
+    if(e&&e.strikes.length){
+      let mid=0;e.strikes.forEach((k,i)=>{if(Math.abs(k-under)<Math.abs(e.strikes[mid]-under))mid=i;});
+      const out=e.strikes.slice(Math.max(0,mid-5),mid+6);
+      if(out.length)return out;
+    }
+  }
   const inc=cfg(S.ticker).inc;
   const atm=Math.round(under/inc)*inc;
   const out=[];for(let k=-5;k<=5;k++)out.push(+(atm+k*inc).toFixed(2));
@@ -1085,6 +1198,7 @@ function init(ticker,regime,vm,seed,replayPick){
   }else{
     log('Generated session — '+ticker+'. No recorded days are embedded, so this is a simulated random walk.','y');
   }
+  loadRecordedOptions(ticker,live?live.date:null);
   resize();renderAll();
 }
 function log(t,c){S.log.push({t,c});if(S.tab==='tape')pane();}
