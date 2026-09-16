@@ -75,6 +75,52 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .acct .off{color:var(--dn);font-weight:700}
 .acct .lnk{margin-left:auto;color:var(--acc);font-weight:600}
 
+/* ---- the NTZ banner: the one rule the whole day is built on --------
+   Above the chart rather than inside a pane, because it is what there is
+   to read before the first click, not something to go looking for. It
+   folds to a single line once it has been read, and stays as it was left. */
+.ntz{flex:0 0 auto;border-bottom:1px solid var(--line);position:relative;z-index:24;
+  background:linear-gradient(180deg,rgba(123,108,246,.17),rgba(123,108,246,.05))}
+.ntzbar{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:9px 14px;min-height:0;
+  background:none;border:0;border-radius:0;color:var(--text)}
+.ntzbar:active:not(:disabled){transform:none}
+.ntztag{flex:0 0 auto;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;color:#cfc7ff;
+  border:1px solid rgba(123,108,246,.55);background:rgba(123,108,246,.2);border-radius:6px;padding:3px 7px}
+.ntzhead{flex:0 0 auto;font-size:19px;font-weight:700;letter-spacing:-.4px;white-space:nowrap}
+.ntzsub{flex:1;min-width:0;color:var(--dim);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ntzchev{flex:0 0 auto;margin-left:auto;color:var(--dim);font-size:13px;transition:transform .16s}
+.ntz[data-open="0"] .ntzchev{transform:rotate(-90deg)}
+.ntz[data-open="0"] .ntzbody{display:none}
+/* Expanded, it floats over the chart rather than pushing it: unfolded in the
+   flow it took 479 of a phone's 844 pixels and left the candles 125, which is
+   the opposite of the point. The bar above it is the only part in the flow. */
+.ntzbody{position:absolute;left:0;right:0;top:100%;padding:12px 16px 14px;font-size:13px;line-height:1.6;
+  color:#b9c2d0;background:var(--panel);border-bottom:1px solid var(--line2);
+  box-shadow:0 20px 50px rgba(0,0,0,.6);max-height:min(66vh,560px);overflow:auto;overscroll-behavior:contain}
+.ntzbody h5{margin:13px 0 5px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim2)}
+.ntzbody h5:first-child{margin-top:2px}
+.ntzbody p{margin:0 0 7px}
+.ntzbody ol{margin:0;padding-left:21px}
+.ntzbody li{margin:0 0 8px}
+.ntzbody b{color:var(--text);font-weight:650}
+.ntzbody .no{color:var(--dn);font-weight:650}
+.ntzbody .go{color:var(--up);font-weight:650}
+.ntzbody .one{margin:11px 0 0;padding:9px 12px;border-left:2px solid var(--acc);border-radius:0 7px 7px 0;
+  background:rgba(123,108,246,.09);color:var(--text)}
+/* Sticky, because the panel scrolls on most screens and the way out of it
+   should not be something to go looking for at the bottom. */
+.ntzdone{position:sticky;bottom:0;display:block;width:100%;margin:12px 0 0;min-height:42px;font-size:13.5px;
+  background:var(--p2);box-shadow:0 -10px 16px 6px var(--panel)}
+@media(max-width:899px){
+  .ntzbar{flex-wrap:wrap;gap:8px;padding:8px 13px}
+  .ntzhead{font-size:16px}
+  .ntzsub{flex:1 0 100%;order:3;white-space:normal;overflow:visible;font-size:12px;line-height:1.45}
+  .ntz[data-open="1"] .ntzsub{display:none}
+  .ntzbody{max-height:min(72vh,620px);padding:12px 13px 14px}
+}
+/* A 1440px screen would otherwise set this prose in 1400px lines. */
+@media(min-width:900px){.ntzbody>*{max-width:980px}}
+
 /* ---- the stage: chart column and the panes ------------------------ */
 .stage{flex:1;min-height:0;position:relative}
 .chartcol{min-width:0;min-height:0}
@@ -474,6 +520,52 @@ svg.eq{display:block;width:100%;height:auto}
     <button class="acct" id="acct" type="button" title="Your account, under your rules. Tap for the track record."></button>
   </div>
 </header>
+
+<section class="ntz" id="ntz" data-open="1">
+  <button class="ntzbar" id="ntzBar" type="button" aria-expanded="true" aria-controls="ntzBody">
+    <span class="ntztag">NTZ</span>
+    <span class="ntzhead">Trade the No-Trade Zone</span>
+    <span class="ntzsub">9:30&ndash;9:45 builds the range. Inside it you do nothing. A 5-minute close outside it is the trade.</span>
+    <span class="ntzchev" aria-hidden="true">&#9662;</span>
+  </button>
+  <div class="ntzbody" id="ntzBody">
+    <h5>What the zone is</h5>
+    <p>The <b>opening range</b>: the high and the low of the first fifteen minutes, 9:30 to 9:45. That band is the
+      No-Trade Zone. The chart shades it in blue the moment it is set and the log prints its high, low and width;
+      it toggles under <b>Indicators &rarr; OR</b>.</p>
+    <h5>Why you stay out of it</h5>
+    <p>Measured on the <span id="ntzN">147</span> sessions recorded in this library, those fifteen minutes hold
+      <b><span id="ntzOpen15">26.5%</span></b> of the whole day&rsquo;s movement, and the first thirty hold
+      <b><span id="ntzOpen30">37.3%</span></b>. Per minute the open is about <b><span id="ntzX">13 times</span></b>
+      as violent as lunch, which spends two entire hours on <span id="ntzLunch">16.6%</span>. So the band is the
+      widest spreads and the heaviest volume of the day with no side settled yet, and nearly every move made inside
+      it is given back inside it. Trading the band is paying the day&rsquo;s worst prices for the day&rsquo;s worst
+      odds.</p>
+    <h5>How to trade it tomorrow</h5>
+    <ol>
+      <li><b>9:30 to 9:45 &mdash; hands off.</b> No entry, no starter, no &ldquo;a few shares just to feel it&rdquo;.
+        Watch where the band is building and nothing else. <span class="no">Zero clicks.</span></li>
+      <li><b>9:45 &mdash; write the band down.</b> High, low, and the width between them. That width is your risk
+        unit for the rest of the day: every stop and target below is measured in it.</li>
+      <li><b>Wait for a 5-minute candle to close outside the band.</b> Above the high and you may only go long;
+        below the low and you may only go short. A wick through is <span class="no">not</span> a break &mdash; only
+        the close counts. Until one prints you are still inside the NTZ, and the answer is still no.</li>
+      <li><b>On that close, take the trade you already planned.</b> <span class="go">Entry</span> is the close.
+        <span class="go">Stop</span> is the far side of the band. <span class="go">Targets</span> are the 127% and
+        162% extensions, or the measured move &mdash; the band&rsquo;s own width projected past the edge it broke.
+        In the Trade pane each of those is one tap: <b>Stop: range edge</b>, <b>Target: 127%</b>,
+        <b>Target: 162%</b>, <b>Target: measured</b>.</li>
+      <li><b>Back inside the band means out.</b> Price returning into the NTZ is the break failing. Exit on that
+        close rather than making the stop do it for you, and you are back to no-trade until price closes outside
+        again.</li>
+      <li><b>No close outside all day means no trade all day.</b> It happens, and sitting out was the trade: the
+        Coach pane grades that as the right answer, not as a day you missed.</li>
+    </ol>
+    <p class="one">Inside the band your job is to wait. Outside it your job is to execute what you already wrote
+      down. This is &ldquo;no setup, no trade&rdquo; with a price attached to it.</p>
+    <button type="button" class="ntzdone" id="ntzDone">Got it &mdash; fold this away</button>
+  </div>
+</section>
 
 <div class="stage">
   <div class="chartcol">
@@ -3896,6 +3988,38 @@ window.matchMedia('(min-width:900px)').addEventListener('change',e=>{if(e.matche
 (function(){const first=randomReplay();init(first?first.symbol:'SPY','random',1,undefined,first);})();
 (function(){let seen=true;try{seen=!!localStorage.getItem('mpGuideSeen');}catch(e){}
   if(!seen)setTimeout(()=>tourShow(0),700);})();
+/* ---- the NTZ banner -------------------------------------------------
+   Open on a first visit, and after that however it was last left: it is a
+   reminder above the chart, not a dialog, and nothing should have to be
+   dismissed twice. The panel floats over the chart, so folding it never
+   moves the candles.
+
+   The percentages are read out of the measured variance curve rather
+   than written into the copy. The library grows and the curve is measured
+   again; a number typed into the sentence would quietly stop being true. */
+(function(){
+  const box=$('ntz'),bar=$('ntzBar');if(!box||!bar)return;
+
+  const IV=window.MP_INTRADAY;
+  if(IV&&Array.isArray(IV.rem)&&IV.rem.length>390){
+    const rem=IV.rem,at=m=>rem[Math.max(0,Math.min(rem.length-1,m))],
+      share=(a,b)=>(Math.max(0,at(a)-at(b))*100).toFixed(1)+'%',
+      put=(id,v)=>{const e=$(id);if(e)e.textContent=v;};
+    put('ntzOpen15',share(0,15));put('ntzOpen30',share(0,30));put('ntzLunch',share(120,240));
+    if(IV.sessions)put('ntzN',String(IV.sessions));
+    // Variance per minute over the opening fifteen against the lunch hours.
+    const o=(at(0)-at(15))/15,l=(at(120)-at(240))/120;
+    if(l>0&&o>l)put('ntzX',Math.round(o/l)+' times');
+  }
+
+  let open=true;
+  try{const v=localStorage.getItem('mpNtzOpen');if(v!==null)open=v==='1';}catch(e){}
+  const set=o=>{open=o;box.dataset.open=o?'1':'0';bar.setAttribute('aria-expanded',o?'true':'false');
+    try{localStorage.setItem('mpNtzOpen',o?'1':'0');}catch(e){}};
+  set(open);
+  bar.addEventListener('click',()=>set(!open));
+  const done=$('ntzDone');if(done)done.addEventListener('click',e=>{e.stopPropagation();set(false);});
+})();
 </script>
 </body>
 </html>
