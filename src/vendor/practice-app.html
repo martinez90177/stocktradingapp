@@ -159,7 +159,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 
 .chartbox{position:relative;background:var(--chart);overflow:hidden;min-height:0}
 canvas{position:absolute;inset:0;display:block;touch-action:none}
-.chips-tr{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:5;pointer-events:none}
+.chips-tr{position:absolute;top:8px;right:calc(var(--axisw,60px) + 8px);display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:5;pointer-events:none}
 .chips-tr>*{pointer-events:auto}
 .fitbtn{font-family:var(--sans);font-size:11.5px;font-weight:600;padding:5px 10px;min-height:0;border-radius:7px;
   background:rgba(13,18,32,.92);border:1px solid var(--acc);color:var(--text);display:none}
@@ -1800,19 +1800,30 @@ function scale(){
   const count=Math.max(10,Math.min(S.view.count,B.length));
   const left=Math.max(0,right-count+1);
   const vis=B.slice(left,right+1);if(!vis.length)return null;
-  let lo,hi;
-  if(S.yMan){lo=S.yMan.lo;hi=S.yMan.hi;}
-  else{
-    lo=Math.min(...vis.map(b=>b.l));hi=Math.max(...vis.map(b=>b.h));
-    const todayVis=vis.some(b=>b.day===HISTN);
-    if(S.ind.or&&S.or&&todayVis){lo=Math.min(lo,S.or.lo);hi=Math.max(hi,S.or.hi);}
-    if(S.pos)[S.pos.stopU,S.pos.targetU].forEach(v=>{if(v!=null){lo=Math.min(lo,v);hi=Math.max(hi,v);}});
-    const pd=(hi-lo)*.07||1;lo-=pd;hi+=pd;
+  // The auto-fit range for whatever is visible right now, computed whether
+  // or not a manual stretch is active: it is what a manual range is checked
+  // against below, and it is what draws when there is none.
+  let naLo=Math.min(...vis.map(b=>b.l)),naHi=Math.max(...vis.map(b=>b.h));
+  const todayVis=vis.some(b=>b.day===HISTN),daySpan=new Set(vis.map(b=>b.day)).size;
+  if(S.ind.or&&S.or&&todayVis&&daySpan<=2){naLo=Math.min(naLo,S.or.lo);naHi=Math.max(naHi,S.or.hi);}
+  if(S.pos)[S.pos.stopU,S.pos.targetU].forEach(v=>{if(v!=null){naLo=Math.min(naLo,v);naHi=Math.max(naHi,v);}});
+  const naPad=(naHi-naLo)*.07||1;naLo-=naPad;naHi+=naPad;
+  // A manual stretch (drag or pinch on the price axis) is honoured only while
+  // it still roughly covers what has scrolled into view. Panning or zooming
+  // time used to leave it framing bars that are long gone -- $700 stuck on
+  // screen while the visible candles trade at $50 -- so it is dropped, and
+  // the chart re-fits itself, the moment it stops meaningfully overlapping.
+  if(S.yMan){
+    const overlap=Math.min(S.yMan.hi,naHi)-Math.max(S.yMan.lo,naLo);
+    const span=Math.max(S.yMan.hi-S.yMan.lo,naHi-naLo)||1;
+    if(overlap<span*.25)S.yMan=null;
   }
+  const lo=S.yMan?S.yMan.lo:naLo,hi=S.yMan?S.yMan.hi:naHi;
   // The price axis is as wide as its widest label rather than a fixed 64px:
   // larger type needs a wider axis, and a guess that is too small clips digits.
   cx.font=cfont(F,500);
   const padR=Math.max(50,Math.ceil(Math.max(cx.measureText(hi.toFixed(2)).width,cx.measureText(lo.toFixed(2)).width))+18);
+  cv.parentElement.style.setProperty('--axisw',padR+'px');
   // RGAP keeps empty chart between the newest candle and the axis. Its only job
   // is to clear the auto-fib labels, which are right-aligned to the axis; with
   // those off, the candles get the room instead.
@@ -1854,7 +1865,7 @@ function tag(t,x,y,c,bg){const F=fs();cx.save();cx.font=cfont(F-1,600);
 
 function draw(){
   if(!S.mins||!scale())return;
-  const {w,h,padL,padR,padT,ph,volH,rsiH,cw,B,left,right}=G;
+  const {w,h,padL,padR,padT,ph,volH,rsiH,cw,B,left,right,lo,hi}=G;
   cx.clearRect(0,0,w,h);cx.fillStyle='#0a0e14';cx.fillRect(0,0,w,h);
   const F=fs();
   // Price grid on round steps, spaced so the labels never crowd each other.
@@ -1919,8 +1930,13 @@ function draw(){
     for(let i=left;i<=right;i++){const b=B[i],bh=mx?(b.v/mx)*vh:0;
       cx.fillStyle=b.c>=b.o?'rgba(45,212,167,.22)':'rgba(244,82,95,.22)';
       cx.fillRect(G.x(i)-bwv/2,padT+ph-bh,bwv,bh);}}
-  const todayVis=B.slice(left,right+1).some(b=>b.day===HISTN);
-  if(S.ind.or&&S.or&&todayVis){
+  const visB=B.slice(left,right+1),todayVis=visB.some(b=>b.day===HISTN);
+  // These are measured against a single session; spread across a multi-day
+  // zoomed-out view they stop being readable and just crowd the candles, so
+  // they wait for the visible span to narrow back down to about one or two
+  // days before they draw at all.
+  const zoomedIn=new Set(visB.map(b=>b.day)).size<=2;
+  if(S.ind.or&&S.or&&todayVis&&zoomedIn){
     cx.save();cx.fillStyle='rgba(109,156,245,.06)';
     cx.fillRect(padL,G.y(S.or.hi),w-padL-padR,G.y(S.or.lo)-G.y(S.or.hi));cx.restore();
     ln(padL,G.y(S.or.hi),w-padR,G.y(S.or.hi),'rgba(109,156,245,.7)',1.2);
@@ -1929,7 +1945,7 @@ function draw(){
   // The levels a day is traded against: yesterday's high, low and close, and
   // the open. Drawn only when they are in view, so a stretched scale does not
   // pull the chart flat to fit a level a dollar away.
-  if(S.ind.lvl&&todayVis){
+  if(S.ind.lvl&&todayVis&&zoomedIn){
     const s0=todayStart(),L=[['open',S.mins[s0].o,'#9aa4b4']];
     if(HISTN>0){
       const pd=S.mins.slice(s0-MPD,s0);
@@ -1948,7 +1964,7 @@ function draw(){
   }
   // auto fib: the last swing's levels, labelled in the axis gutter, with the
   // swing itself drawn faintly from its start to its end
-  const AF=S.ind.fib&&todayVis?getAutoFib():null;
+  const AF=S.ind.fib&&todayVis&&zoomedIn?getAutoFib():null;
   if(AF){
     const prio=['0%','100%','161.8%','127.2%','61.8%','38.2%'];
     const x0=G.x(barIdxForMin(AF.a.m)),x1=G.x(barIdxForMin(AF.b.m));
@@ -2084,6 +2100,17 @@ function draw(){
   flushLtags();
   cx.restore();   // end of the second price-pane clip
 
+  // A wick reaching past the price frame used to just clip at the edge with
+  // nothing said about it -- indistinguishable from the data being gone. A
+  // manual stretch or a spike can still put a bar out of frame; now it says so.
+  {let hiOff=false,loOff=false;
+   for(let i=left;i<=right;i++){const b=B[i];if(b.h>hi)hiOff=true;if(b.l<lo)loOff=true;}
+   const chev=(y,up)=>{cx.save();cx.fillStyle='rgba(233,237,245,.55)';cx.beginPath();
+     const cx0=padL+(w-padL-padR)/2,d=up?-1:1;
+     cx.moveTo(cx0-7,y+6*d);cx.lineTo(cx0,y);cx.lineTo(cx0+7,y+6*d);cx.lineTo(cx0,y+2.5*d);cx.closePath();cx.fill();cx.restore();};
+   if(hiOff)chev(padT+3,true);
+   if(loOff)chev(padT+ph-3,false);}
+
   if(S.hover&&S.hover.in){const{mx,my}=S.hover;
     ln(mx,padT,mx,padT+ph,'rgba(223,230,239,.24)',1,[3,3]);
     ln(padL,my,w-padR,my,'rgba(223,230,239,.24)',1,[3,3]);
@@ -2136,7 +2163,7 @@ function shape(d,prev,k){
 }
 
 /* ============ TradingView-style axis interaction ============ */
-const pts=new Map();let drag=null,pinch=null,lastTapAxis=0;
+const pts=new Map();let drag=null,pinch=null,lastTapAxis=0,lastTapBody=0,lastTapPos=null;
 function pos(e){const r=cv.getBoundingClientRect();return{mx:e.clientX-r.left,my:e.clientY-r.top};}
 function inYAxis(mx){return mx>G.w-G.padR;}
 function inXAxis(my){return my>G.padT+G.ph+G.volH+(G.rsiH||0)+2;}
@@ -2192,7 +2219,7 @@ cv.addEventListener('pointerdown',e=>{
       count:S.view.count,lo:G.lo,hi:G.hi};S.pend=null;return;}
   if(inYAxis(mx)){
     const now=Date.now();
-    if(now-lastTapAxis<300){S.yMan=null;lastTapAxis=0;draw();return;}
+    if(now-lastTapAxis<300){S.yMan=null;lastTapAxis=0;hint('Price scale fit to what is on screen.');draw();return;}
     lastTapAxis=now;
     lockY();drag={mode:'yaxis',my,lo:S.yMan.lo,hi:S.yMan.hi};return;
   }
@@ -2203,6 +2230,10 @@ cv.addEventListener('pointerdown',e=>{
     if(h){const d=S.draw[h.k];S.sel=h.k;
       drag={mode:'shape',k:h.k,part:h.part,mx,my,m1:d.m1,p1:d.p1,m2:d.m2,p2:d.p2,m0:minAt(mx),y0:G.yp(my)};draw();return;}
     S.sel=null;
+    const now2=Date.now();
+    if(now2-lastTapBody<300&&lastTapPos&&Math.hypot(mx-lastTapPos.mx,my-lastTapPos.my)<24){
+      lastTapBody=0;S.yMan=null;hint('Price scale fit to what is on screen.');draw();return;}
+    lastTapBody=now2;lastTapPos={mx,my};
     drag={mode:'pan',mx,my,right:G.right,lo:G.lo,hi:G.hi};S.hover={mx,my,in:1};draw();return;}
   if(S.tool==='erase'){erase(mx,my);draw();return;}
   const m=minAt(mx),p=snap(my,mx);
@@ -2215,7 +2246,8 @@ cv.addEventListener('pointermove',e=>{
     const[a,b]=[...pts.values()];
     const dx=Math.max(1,Math.abs(a.mx-b.mx)),dy=Math.max(1,Math.abs(a.my-b.my));
     S.view.count=Math.max(12,Math.min(400,Math.round(pinch.count*pinch.dx/dx)));
-    if(Math.abs(dy/pinch.dy-1)>.06){
+    const dyChange=Math.abs(dy/pinch.dy-1),dxChange=Math.abs(dx/pinch.dx-1);
+    if(dyChange>.18&&dyChange>dxChange*1.3){
       lockY();const mid=(pinch.lo+pinch.hi)/2,r=(pinch.hi-pinch.lo)*pinch.dy/dy;
       S.yMan={lo:mid-r/2,hi:mid+r/2};}
     draw();return;
@@ -3619,7 +3651,7 @@ const TOUR=[
   {t:".sessrow",tab:"setup",h:"Pick what to practise",
    b:"The ticker box in the header switches the symbol. The date here picks one of the newest twelve recorded days. Restart replays the same day from the 9:30 open; New day draws a random day from the whole library instead -- any day ever recorded, one you have not had before first -- so the practice cannot be learned. Your chart settings carry over."},
   {t:"#cv",h:"The chart",
-   b:"Drag to scroll back in time; pinch, or use the mouse wheel, to zoom. Drag the price scale on the right to stretch it and double-tap it to reset. The shaded band that appears at 9:45 is the opening range: the high and low of the first 15 minutes. The tinted candles before 9:30 are the pre-market, and the dotted lines are the levels the day is traded against: yesterday's high, low and close, the pre-market high and low, and the open."},
+   b:"Drag to scroll back in time; pinch, or use the mouse wheel, to zoom. Drag the price scale on the right to stretch it, or double-tap anywhere on the chart to fit it to what is on screen. The shaded band that appears at 9:45 is the opening range: the high and low of the first 15 minutes. The tinted candles before 9:30 are the pre-market, and the dotted lines are the levels the day is traded against: yesterday's high, low and close, the pre-market high and low, and the open."},
   {t:"#tfbar",mode:"tf",h:"Timeframe",
    b:"How much time each candle covers. The replay still moves a minute at a time underneath, so you can switch whenever you like."},
   {t:"#ov",mode:"ind",h:"Indicators and chart style",
