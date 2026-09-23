@@ -74,6 +74,13 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .acct .warn{color:var(--fib)} .acct .bad{color:var(--dn);font-weight:700}
 .acct .off{color:var(--dn);font-weight:700}
 .acct .lnk{margin-left:auto;color:var(--acc);font-weight:600}
+/* The phone's header-row stand-in for .acct -- see the phone media query for
+   its layout. Hidden here so a mid-resize moment never shows both. */
+.acctmini{display:none;align-items:center;gap:4px;min-width:0;max-width:72px;padding:3px 6px;border-radius:7px;
+  font-family:var(--mono);font-size:11.5px;color:var(--dim);border:1px solid var(--line2);background:var(--p2);
+  cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:0 1 auto}
+.acctmini b{font-weight:700} .acctmini .tup{color:var(--up)} .acctmini .tdn{color:var(--dn)}
+.acctmini .warn{color:var(--fib);font-weight:700}
 
 /* ---- the NTZ banner: the one rule the whole day is built on --------
    Above the chart rather than inside a pane, because it is what there is
@@ -114,7 +121,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 @media(max-width:899px){
   .ntzbar{flex-wrap:wrap;gap:8px;padding:8px 13px}
   .ntzhead{font-size:16px}
-  .ntzsub{flex:1 0 100%;order:3;white-space:normal;overflow:visible;font-size:12px;line-height:1.45}
+  .ntzsub{flex:1 0 100%;order:3;font-size:12px}   /* single truncated line, folded stays compact -- the full rule is one tap away in the panel */
   .ntz[data-open="1"] .ntzsub{display:none}
   .ntzbody{max-height:min(72vh,620px);padding:12px 13px 14px}
 }
@@ -431,6 +438,14 @@ svg.eq{display:block;width:100%;height:auto}
   .chg{font-size:11px;padding:2px 6px}
   .ohlc,#sub{display:none}
   #sess::before{content:none!important}
+  /* The account strip used to be a whole second row here -- min-height 26px
+     plus its own padding and the row's own margin-top, permanent chrome
+     whether or not there was anything to say. The one number worth glancing
+     at every minute -- today's running total -- moves into the header row
+     itself as a small pill; the rest (spent, trades used, limit, cooldown)
+     is one tap away in Record, same as before. */
+  .row2{display:none}
+  .acctmini{display:flex}
   /* The header has room for the ticker, the price and the clock. New day is an icon. */
   .row1{gap:8px}
   .px{font-size:17px}
@@ -438,11 +453,13 @@ svg.eq{display:block;width:100%;height:auto}
   .row1 .tbtn span{display:none}
   .row1 .tbtn svg{display:block!important}
   .acct{gap:8px;font-size:10.5px;padding:3px 8px}
-  .hint{top:40px}
+  .hint{top:54px}
   .clk #clk{font-size:13px}
   .stage{display:flex;overflow:hidden}
-  .chartcol{flex:1;display:flex;flex-direction:column}
-  .toolbar{display:flex;align-items:stretch;height:46px;flex:0 0 auto}
+  .chartcol{flex:1;display:flex;flex-direction:column;position:relative}
+  .toolbar{position:absolute;top:6px;left:6px;right:6px;z-index:15;display:flex;align-items:stretch;height:44px;
+    border-radius:10px;overflow:hidden;background:rgba(13,18,32,.88);border:1px solid var(--line2);
+    box-shadow:0 8px 20px rgba(0,0,0,.4)}
   .modes{border-right:1px solid var(--line)}
   .tools{flex:1}
   .tools .strip{flex:1}
@@ -464,12 +481,21 @@ svg.eq{display:block;width:100%;height:auto}
   .tab{flex:0 0 auto;min-height:34px;padding:0 13px}
   .pane{padding:12px 12px 28px}
   .foot{display:none}
-  .actions{padding:8px 10px}
-  .tabbar{display:grid;grid-template-columns:repeat(4,1fr);flex:0 0 auto;padding:4px 6px var(--sab);border-top:1px solid var(--line);background:var(--panel)}
-  .tabbar button{min-height:48px;border:none;border-radius:9px;background:transparent;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--dim)}
-  .tabbar button small{font-size:10.5px;font-weight:600;letter-spacing:.2px}
+  /* The transport row and the tab bar used to cost 58px and ~53px of
+     permanent height each, whether or not there was anything urgent in
+     either. Fitting all eight controls (four transport, four panes) onto
+     one row would mean icon targets under 25px wide on a 390px phone --
+     collapsing the four panes to one switcher (Phase 2) is what actually
+     buys the room for that. Short of that, both rows are simply tightened:
+     less padding, and the tab bar drops its text labels for icon + aria-label,
+     which is most of what was making it 53px tall in the first place. */
+  .actions{height:46px;padding:5px 10px}
+  .tabbar{display:grid;grid-template-columns:repeat(4,1fr);flex:0 0 auto;padding:3px 6px var(--sab);border-top:1px solid var(--line);background:var(--panel)}
+  .tabbar button{min-height:38px;border:none;border-radius:9px;background:transparent;padding:0;display:flex;align-items:center;justify-content:center;color:var(--dim)}
+  .tabbar button small{display:none}
   .tabbar button.on{color:var(--text);background:var(--accs)}
-  .chips-tr{top:32px}
+  .tabbar button .i{width:21px;height:21px}
+  .chips-tr{top:54px}
 }
 
 /* =====================================================================
@@ -513,6 +539,7 @@ svg.eq{display:block;width:100%;height:auto}
     <span class="px" id="px">—</span>
     <span class="chg u" id="chg">—</span>
     <div class="ohlc" id="ohlc"></div>
+    <button class="acctmini" id="acctmini" type="button" title="Your account, under your rules. Tap for the track record."></button>
     <div class="clk"><span id="clk">9:45</span><span class="clkx"><span id="sub">5m · live</span><span id="sess"></span></span></div>
     <button class="tbtn prim" id="newTop" type="button" title="Load a different recorded day" aria-label="New day"><svg class="i" viewBox="0 0 24 24" style="display:none"><path d="M4 7h3.5c2 0 3 1 4 2.5l2 3c1 1.5 2 2.5 4 2.5H20M4 17h3.5c1.3 0 2.2-.4 3-1.2M13.5 8.2c.8-.8 1.7-1.2 3-1.2H20"/><path d="M18 4.5L20.5 7 18 9.5M18 14.5l2.5 2.5-2.5 2.5"/></svg><span>New day</span></button>
   </div>
@@ -644,10 +671,10 @@ svg.eq{display:block;width:100%;height:auto}
 </div>
 
 <nav class="tabbar" id="tabbar" aria-label="Panes">
-  <button type="button" data-l="trade"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h16v14l-2-1.5L16 19l-2-1.5L12 19l-2-1.5L8 19l-2-1.5L4 19z"/><path d="M8 9h8M8 13h5"/></svg><small>Trade</small></button>
-  <button type="button" data-l="chain"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="4" cy="6" r=".5"/></svg><small>Chain</small></button>
-  <button type="button" data-l="setup"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><small>Session</small></button>
-  <button type="button" data-l="more"><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/></svg><small>More</small></button>
+  <button type="button" data-l="trade" aria-label="Trade"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h16v14l-2-1.5L16 19l-2-1.5L12 19l-2-1.5L8 19l-2-1.5L4 19z"/><path d="M8 9h8M8 13h5"/></svg><small>Trade</small></button>
+  <button type="button" data-l="chain" aria-label="Chain"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="4" cy="6" r=".5"/></svg><small>Chain</small></button>
+  <button type="button" data-l="setup" aria-label="Session"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><small>Session</small></button>
+  <button type="button" data-l="more" aria-label="More"><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/></svg><small>More</small></button>
 </nav>
 <button class="unzoom" id="unzoom" type="button" hidden>Zoomed in · tap to reset</button>
 </div>
@@ -2120,14 +2147,17 @@ function draw(){
     if(y>padT&&y<padT+ph)tag(last.c.toFixed(2),w-padR+1,y,'#06090f',last.c>=last.o?'#26a37a':'#e0524a');}
   // On a phone the bar readout lives in the chart's corner, TradingView style,
   // instead of a line in the sticky header; the hovered bar when there is one.
+  // Pushed down clear of the floating timeframe/draw/indicator toolbar, which
+  // sits on top of the chart's own top-left corner on a phone -- otherwise
+  // this drew directly underneath it and was never seen.
   if(w<600){
     let b=last,when='';
     if(S.hover&&S.hover.in){const bi=Math.round(G.ix(S.hover.mx));if(bi>=0&&bi<B.length){b=B[bi];
       when=(tfMin()==='D'?dayLbl(b.day):(b.day===HISTN?'':dayLbl(b.day)+' ')+tlblAbs(b.t,!!b.x))+'  ';}}
     if(b){cx.save();cx.font=cfont(F-1,600);cx.textBaseline='top';cx.fillStyle='rgba(11,16,23,.75)';
       const t=when+'O '+b.o.toFixed(2)+'  H '+b.h.toFixed(2)+'  L '+b.l.toFixed(2)+'  C '+b.c.toFixed(2)+'  V '+(b.v/1000).toFixed(0)+'k';
-      const tw=cx.measureText(t).width;cx.fillRect(padL+2,padT,tw+10,F+6);
-      cx.fillStyle=b.c>=b.o?'#2dd4a7':'#f4525f';cx.fillText(t,padL+7,padT+3);cx.restore();}
+      const oy=padT+46,tw=cx.measureText(t).width;cx.fillRect(padL+2,oy,tw+10,F+6);
+      cx.fillStyle=b.c>=b.o?'#2dd4a7':'#f4525f';cx.fillText(t,padL+7,oy+3);cx.restore();}
   }
   $('fit').classList.toggle('show',!!S.yMan||S.view.right!=null);
 }
@@ -2341,9 +2371,12 @@ function headline(){
   paintPosBar();paintAcct();
   const b=S.mins[revealed()-1];
   $('px').textContent='$'+b.c.toFixed(2);
-  const open=S.mins[todayStart()].o,d=b.c-open;
+  const open=S.mins[todayStart()].o,d=b.c-open,pct=(d>=0?'+':'')+(d/open*100).toFixed(2)+'%';
   const e=$('chg');e.className='chg '+(d>=0?'u':'d');
-  e.textContent=(d>=0?'+':'')+d.toFixed(2)+' ('+(d>=0?'+':'')+(d/open*100).toFixed(2)+'%)';
+  // The dollar change is dropped on a phone: it was most of this chip's
+  // ~104px, in a header that also needs room for the account pill, and the
+  // percentage is the more useful number of the two at a glance anyway.
+  e.textContent=window.innerWidth<600?pct:(d>=0?'+':'')+d.toFixed(2)+' ('+pct+')';
   $('clk').textContent=lbl(HIST,S.cursor)+(S.cursor>=MPD?' close':'');
   $('sub').textContent=S.tf+' · '+(S.mode==='options'?'options':'shares');
   const B=bars(),L=B[B.length-1];
@@ -3284,6 +3317,19 @@ function paintAcct(){
       :'<span class="off">rules off</span>')+
     (S.blind?'<span class="warn">blind</span>':'')+(S.ended?'<span>ended</span>':'')+
     '<span class="lnk">Record &rsaquo;</span>';
+  // The phone's stand-in, in the header row: just the number that moves
+  // minute to minute (today's running total), with a dot for anything that
+  // needs attention. There turned out to be little room left in that row
+  // once the ticker, price and change chip were already in it -- measured
+  // at under 50px free on a 440px phone -- so this is whole dollars only,
+  // no trade count. The full breakdown is the same tap away, in Record,
+  // which this opens too.
+  const m=$('acctmini');
+  if(m){
+    const flag=cd>0||lossCls==='bad'||use.outlay>=RULES.cap-1e-9;
+    m.innerHTML='<b class="'+(today>=0?'tup':'tdn')+'">'+(today>=0?'+$':'−$')+Math.round(Math.abs(today))+'</b>'+
+      (flag?'<span class="warn">&#9679;</span>':'');
+  }
 }
 /** The line under the cards: what the rules allow right now, in numbers. */
 function rulesLine(qty){
@@ -3501,6 +3547,7 @@ let recFilter='all';
 function openRecord(){const r=$('rec');if(!r)return;renderRecord();r.hidden=false;document.body.style.overflow='hidden';r.scrollTop=0;}
 function closeRecord(){const r=$('rec');if(!r)return;r.hidden=true;document.body.style.overflow='';}
 $('acct').onclick=openRecord;
+$('acctmini').onclick=openRecord;
 window.addEventListener('resize',paintAcct);   // the phone form, if the width changes after the paint
 $('recClose').onclick=closeRecord;
 function recTrades(){
