@@ -1,0 +1,100 @@
+{
+  "date": "2026-09-14",
+  "measuredAt": "2026-09-14T18:27:51.334Z",
+  "index": {
+    "VXN": 21.84,
+    "VIX": 16.73
+  },
+  "symbols": {
+    "AAPL": {
+      "index": "VXN",
+      "atm": 0.215,
+      "ratio": 0.984,
+      "skew": -0.931,
+      "skewT": 2.24,
+      "prints": 11,
+      "spot": 334.151,
+      "expiry": "2026-09-16"
+    },
+    "AMD": {
+      "index": "VXN",
+      "atm": 0.2798,
+      "ratio": 1.281,
+      "skew": -0.582,
+      "skewT": 0.24,
+      "prints": 8,
+      "spot": 497.21,
+      "expiry": "2026-09-14"
+    },
+    "AMZN": {
+      "index": "VXN",
+      "atm": 0.2526,
+      "ratio": 1.157,
+      "skew": 0.485,
+      "skewT": 2.24,
+      "prints": 7,
+      "spot": 255.18,
+      "expiry": "2026-09-16"
+    },
+    "META": {
+      "index": "VXN",
+      "atm": 0.2764,
+      "ratio": 1.265,
+      "skew": -1.128,
+      "skewT": 0.24,
+      "prints": 12,
+      "spot": 667.77,
+      "expiry": "2026-09-14"
+    },
+    "MSFT": {
+      "index": "VXN",
+      "atm": 0.1285,
+      "ratio": 0.588,
+      "skew": 6.369,
+      "skewT": 0.24,
+      "prints": 4,
+      "spot": 507.86,
+      "expiry": "2026-09-14"
+    },
+    "MU": {
+      "index": "VXN",
+      "atm": 0.2769,
+      "ratio": 1.268,
+      "skew": 2.271,
+      "skewT": 0.24,
+      "prints": 12,
+      "spot": 928.99,
+      "expiry": "2026-09-14"
+    },
+    "QQQ": {
+      "index": "VXN",
+      "atm": 0.0989,
+      "ratio": 0.453,
+      "skew": -2.105,
+      "skewT": 0.24,
+      "prints": 11,
+      "spot": 711.89,
+      "expiry": "2026-09-14"
+    },
+    "SPY": {
+      "index": "VIX",
+      "atm": 0.081,
+      "ratio": 0.484,
+      "skew": -7.389,
+      "skewT": 0.24,
+      "prints": 11,
+      "spot": 762.0201,
+      "expiry": "2026-09-14"
+    },
+    "TSLA": {
+      "index": "VXN",
+      "atm": 0.2023,
+      "ratio": 0.926,
+      "skew": 1.013,
+      "skewT": 0.24,
+      "prints": 4,
+      "spot": 361.2099,
+      "expiry": "2026-09-14"
+    }
+  }
+}
