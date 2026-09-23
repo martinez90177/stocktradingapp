@@ -66,5 +66,12 @@
       "timing": "unknown",
       "source": "Yahoo earnings calendar"
     }
+  ],
+  "PLTR": [
+    {
+      "date": "2026-11-02",
+      "timing": "unknown",
+      "source": "Yahoo earnings calendar"
+    }
   ]
 }
