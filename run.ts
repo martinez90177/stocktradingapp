@@ -7,9 +7,9 @@ import { analyzeSymbol } from "./src/pipeline.ts";
 import { renderReport, marketPhase } from "./src/report.ts";
 import { discoverMovers } from "./src/movers.ts";
 import { loadRules } from "./src/rules.ts";
-import { renderPractice, writeSessionPacks } from "./src/practice.ts";
+import { renderPractice, writeSessionPacks, writeOptionPacks } from "./src/practice.ts";
 import { harvest, loadForEmbed } from "./src/replay.ts";
-import { harvestVol, loadVolForEmbed, loadCalibrations, loadEvents, recordEvents } from "./src/volindex.ts";
+import { harvestVol, loadVolForEmbed, loadCalibrations, loadEvents, recordEvents, loadIntraday } from "./src/volindex.ts";
 import { execFileSync } from "node:child_process";
 import { loadJournal } from "./src/journal.ts";
 import { renderJournal } from "./src/journalpage.ts";
@@ -19,7 +19,10 @@ const REPORTS = join(ROOT, "reports");
 const CACHE = join(ROOT, "cache");
 
 interface Config {
+  /** The morning report: what gets analysed and written up. */
   symbols: string[];
+  /** The replay library: every ticker whose sessions are recorded for practice. */
+  practice: string[];
   options: {
     dailyLookbackDays: number;
     intradayDays: number;
@@ -27,6 +30,7 @@ interface Config {
     moversLimit: number;
     moversMinPrice: number;
     moversMinDollarVolume: number;
+    harvestDays: number;
   };
 }
 
@@ -54,13 +58,21 @@ async function loadConfig(flags: Record<string, string | boolean>): Promise<Conf
     ? flags.symbols.split(",").map((s) => s.trim()).filter(Boolean)
     : null;
 
-  const symbols = (fromFlag ?? file.symbols ?? ["SPY", "QQQ", "AAPL"])
+  const clean = (list: string[]) => list
     .map((s: string) => s.trim().toUpperCase())
     .filter((s: string, i: number, arr: string[]) => s.length > 0 && arr.indexOf(s) === i);
+
+  const symbols = clean(fromFlag ?? file.symbols ?? ["SPY", "QQQ", "AAPL"]);
+  // The replay library wants far more tickers than a morning report does: a
+  // pool you cannot get familiar with is the point of practising on it. A
+  // watchlist with no `practice` list keeps the old behaviour and records the
+  // report's own symbols. --symbols overrides both, for a one-off run.
+  const practice = clean(fromFlag ?? file.practice ?? file.symbols ?? symbols);
 
   const o = file.options ?? {};
   return {
     symbols,
+    practice,
     options: {
       dailyLookbackDays: Number(o.dailyLookbackDays) || 180,
       intradayDays: Number(o.intradayDays) || 2,
@@ -68,6 +80,9 @@ async function loadConfig(flags: Record<string, string | boolean>): Promise<Conf
       moversLimit: o.moversLimit === 0 ? 0 : Number(o.moversLimit) || 12,
       moversMinPrice: Number(o.moversMinPrice) || 3,
       moversMinDollarVolume: Number(o.moversMinDollarVolume) || 20e6,
+      // How far back the replay harvest reaches. Schwab serves about 48 days of
+      // 1-minute bars; Yahoo clamps itself to 29 however much is asked for.
+      harvestDays: Number(o.harvestDays) || 60,
     },
   };
 }
@@ -204,12 +219,13 @@ async function main() {
     // Harvesting is an extra, and it runs after the report is already on disk.
     // A network hiccup here must not throw away a finished run.
     try {
-      // The first six watchlist names, plus every ticker already in the library.
-      // Taking only the first six silently stopped recording TSLA once it moved
-      // down the watchlist -- its days ran out at Sep 4 while the rest carried on.
+      // Every ticker on the practice list, plus everything already in the
+      // library. It used to be the first six of the watchlist, which silently
+      // stopped recording TSLA once it slipped to eighth, and which capped the
+      // pool at six tickers however long the watchlist grew.
       const recorded = await readdir(SESSIONS).catch(() => [] as string[]);
-      const toRecord = [...new Set([...config.symbols.slice(0, 6), ...recorded])];
-      const h = await harvest(toRecord, SESSIONS, CACHE, (m) => console.warn(`  ~ ${m}`));
+      const toRecord = [...new Set([...config.practice, ...recorded])];
+      const h = await harvest(toRecord, SESSIONS, CACHE, (m) => console.warn(`  ~ ${m}`), config.options.harvestDays);
       console.log(`  replay library: ${h.added} new${h.extended ? `, ${h.extended} given extended hours` : ""}, ${h.total} sessions total`);
     } catch (e) {
       console.warn(`  ~ replay harvest skipped (${(e as Error).message})`);
@@ -242,6 +258,16 @@ async function main() {
     } catch (e) {
       console.warn(`  ~ calibration skipped (${String((e as Error).message).split("\n")[0]})`);
     }
+    // How a session's variance is spread across its minutes: measured from the
+    // sessions just recorded, so the practice terminal charges a 0DTE the
+    // variance still ahead of it rather than a flat volatility. No network.
+    try {
+      const out = execFileSync(process.execPath, [join(ROOT, "tools", "measure-intraday-variance.mjs")], { encoding: "utf8", timeout: 120000 });
+      const lines = out.trim().split("\n");
+      console.log(`  intraday variance: ${lines[0].trim()}`);
+    } catch (e) {
+      console.warn(`  ~ intraday variance skipped (${String((e as Error).message).split("\n")[0]})`);
+    }
   }
 
   try {
@@ -251,10 +277,14 @@ async function main() {
       embed: await loadVolForEmbed(VOL, sessions.map((s) => s.date)),
       calibrations: await loadCalibrations(VOL),
       events: await loadEvents(VOL),
+      intraday: await loadIntraday(VOL),
       rulebook: rules,
     });
     await writeFile(join(REPORTS, "practice.html"), practice, "utf8");
     await writeSessionPacks(SESSIONS, join(REPORTS, "sessions"));   // the library beside the page, for Surprise me
+    // The real option quotes, for the days somebody recorded them.
+    const op = await writeOptionPacks(join(ROOT, "options"), join(REPORTS, "options"));
+    if (op.days) console.log(`  recorded option quotes: ${op.days} day(s) across ${op.symbols} ticker(s)`);
   } catch (e) {
     console.warn(`  ~ practice page not written (${(e as Error).message})`);
   }

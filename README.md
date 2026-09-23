@@ -81,7 +81,31 @@ at generation time.
 
 ## Changing the watchlist
 
-Edit `watchlist.json`:
+Edit `watchlist.json`. It carries two lists, because a morning report and a
+practice library want opposite things:
+
+- **`symbols`** is the report: what you read before the open, and what option
+  quotes are recorded for. Keep it short enough to actually read.
+- **`practice`** is the replay library. It wants to be as long as you can
+  afford. A pool you cannot get familiar with is the whole point of practising
+  on it, and candles are cheap. Ships with 20 tech names Alex actually trades,
+  plus SPY/QQQ/IWM for index context.
+
+A watchlist with no `practice` list behaves as it always did and records its
+report symbols. `--symbols` on a run overrides both.
+
+What it costs per trading day, in the repository:
+
+| | tickers | per day |
+| --- | --- | --- |
+| Candles (`practice`) | 20 | about 0.4 MB |
+| Option quotes (`symbols`, 3 expiries) | 12 | about 2.8 MB |
+
+Option quotes are the expensive half by four to one, so narrow them to the
+names you actually trade rather than the whole report:
+`node tools/record-options.mjs --symbols NVDA,TSLA,QQQ --expiries 1`.
+
+The original shape, for reference:
 
 ```json
 {
@@ -157,12 +181,46 @@ Chain, Fib, Tape, Journal, Coach, Session and Rules pane alongside. It trades
 the account you actually have, under the rules you wrote for it, and keeps a
 record of every trade; see *Your account, your rules* below.
 
+### The layout
+
+The terminal is **one screen that never scrolls**, on a phone and on a
+desktop alike. The header carries the ticker, the price, the clock and the
+account strip; the chart takes everything that is left; and the panes live
+beside it or over it, scrolling by themselves.
+
+On a **desktop** it is laid out the way a charting terminal is: a toolbar of
+timeframes, chart style and indicator chips above the chart, the drawing
+tools down its left edge, the transport row (rewind, Next, play, speed)
+under it, and a sidebar on the right with the day picker, the eight pane tabs
+as two rows of four, and the pane. A slim masthead above it all holds the
+data note behind a chip, the guide, and the link back to the report.
+
+On a **phone** the same parts are stacked: header, chart, one toolbar row, the
+transport row, and a bar of four buttons along the bottom -- Trade, Chain,
+Session, More. The toolbar shows one of three things at a time, picked by the
+icons at its left: the timeframes, the drawing tools, or the chart style and
+indicator chips. A pane opens as a **sheet** that slides up over the lower part
+of the chart and stops above the transport row, so Next stays under your
+thumb with the ticket open; drag its handle down to close it, up for the full
+height, or tap the button that opened it. The sheet's own tab row reaches
+every pane; More opens the ones the bar does not name and takes that pane's
+name while it is open. The day picker, Restart and the data note sit at the
+top of the Session pane, and the shuffle button in the header is New day.
+
+The app's markup and stylesheet are the single source for both: the build
+adds the report's fonts and the masthead and nothing else. It used to
+replace the stylesheet with a copy kept in `src/practice.ts`, and the two
+drifted until the file opened from disk and the site served were different
+pages.
+
 ### Finding your way
 
 A **guide** walks through the page one control at a time: a spotlight on the
 thing and a card saying what it does. It opens by itself on a first visit, and
-from the **?** button in the header or **How to use this page** after that. The
-dimmed page cannot be clicked while it runs, so the tour cannot place a trade.
+from the **?** beside the day picker (the Session pane on a phone) or **How to
+use this page** in the desktop masthead after that. The dimmed page cannot be
+clicked while it runs, so the tour cannot place a trade. On a phone each step
+opens the sheet or switches the toolbar to the thing it is pointing at.
 
 Every drawing tool is labelled under its icon (Pointer, Trend, Level, Fib, Box,
 Measure, Erase, Undo, Clear) and has a hover description. Picking a tool, or
@@ -329,13 +387,23 @@ there). **Surprise me** in the Session tab -- any ticker, or any day of this
 one -- and **New day** in the header draw a random day from that library:
 fetched on demand, with up to a month of history behind it, preferring days
 with a fortnight of history and days not served before (kept in the browser,
-so the next surprise is one you have not had). The picker stays on the newest
-twelve. Where the packs cannot be fetched -- the page opened from disk -- the
-embedded days stand in and the tape says so.
+so the next surprise is one you have not had).
 
-The library grows by a day per ticker per run and nothing ages out of it, so
-the pool only gets harder to learn. It starts at 21 days per ticker, which is
-Yahoo's reach; after a couple of months of runs it is genuinely large.
+**The day picker lists the whole library too**, grouped by month, and fetches
+the pack when a day the page did not embed is chosen. It used to stop at the
+newest twelve, which quietly capped the pool at whatever happened to fit in
+the file however many days had been recorded. The ticker box is the same: every
+symbol the library has, not only those with days embedded. Where the packs
+cannot be fetched -- the page opened from a file -- the embedded days stand in
+and the tape says so.
+
+The library grows by a ticker-day per run and **nothing ages out of it**, which
+is the whole point. A feed only reaches so far back -- about 48 days for
+Schwab's 1-minute bars, 30 for Yahoo's -- but that is a window that moves with
+you, while the library is the union of every window ever fetched. A day not
+recorded while it was in reach is gone for good; a day recorded is kept for
+ever. So the first harvest gets a couple of months per ticker, and after that
+it only ever gets harder to learn.
 
 ### Blind days and hardcore
 
@@ -348,9 +416,10 @@ a day already traded before, so the filters can leave them out.
 
 ### Option prices
 
-The candles are recorded; option prices are modelled, because historical
-intraday option quotes are not free. What makes a model honest is the
-volatility in it, and that is now the market's own, not a guess:
+The candles are recorded. Option prices are recorded too on any day the
+recorder above was running; on every other day they are modelled, because
+Yahoo keeps no history to fetch. What makes a model honest is the volatility
+in it, and that is the market's own, not a guess:
 
 - **The level** comes from the day being replayed: VXN (Nasdaq-100 options) for
   most tickers, VIX (S&P 500 options) for SPY, read at the minute on screen and
@@ -363,18 +432,245 @@ volatility in it, and that is now the market's own, not a guess:
   The local morning run re-measures every ticker each day, so the scaling
   follows the market. A ticker never measured is priced like the typical
   measured stock, and the ticket says so.
+- **The clock** is the one the market keeps, not the one on the wall. A
+  session's variance is not spread evenly across its minutes: measured from the
+  recorded bars by `node tools/measure-intraday-variance.mjs`, the first half
+  hour carries about **a third** of the day and the last half hour about a
+  twentieth. A 0DTE at 3pm has a sixth of the session left but a **thirteenth**
+  of its variance. The measured curve lives in `volatility/intraday.json`.
 - **Spreads** follow the exchange's ticks: SPY and QQQ a cent or two wide, stock
   options in pennies under $3 and nickels above. You buy at the ask and sell at
   the bid.
 
 The ticket says where the volatility came from, e.g. *"VXN at 10:30 was 22.07;
-QQQ options trade at 0.93x VXN (measured 2026-09-10)"*.
+QQQ options trade at 0.93x VXN (measured 2026-09-10); 51% of the session's
+variance is still ahead at 10:30 (an even clock would say 85%)"*.
+
+### Recording the real quotes
+
+A model can be made honest. It cannot be made exact, and a size you cannot
+scale from is worse than useless. So the option prices are recorded too, the
+same way the candles are:
+
+```bash
+npm run schwab-login      # once a week: sign in to thinkorswim
+npm run check-feeds       # which feeds are live, and how far behind?
+npm run record-options    # then record until the bell
+```
+
+Start it before the open and leave it until the bell. Every minute it reads the
+real chain for each watchlist symbol and files the **actual bid and ask** of
+every strike near the money into `options/<SYMBOL>/<DATE>.json`. From the first
+day it runs, the practice terminal quotes those numbers: a fill is the ask that
+was really showing at 10:07, and an exit is the bid that was really there at
+11:52.
+
+It is a long-running process, not a cron job, and that is the catch. **No free
+feed serves option history**, so a session nobody recorded is gone for good.
+That is why `options/` is committed, like `sessions/`, and why the days already
+in the library stay modelled: they cannot be recovered short of buying the
+history from a vendor who kept it.
+
+#### Which feed, and is it telling you about now?
+
+Freshness is the whole game. A quote recorded at 10:07 is worthless if the feed
+handed out 9:52's prices, and **Yahoo's option chain is usually about a quarter
+of an hour behind** with nothing in the response to say so. So four feeds are
+wired in, and none of them is taken at its word:
+
+| Feed | Needs | Real-time? |
+| --- | --- | --- |
+| `schwab` | `SCHWAB_APP_KEY`, `SCHWAB_APP_SECRET`, plus a login | **yes**, for account holders, and it says so in the response |
+| `tradier` | `TRADIER_TOKEN` | yes with a funded brokerage account; the free sandbox is delayed |
+| `polygon` | `POLYGON_KEY` | on a paid options plan |
+| `alpaca` | `ALPACA_KEY`, `ALPACA_SECRET` | with `ALPACA_OPTIONS_FEED=opra`; the free indicative feed is delayed |
+| `yahoo` | nothing | no, and it will not admit it |
+
+**Schwab is the one to use**, because thinkorswim is built on it: the data is
+the same data the platform shows, it is real-time for account holders, and
+alone among these it returns an `isDelayed` flag rather than leaving you to
+infer it. A feed that declares itself delayed is treated as stale however
+recent its timestamp looks, because a delayed quote is re-stamped as it is
+handed out.
+
+**The candles come from Schwab too**, once it is logged in: `fetchMinuteBars`
+tries it first and falls back to Yahoo. So the chart being replayed is the
+chart thinkorswim would have drawn, and the whole page runs on one feed.
+
+#### Setting Schwab up
+
+At [developer.schwab.com](https://developer.schwab.com): create an app, add the
+**Market Data Production** product, and note the callback URL you register
+(`https://127.0.0.1` will do).
+
+**There are two different accounts here, and this catches everyone out.**
+
+| | Account | Used for |
+| --- | --- | --- |
+| developer.schwab.com | **its own registration**, separate from your brokerage login | creating and managing the app, getting the key and secret |
+| the OAuth approval | your **Schwab brokerage** login, the thinkorswim one | approving the app and choosing which account it may read |
+
+The developer portal will not accept your brokerage credentials, so sign up for
+it separately. The brokerage login is used later, at the approval screen that
+`schwab-login` sends you to, and that is also where you pick which brokerage
+account the app can see.
+
+The brokerage account also has to be **thinkorswim-enabled**, and the market
+data entitlements follow it rather than the developer profile. Approving with
+the wrong account is how a login succeeds and then quietly serves delayed
+quotes, which `npm run check-feeds` shows as `DELAYED`.
+
+Then:
+
+```bash
+export SCHWAB_APP_KEY=...  SCHWAB_APP_SECRET=...
+npm run schwab-login
+```
+
+That prints a link; you sign in with your Schwab credentials, approve, and the
+browser lands on a page that will not load -- expected, the callback is not a
+real server -- and you paste the address back. Tokens go to
+`.schwab-tokens.json`, which git ignores and which is written readable only by
+you.
+
+If any of that does not work:
+
+```bash
+npm run schwab-doctor
+```
+
+It checks each precondition in turn -- credentials set and free of stray quotes
+or spaces, the callback URL, whether Schwab can be reached at all, whether there
+is a login and whether Schwab still accepts it -- and stops at the first thing
+actually wrong. It prints no secrets, only a length and the last four
+characters, which is enough to spot a truncated paste. Schwab's own refusals are
+translated: `invalid_client` usually means the app is not live yet rather than a
+bad secret, and `invalid_grant` usually means a spent code or a callback URL
+that differs by a trailing slash.
+
+An access token lasts thirty minutes and the recorder refreshes it by itself,
+about a dozen times a session. **The refresh token lasts seven days**, so the
+login is a weekly job. That is Schwab's rule, not a setting: refreshing does
+not extend it, and there is no way to make it last longer.
+
+What there is instead is no way to lose a session to it quietly. The recorder
+says how long the login has left when it starts and warns if it will run out
+mid-session; if it dies anyway, the expiry is printed once, loudly, naming the
+command that fixes it, rather than the run sliding silently onto a delayed
+feed. The same goes for the harvest, which would otherwise fall back to Yahoo
+and reach 30 days instead of 48 without saying so. Restarting merges into the
+same file, so a mid-session re-login costs only the minutes it took.
+
+Every feed is asked for **its own timestamp**, the gap from the clock is
+measured on every single sweep, and that lag is written into the file beside
+the quotes. Each minute goes to the first feed that answers fresh and falls
+down the list when one is stale or down, so a session can be recorded from more
+than one; the file records which feed supplied which minute.
+
+`--check` sweeps every configured feed once and prints spot, lag, expiries,
+strikes and a sample quote side by side, so you can see which are actually live
+before committing a session to them. `--source tradier,yahoo` sets the order by
+hand, and `--max-lag` (90 seconds by default) decides what counts as stale.
+
+None of this is hidden afterwards. The tape says which feed a day came from and
+how far behind it typically was, and where a recording was materially delayed
+the ticket says so on the contract: *"the feed was about 15 minutes behind the
+clock, so these are its prices from around 10:15."* A late quote clearly
+labelled as late is worth having. A late quote passed off as this minute's is
+not, and would be the same lie as generating it.
+
+What it costs: about **1.6 MB a day** in the repository for three expiries
+across seven tickers, once git has compressed it, so roughly 400 MB a year.
+`--expiries 1` records only what expires today and cuts that to a third;
+`--band` narrows the strikes; `--symbols` limits it to the tickers you actually
+trade.
+
+**Nothing is presented as a real quote unless it is one.** A strike, an expiry
+or a minute nobody recorded falls back to the model, and the ticket says which
+it is giving you, every time. A minute the recorder missed may borrow the one
+before it, but only for two minutes: a quote from 1:58 shown as the price at
+3:00 would be the same lie as generating it. Where a quote is real, the greeks
+beside it come from the volatility that price implies rather than from the
+model.
+
+### One feed, not two
+
+Everything recorded before 2026-09-15 came from Yahoo. That matters more than
+it looks: the intraday variance curve and the overnight gap ratios are measured
+across the **whole** library, and those numbers set option prices, so a library
+with two vendors in it puts a seam inside the pricing.
+
+So the library is meant to be replaced rather than mixed. Every session now
+carries the feed it came from, `measure-intraday-variance` reports the mix and
+warns when there is more than one, and two tools handle the switch:
+
+```bash
+node tools/compare-bars.mjs               # how far apart are the two feeds, really?
+node tools/refetch-bars.mjs               # what would change; writes nothing
+node tools/refetch-bars.mjs --write       # re-record the library from Schwab
+node tools/measure-intraday-variance.mjs  # then re-measure what is derived from it
+```
+
+`compare-bars` fetches the same recent days from both and reports the worst and
+median difference in the closes, the minutes one has and the other does not,
+and how far apart the volumes are. Pennies and a few percent is two vendors
+consolidating the same tape, and is fine. Dollars, or missing minutes, means the
+seam is real.
+
+`refetch-bars` re-records each day from Schwab, and is careful: a day is only
+replaced where Schwab's session is **at least as complete** as the one on disk,
+so a short or gappy answer can never quietly degrade a good recording. It
+separates a day Schwab cannot reach at all from one it served with too many
+minutes missing -- the second is worth trying again, the first is not -- and
+leaves both alone, still tagged as Yahoo's. Nothing is written without
+`--write`, and the library is committed, so a replacement is a reviewable diff.
+
+### The clock, and why a flat volatility was not enough
+
+A calibration is a volatility measured at some particular distance from expiry,
+and that distance was being thrown away. The same QQQ expiry measured at the
+2026-09-10 close, a full day out, was **21.6%**; measured at 13:28 the next day,
+two and a half hours out, it was **7.9%**. Both were stored in one `ratio`
+field and used as if they meant the same thing, held flat across the whole
+replayed day on a clock that ran evenly. So the terminal charged the morning's
+volatility all afternoon: a QQQ 0DTE at 3pm ran about **three times** what the
+market charged for it, and a deep in-the-money contract carried time value it
+had no business carrying.
+
+The anchor is variance now, not volatility:
+
+1. The calibration says what the market charged, at whatever horizon it was
+   taken at. That is a quantity of variance.
+2. Dividing by how many sessions' worth of variance stood ahead of it leaves
+   the value of **one session** for that ticker.
+3. The measured curve says what share of a session is still ahead at the minute
+   on screen, and the volatility handed to Black-Scholes is whatever expresses
+   that variance over the time still on the clock.
+
+Both halves of the curve are measured **per ticker**, because they are nothing
+like each other. The overnight gap is worth 0.11 of a session on AAPL and 1.09
+on NVDA; pooling them priced the index ETFs about a third too dear. A ticker
+with fewer than 15 recorded days falls back to the pooled curve, and the ticket
+says which it used.
+
+**Time decay** is the next hour of that curve rather than the Black-Scholes
+theta, which assumes every minute decays alike. On the measured clock the first
+hour of the day costs several times what noon costs, which is the whole reason
+0DTE holders talk about the morning bleed.
+
+Checked against the real prints from the afternoon of 2026-09-11, which the
+model never saw (it prices that day from the 09-10 calibration): at-the-money
+0DTE implied volatility of **9.1%** against a measured 7.9% on QQQ, 19.5%
+against 21.4% on TSLA, 14.1% against 15.5% on MSFT. It was 2.5x out before.
+The residue is a real thing rather than a modelling error -- the market's view
+of 09-11 genuinely changed between the previous close and that afternoon -- so
+it is left alone rather than tuned away.
 
 What it replaced: a fixed volatility per ticker from when the app was written
 (QQQ 17%, from when QQQ traded near 500; NVDA 50%; any other ticker 35%), marked
 up 55% for 0DTE, with a smile that made every out-of-the-money option dearer.
 On Sep 9 at 9:45 that priced the QQQ 720 call, 0DTE, at $3.48; it is $2.25 on
-the market's volatility.
+the market's volatility, and less again once the clock above is applied.
 
 **How accurate.** Tested against 273 real option trades at the Sep 10 close,
 on expiries the calibration never saw: median error **9%**, against 35% for the
@@ -494,16 +790,15 @@ Skip the harvest with `--no-replay`.
 ### Reading the chart
 
 Six chart types — candles, hollow, **Heikin Ashi**, OHLC bars, line and area —
-from the picker in the strip under the chart. Heikin Ashi is built from the first
-bar forward, because each of its candles depends on the one before it. The
-chips live in that strip on every screen: floated over the candles they
-covered the first hour, and at ten-pixel mono they were the hardest thing on
-the page to read. Any strip wider than its box -- the chips, the timeframes,
-the draw rail -- gets **arrows** at the edges that scroll it. The pane tabs
-do not scroll at all: all eight sit in view as two rows of four, in the order
-they are reached for -- Trade, Session, Coach, Chain, then Fib, Tape, Journal,
-Rules -- since a strip that scrolled sideways hid Session and Rules past the
-edge, where nobody looked.
+from the picker in the toolbar. Heikin Ashi is built from the first bar
+forward, because each of its candles depends on the one before it. The
+indicator chips sit in the toolbar beside it, never over the candles: floated
+over the chart they covered the first hour of the day. Any strip wider than
+its box -- the chips, the timeframes, the tools and the tab row on a phone --
+gets **arrows** at the edges that scroll it, since a hidden scrollbar is no
+sign that there is more past the edge. On a desktop the eight pane tabs are
+two rows of four, all in view, in the order they are reached for -- Trade,
+Session, Coach, Chain, then Fib, Tape, Journal, Rules.
 
 Indicator chips sit beside it: EMA 9/20/50, VWAP, Bollinger bands, an **RSI 14
 subpanel**, volume, and magnet snapping for the drawing tools. Volume is drawn
@@ -539,7 +834,8 @@ context: pinch, scroll, or drag the time axis.
 
 The price axis is draggable to stretch or squash the scale — the cursor turns
 into a resize arrow over it — and scrolling there zooms the price scale alone.
-Double-tap the axis to reset it, or press **auto fit**.
+Double-tap the axis to reset it, or press **Reset view**, which appears over
+the chart whenever the view is not the automatic one.
 
 Labels along the left edge -- the levels, a stop, a target, the strike, working
 orders, drawn levels -- are laid out together at the end of each frame: sorted
@@ -548,21 +844,28 @@ label to its line, which stays exactly at its price. Three levels within a
 dollar of each other used to print three labels on top of one another.
 
 There is deliberate empty space between the newest candle and the price axis. It
-is sized to clear the level labels drawn along that edge, so 261.8% and PDH sit
+is sized to clear the level labels drawn along that edge, so 161.8% and PDH sit
 in clear air instead of on top of the last few bars.
 
 ### On a phone
 
-The chart's height is fixed once per width. Safari's address bar collapses and
-expands as you scroll, which changes `innerHeight` and used to fire a resize
-on every gesture: the chart changed height under your fingers and the whole
-page shifted -- the "unstable" feel. Only a rotation resizes it now. The page
-itself never pinch-zooms (iOS ignores `user-scalable=no`, so a pinch with one
-finger off the canvas zoomed the page and the chart went with it), a
-two-finger drag on the chart never scrolls the page underneath, and tapping a
-tab past the edge scrolls the tab strip sideways only. The bar readout lives
-in the chart's corner, TradingView style, instead of a line in the sticky
-header, which was already tall.
+The page itself never scrolls, so Safari's address bar no longer collapses and
+expands under a gesture, which used to change the chart's height mid-drag and
+shift the whole page. The chart is exactly the box the layout gives it, on
+every screen, and re-sizes only when that box does.
+
+**Zoom.** iOS ignores `user-scalable=no`, and the old page had several ways
+into Safari's page zoom and none out: a pinch with one finger off the canvas,
+a double-tap on a strip, and -- the usual one -- tapping any input or select
+smaller than 16px, which Safari zooms into and never zooms back out of. Every
+control on a phone is 16px now, pinches and double-taps are intercepted, a
+two-finger drag on the chart never scrolls anything underneath, and if the
+page is ever found zoomed anyway a **Zoomed in · tap to reset** pill appears
+at the top and puts it back.
+
+The bar readout lives in the chart's corner, TradingView style, and the
+position bar floats there too, under Reset view, so neither costs the chart
+a line of header.
 
 ### Maintaining it
 

@@ -3,198 +3,286 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#080b10">
+<meta name="theme-color" content="#080b11">
 <title>Open Range — options & shares practice</title>
 <style>
+/* =====================================================================
+   The terminal is one fixed shell that fills the screen: the chart takes
+   whatever is left after the header, the toolbar and the transport row,
+   and the panes open beside it (desktop) or over it as a sheet (phone).
+   The page itself never scrolls. That is what makes a phone stop zooming:
+   every pinch, double-tap and 15px input used to be a way into Safari's
+   page zoom, and there was no way back out.
+   ===================================================================== */
 :root{
-  --bg:#080b10;--panel:#0f141c;--p2:#151c26;--line:#1c2430;--line2:#28323f;
-  --text:#dfe6ef;--dim:#7b8695;--up:#26a37a;--dn:#e0524a;--fib:#c9a227;--acc:#6d9cf5;
-  --mono:'SF Mono',ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
+  --bg:#080b11;--panel:#121826;--p2:#0d1220;--line:#1d2637;--line2:#2b3547;
+  --text:#e9edf5;--dim:#8994a6;--dim2:#67717f;
+  --up:#2dd4a7;--dn:#f4525f;--fib:#f5a524;--acc:#7b6cf6;--accs:rgba(123,108,246,.16);
+  --chart:#0a0e14;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
+  --actH:58px;
+  color-scheme:dark;
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{margin:0;background:var(--bg);color:var(--text);
-  font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:15px;overscroll-behavior:none;}
-button,input,select{font-family:inherit;color:var(--text);font-size:14px;}
-button{cursor:pointer;background:var(--p2);border:1px solid var(--line2);border-radius:8px;padding:0 12px;min-height:38px;}
-button:active:not(:disabled){transform:scale(.97);}
-button:disabled{opacity:.3;}
-input,select{background:var(--p2);border:1px solid var(--line2);border-radius:8px;padding:9px 10px;
-  width:100%;font-family:var(--mono);font-size:15px;}
-.n{font-family:var(--mono);font-variant-numeric:tabular-nums;}
-.up{color:var(--up);}.dn{color:var(--dn);}
-
-.top{position:sticky;top:0;z-index:20;background:rgba(8,11,16,.94);backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;}
-.row1{display:flex;align-items:center;gap:10px;}
-.tksel{background:transparent;border:none;font-size:19px;font-weight:700;padding:0 18px 0 0;min-height:0;width:auto;
-  -webkit-appearance:none;appearance:none;
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;
+  overflow:hidden;overscroll-behavior:none;touch-action:pan-x pan-y;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font-family:var(--sans);color:var(--text);font-size:13.5px}
+button{cursor:pointer;background:var(--p2);border:1px solid var(--line2);border-radius:8px;padding:0 12px;min-height:38px;font-weight:600}
+button:active:not(:disabled){transform:scale(.97)}
+button:disabled{opacity:.3}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+input,select{background:var(--p2);border:1px solid var(--line2);border-radius:8px;padding:9px 10px;width:100%;
+  font-family:var(--mono);font-size:14px}
+.n,.px,.chg,.clk,.ohlc,.seed{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.up,.u{color:var(--up)} .dn,.d{color:var(--dn)}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
+/* A select that looks like a chip. */
+.dd{-webkit-appearance:none;appearance:none;cursor:pointer;background-color:var(--p2);border:1px solid var(--line2);color:var(--text);
   background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
-  background-position:calc(100% - 8px) 10px,calc(100% - 3px) 10px;background-size:5px 5px;background-repeat:no-repeat;}
-.px{font-family:var(--mono);font-size:19px;font-weight:600;}
-.chg{font-family:var(--mono);font-size:12.5px;padding:2px 7px;border-radius:5px;}
-.chg.u{color:var(--up);background:rgba(38,163,122,.14);}
-.chg.d{color:var(--dn);background:rgba(224,82,74,.14);}
-.clk{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--dim);text-align:right;line-height:1.3;}
-.ohlc{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:5px;height:14px;white-space:nowrap;overflow:hidden;}
-.ohlc b{color:var(--text);font-weight:500;}
-.clkx{font-size:10px;}
-.sessrow{display:flex;gap:7px;align-items:center;margin-top:8px;}
-.ssel{flex:0 1 240px;min-width:0;width:auto;min-height:34px;padding:0 10px;font-size:12.5px;}
-.sbtn{flex:0 0 auto;min-height:34px;padding:0 12px;font-size:12.5px;white-space:nowrap;}
-.sbtn.sprim{border-color:var(--acc);}
+  background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.dd:hover{border-color:var(--acc)}
+.dd:disabled{opacity:.5;cursor:default}
 
-.tfbar{display:flex;gap:5px;overflow-x:auto;padding:8px 12px 6px;scrollbar-width:none;
-  border-bottom:1px solid var(--line);background:var(--bg);}
-.tfbar::-webkit-scrollbar{display:none;}
-.tf{flex:0 0 auto;min-height:32px;padding:0 13px;border-radius:16px;font-family:var(--mono);font-size:13px;
-  background:transparent;border:1px solid var(--line2);color:var(--dim);}
-.tf.on{background:var(--acc);border-color:var(--acc);color:#06090f;font-weight:700;}
+/* ---- the shell ---------------------------------------------------- */
+.shell{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg)}
+.top{flex:0 0 auto;border-bottom:1px solid var(--line);background:var(--bg);padding:calc(var(--sat) + 7px) 12px 7px}
+.row1{display:flex;align-items:center;gap:10px;min-height:36px}
+.tksel{font-family:var(--sans);font-size:18px;font-weight:700;letter-spacing:-.3px;padding:4px 30px 4px 11px;min-height:0;width:auto;
+  border-radius:9px;flex:0 0 auto}
+.px{font-size:19px;font-weight:600;letter-spacing:-.4px;white-space:nowrap}
+.chg{font-size:12px;padding:2px 7px;border-radius:5px;font-weight:600;white-space:nowrap}
+.chg.u{color:var(--up);background:rgba(45,212,167,.14)}
+.chg.d{color:var(--dn);background:rgba(244,82,95,.14)}
+.ohlc{flex:1;min-width:0;font-size:12px;color:#a3adbb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:6px}
+.ohlc b{color:var(--text);font-weight:600}
+.clk{margin-left:auto;text-align:right;line-height:1.25;white-space:nowrap;flex:0 0 auto}
+.clk #clk{display:block;font-size:14px;font-weight:600;color:var(--text)}
+.clkx{font-size:10.5px;color:var(--dim)}
+#sub:not(:empty)+#sess:not(:empty)::before{content:" · "}
+.tbtn{min-height:32px;padding:0 12px;font-size:12.5px;white-space:nowrap;flex:0 0 auto}
+.tbtn.prim{background:var(--accs);border-color:var(--acc)}
+.row2{display:flex;align-items:center;gap:8px;margin-top:6px}
+.acct{flex:1;display:flex;gap:12px;align-items:center;min-height:26px;padding:3px 9px;border-radius:7px;
+  font-family:var(--mono);font-size:11.5px;color:var(--dim);border:1px solid var(--line2);background:var(--p2);
+  width:100%;text-align:left;white-space:nowrap;overflow-x:auto;scrollbar-width:none;font-weight:500;cursor:pointer}
+.acct::-webkit-scrollbar{display:none}
+.acct:hover{border-color:var(--acc)}
+.acct b{color:var(--text);font-weight:600}
+.acct .tup{color:var(--up)} .acct .tdn{color:var(--dn)}
+.acct .warn{color:var(--fib)} .acct .bad{color:var(--dn);font-weight:700}
+.acct .off{color:var(--dn);font-weight:700}
+.acct .lnk{margin-left:auto;color:var(--acc);font-weight:600}
+/* The phone's header-row stand-in for .acct -- see the phone media query for
+   its layout. Hidden here so a mid-resize moment never shows both. */
+.acctmini{display:none;align-items:center;gap:4px;min-width:0;max-width:72px;padding:3px 6px;border-radius:7px;
+  font-family:var(--mono);font-size:11.5px;color:var(--dim);border:1px solid var(--line2);background:var(--p2);
+  cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:0 1 auto}
+.acctmini b{font-weight:700} .acctmini .tup{color:var(--up)} .acctmini .tdn{color:var(--dn)}
+.acctmini .warn{color:var(--fib);font-weight:700}
 
-.chartbox{position:relative;background:#0a0e14;}
-canvas{display:block;width:100%;touch-action:none;}
-.ov{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:8px 12px;background:var(--panel);border-top:1px solid var(--line);scrollbar-width:none;}
-.ov::-webkit-scrollbar{display:none;}
-.badge{flex:0 0 auto;font-size:12.5px;min-height:32px;padding:0 12px;border-radius:8px;font-weight:600;
-  background:transparent;border:1px solid var(--line2);color:var(--dim);display:grid;place-items:center;}
-.badge.on{color:var(--text);border-color:var(--acc);}
-.strip{position:relative;min-width:0;}
-.strip .sa{position:absolute;top:0;bottom:0;width:34px;min-height:0;padding:0;border:none;border-radius:0;z-index:3;color:var(--acc);font-size:20px;font-weight:700;display:none;}
-.strip .sa.l{left:0;background:linear-gradient(90deg,var(--sbg) 55%,transparent);}
-.strip .sa.r{right:0;background:linear-gradient(270deg,var(--sbg) 55%,transparent);}
-.strip .sa.show{display:block;}
-.ctsel{font-family:var(--mono);font-size:10.5px;padding:3px 18px 3px 7px;width:auto;min-height:0;
-  border-radius:5px;background-color:rgba(15,20,28,.9);border:1px solid var(--line2);color:var(--text);
-  -webkit-appearance:none;appearance:none;
-  background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
-  background-position:calc(100% - 9px) 8px,calc(100% - 5px) 8px;background-size:4px 4px;background-repeat:no-repeat;}
-.fitbtn{position:absolute;right:60px;bottom:26px;font-family:var(--mono);font-size:10.5px;padding:4px 9px;
-  min-height:0;background:rgba(109,156,245,.16);border:1px solid var(--acc);color:var(--acc);display:none;}
-.fitbtn.show{display:block;}
-
-.rail{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;background:var(--panel);
-  border-top:1px solid var(--line);border-bottom:1px solid var(--line);scrollbar-width:none;}
-.rail::-webkit-scrollbar{display:none;}
-.tool{flex:0 0 auto;width:42px;height:38px;display:grid;place-items:center;padding:0;background:transparent;border:1px solid var(--line2);}
-.tool.on{background:var(--acc);border-color:var(--acc);}
-.tool.on svg{stroke:#06090f;}
-.tool svg{width:18px;height:18px;fill:none;stroke:var(--dim);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
-.rail .lbl{flex:0 0 auto;align-self:center;font-size:11px;color:var(--dim);}
-
-/* Two rows, each with its own track sizes. A single grid cannot do this:
-   the side buttons would inherit the transport columns and come out uneven. */
-.actions{position:sticky;bottom:0;z-index:18;display:flex;flex-direction:column;gap:7px;
-  padding:9px 12px calc(env(safe-area-inset-bottom) + 9px);background:rgba(8,11,16,.96);
-  backdrop-filter:blur(10px);border-top:1px solid var(--line);}
-.trow{display:grid;grid-template-columns:46px 1fr 46px 76px;gap:7px;}
-.srow{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
-.actions button{min-height:46px;font-weight:600;font-size:14px;padding:0 4px;white-space:nowrap;}
-.actions select{min-height:46px;padding:0 4px;font-size:12.5px;text-align:center;}
-.actions #back,.actions #auto{font-size:15px;padding:0;}
-.bnext{background:var(--acc);border-color:var(--acc);color:#06090f;}
-.blong{border-color:var(--up);color:var(--up);background:rgba(38,163,122,.10);}
-.bshort{border-color:var(--dn);color:var(--dn);background:rgba(224,82,74,.10);}
-
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:10px 12px 6px;}
-.tab{min-height:36px;padding:0 6px;font-size:13px;background:var(--p2);border:1px solid var(--line2);color:var(--dim);border-radius:8px;}
-.tab.on{background:var(--acc);border-color:var(--acc);color:#06090f;font-weight:700;}
-.pane{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:0 12px 14px;padding:13px;min-height:190px;}
-h3{font-size:12px;color:var(--dim);font-weight:600;margin:0 0 9px;}
-h3.sp{margin-top:16px;}
-.empty{color:var(--dim);font-size:13.5px;line-height:1.5;}
-
-.seg{display:flex;gap:0;border:1px solid var(--line2);border-radius:9px;overflow:hidden;margin-bottom:12px;}
-.seg button{flex:1;border:none;border-radius:0;background:transparent;min-height:40px;color:var(--dim);}
-.seg button.on{background:var(--acc);color:#06090f;font-weight:700;}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
-.chips button{min-height:34px;font-size:11.5px;font-family:var(--mono);padding:0 10px;}
-.chips button.on{border-color:var(--acc);color:var(--text);background:rgba(109,156,245,.12);}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
-.grid2 label{font-size:11.5px;color:var(--dim);}
-.grid2 label span{display:block;margin-bottom:4px;}
-.quote{background:var(--p2);border:1px solid var(--line2);border-radius:9px;padding:10px;margin-top:11px;}
-.quote .big{font-family:var(--mono);font-size:17px;font-weight:600;}
-.greeks{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:7px;}
-.greeks b{color:var(--text);font-weight:500;}
-.kv{display:flex;justify-content:space-between;font-family:var(--mono);font-size:13.5px;padding:5px 0;border-bottom:1px dotted var(--line);}
-.kv:last-child{border-bottom:none;}
-.kv .k{color:var(--dim);}
-.mgmt{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:11px;}
-.mgmt button{min-height:40px;font-size:13px;}
-.fibrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:13px;padding:7px 8px;border-radius:6px;}
-.fibrow+.fibrow{margin-top:1px;}
-.fibrow .k{color:var(--dim);}
-.fibrow.ext .k{color:var(--fib);}
-.fibrow.edge{background:rgba(109,156,245,.10);}
-.fibrow.edge .k{color:var(--acc);}
-.fibrow.near{outline:1px solid var(--line2);}
-.fibrow small{color:var(--dim);font-size:10.5px;margin-left:5px;}
-.tape div{font-family:var(--mono);font-size:12.5px;color:var(--dim);padding:2.5px 0;line-height:1.45;}
-.tape .hl{color:var(--text);}.tape .g{color:var(--up);}.tape .r{color:var(--dn);}.tape .y{color:var(--fib);}
-.scroll{max-height:270px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px;}
-th{text-align:left;color:var(--dim);font-weight:500;padding:5px 4px;border-bottom:1px solid var(--line2);}
-td{padding:6px 4px;border-bottom:1px solid var(--line);}
-tr.atm td{background:rgba(109,156,245,.10);}
-tr.pick td{outline:1px solid var(--acc);}
-.chain td{cursor:pointer;}
-.stats{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:13px;margin-bottom:11px;}
-.stats span{color:var(--dim);}
-.gr{display:flex;gap:9px;padding:9px 0;border-bottom:1px solid var(--line);}
-.gr:last-child{border-bottom:none;}
-.gr .m{font-family:var(--mono);font-size:14px;line-height:1.3;}
-.gr .m.ok{color:var(--up);}.gr .m.bad{color:var(--dn);}.gr .m.mid{color:var(--fib);}.gr .m.h{color:var(--acc);}
-.gr .b{font-size:13.5px;line-height:1.5;}
-.setup{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
-.setup select{width:auto;flex:1;min-width:130px;}
-.seed{font-family:var(--mono);font-size:12px;color:var(--acc);background:var(--p2);border:1px solid var(--line2);
-  border-radius:7px;padding:8px 10px;}
-footer{color:#525c69;font-size:11px;text-align:center;padding:0 20px 26px;line-height:1.5;}
-/* On a phone the chip strip is not an overlay. Ten indicator chips and a
-   chart-type picker wrap to two rows and bury the candles underneath them,
-   so below 900px they sit in their own scrolling strip under the chart. */
+/* ---- the NTZ banner: the one rule the whole day is built on --------
+   Above the chart rather than inside a pane, because it is what there is
+   to read before the first click, not something to go looking for. It
+   folds to a single line once it has been read, and stays as it was left. */
+.ntz{flex:0 0 auto;border-bottom:1px solid var(--line);position:relative;z-index:24;
+  background:linear-gradient(180deg,rgba(123,108,246,.17),rgba(123,108,246,.05))}
+.ntzbar{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:9px 14px;min-height:0;
+  background:none;border:0;border-radius:0;color:var(--text)}
+.ntzbar:active:not(:disabled){transform:none}
+.ntztag{flex:0 0 auto;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;color:#cfc7ff;
+  border:1px solid rgba(123,108,246,.55);background:rgba(123,108,246,.2);border-radius:6px;padding:3px 7px}
+.ntzhead{flex:0 0 auto;font-size:19px;font-weight:700;letter-spacing:-.4px;white-space:nowrap}
+.ntzsub{flex:1;min-width:0;color:var(--dim);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ntzchev{flex:0 0 auto;margin-left:auto;color:var(--dim);font-size:13px;transition:transform .16s}
+.ntz[data-open="0"] .ntzchev{transform:rotate(-90deg)}
+.ntz[data-open="0"] .ntzbody{display:none}
+/* Expanded, it floats over the chart rather than pushing it: unfolded in the
+   flow it took 479 of a phone's 844 pixels and left the candles 125, which is
+   the opposite of the point. The bar above it is the only part in the flow. */
+.ntzbody{position:absolute;left:0;right:0;top:100%;padding:12px 16px 14px;font-size:13px;line-height:1.6;
+  color:#b9c2d0;background:var(--panel);border-bottom:1px solid var(--line2);
+  box-shadow:0 20px 50px rgba(0,0,0,.6);max-height:min(66vh,560px);overflow:auto;overscroll-behavior:contain}
+.ntzbody h5{margin:13px 0 5px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim2)}
+.ntzbody h5:first-child{margin-top:2px}
+.ntzbody p{margin:0 0 7px}
+.ntzbody ol{margin:0;padding-left:21px}
+.ntzbody li{margin:0 0 8px}
+.ntzbody b{color:var(--text);font-weight:650}
+.ntzbody .no{color:var(--dn);font-weight:650}
+.ntzbody .go{color:var(--up);font-weight:650}
+.ntzbody .one{margin:11px 0 0;padding:9px 12px;border-left:2px solid var(--acc);border-radius:0 7px 7px 0;
+  background:rgba(123,108,246,.09);color:var(--text)}
+/* Sticky, because the panel scrolls on most screens and the way out of it
+   should not be something to go looking for at the bottom. */
+.ntzdone{position:sticky;bottom:0;display:block;width:100%;margin:12px 0 0;min-height:42px;font-size:13.5px;
+  background:var(--p2);box-shadow:0 -10px 16px 6px var(--panel)}
 @media(max-width:899px){
-  .ov{position:static;max-width:none;flex-wrap:nowrap;overflow-x:auto;gap:6px;
-    padding:8px 12px;background:var(--panel);border-top:1px solid var(--line);
-    scrollbar-width:none;-webkit-overflow-scrolling:touch;}
-  .ov::-webkit-scrollbar{display:none;}
-  .badge{flex:0 0 auto;min-height:30px;font-size:11.5px;padding:0 11px;background:transparent;}
-  .ctsel{flex:0 0 auto;min-height:30px;font-size:11.5px;padding:0 20px 0 9px;
-    background-position:calc(100% - 9px) 13px,calc(100% - 5px) 13px;}
-  /* the chart is no longer covered top-left, so auto fit moves out of the volume */
-  .fitbtn{left:auto;right:70px;top:9px;bottom:auto;}
-  .tfbar{padding:8px 12px 6px;}
-  .acct{gap:10px;font-size:11.5px;padding:6px 9px}
-  .ohlc{display:none;}
+  .ntzbar{flex-wrap:wrap;gap:8px;padding:8px 13px}
+  .ntzhead{font-size:16px}
+  .ntzsub{flex:1 0 100%;order:3;font-size:12px}   /* single truncated line, folded stays compact -- the full rule is one tap away in the panel */
+  .ntz[data-open="1"] .ntzsub{display:none}
+  .ntzbody{max-height:min(72vh,620px);padding:12px 13px 14px}
 }
-@media(min-width:900px){
-  .wrap{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:1fr 340px;gap:14px;padding:0 14px 20px;align-items:start;}
-  .left{min-width:0;}
-  .right{position:sticky;top:112px;}
-  .pane{margin:0 0 12px;}
-  .actions{position:static;background:transparent;backdrop-filter:none;border-top:none;padding:10px 0 0;}
-  .chartbox{border-radius:10px;overflow:hidden;border:1px solid var(--line);}
-  .rail{border-radius:10px;margin-top:10px;border:1px solid var(--line);}
-  footer{grid-column:1/-1;}
-}
-/* ---- draw rail: every tool says what it is ---- */
-.tool{width:54px;height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
-.tool small{font-size:10px;line-height:1;color:var(--dim);font-weight:600;letter-spacing:.1px}
-.tool.on small{color:var(--text)}
-.tool:hover{border-color:var(--acc)}
+/* A 1440px screen would otherwise set this prose in 1400px lines. */
+@media(min-width:900px){.ntzbody>*{max-width:980px}}
 
-/* ---- a note over the chart ---- */
-.hint{position:absolute;left:50%;top:40px;transform:translate(-50%,-4px);max-width:calc(100% - 110px);z-index:6;
+/* ---- the stage: chart column and the panes ------------------------ */
+.stage{flex:1;min-height:0;position:relative}
+.chartcol{min-width:0;min-height:0}
+.toolbar{background:var(--panel);border-bottom:1px solid var(--line)}
+.modes{display:flex;flex:0 0 auto}
+.modes button{width:44px;min-height:0;border:none;border-radius:0;background:transparent;padding:0;display:grid;place-items:center;color:var(--dim)}
+.modes button.on{background:var(--accs);color:var(--text);box-shadow:inset 0 -2px 0 var(--acc)}
+.tools{display:flex;align-items:stretch;min-width:0}
+.tfbar,.ov,.rail{display:flex;gap:6px;overflow-x:auto;padding:0 10px;align-items:center;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;height:100%}
+.tfbar::-webkit-scrollbar,.ov::-webkit-scrollbar,.rail::-webkit-scrollbar{display:none}
+.tf{flex:0 0 auto;min-height:30px;padding:0 11px;border-radius:7px;font-family:var(--mono);font-size:12.5px;
+  background:transparent;border:1px solid transparent;color:var(--dim);font-weight:500}
+.tf:hover{color:var(--text)}
+.tf.on{background:var(--accs);border-color:var(--acc);color:var(--text);font-weight:600}
+.badge{flex:0 0 auto;font-family:var(--sans);font-size:12px;min-height:30px;padding:0 11px;border-radius:7px;font-weight:600;
+  background:transparent;border:1px solid var(--line2);color:var(--dim);display:grid;place-items:center;letter-spacing:.1px}
+.badge:hover{border-color:var(--acc);color:var(--text)}
+.badge.on{color:var(--text);border-color:var(--acc);background:var(--accs)}
+.ctsel{flex:0 0 auto;font-family:var(--sans);font-size:12px;font-weight:600;min-height:30px;padding:0 26px 0 11px;width:auto;border-radius:7px}
+.rail .lbl{display:none}
+.tool{flex:0 0 auto;display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;background:transparent;border:1px solid var(--line2);color:var(--dim);min-height:0}
+.tool svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tool small{font-size:11.5px;font-weight:600;letter-spacing:.1px;white-space:nowrap}
+.tool:hover{border-color:var(--acc);color:var(--text)}
+.tool.on{background:var(--accs);border-color:var(--acc);color:var(--text)}
+/* A strip that overflows gets arrows at its edges: a hidden scrollbar is no
+   sign that there is more past the edge. */
+.strip{position:relative;min-width:0}
+.strip .sa{position:absolute;top:0;bottom:0;width:30px;min-height:0;padding:0;border:none;border-radius:0;z-index:3;
+  color:var(--acc);font-size:20px;font-weight:700;display:none;cursor:pointer;line-height:1}
+.strip .sa.l{left:0;background:linear-gradient(90deg,var(--sbg) 55%,transparent)}
+.strip .sa.r{right:0;background:linear-gradient(270deg,var(--sbg) 55%,transparent)}
+.strip .sa.show{display:block}
+.strip .sa:active{transform:none}
+
+.chartbox{position:relative;background:var(--chart);overflow:hidden;min-height:0}
+canvas{position:absolute;inset:0;display:block;touch-action:none}
+.chips-tr{position:absolute;top:8px;right:calc(var(--axisw,60px) + 8px);display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:5;pointer-events:none}
+.chips-tr>*{pointer-events:auto}
+.fitbtn{font-family:var(--sans);font-size:11.5px;font-weight:600;padding:5px 10px;min-height:0;border-radius:7px;
+  background:rgba(13,18,32,.92);border:1px solid var(--acc);color:var(--text);display:none}
+.fitbtn.show{display:block}
+.posbar{display:flex;align-items:center;gap:10px;padding:5px 10px;border-radius:8px;font-size:12px;
+  border:1px solid var(--line2);background:rgba(13,18,32,.94);max-width:min(340px,calc(100vw - 90px))}
+.posbar[hidden]{display:none}
+.posbar.up{border-color:rgba(45,212,167,.5)}
+.posbar.dn{border-color:rgba(244,82,95,.5)}
+.posbar .pw{font-family:var(--mono);font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.posbar .pv{font-family:var(--mono);white-space:nowrap}
+.posbar.up .pv{color:var(--up)}
+.posbar.dn .pv{color:var(--dn)}
+.posbar .pv b{font-size:13px;margin-right:6px}
+.hint{position:absolute;left:50%;top:12px;transform:translate(-50%,-4px);max-width:calc(100% - 110px);z-index:6;
   background:rgba(13,18,32,.96);border:1px solid var(--acc);color:var(--text);font-size:12.5px;line-height:1.4;
   padding:7px 12px;border-radius:9px;text-align:center;opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;
   box-shadow:0 6px 24px rgba(0,0,0,.45)}
 .hint.show{opacity:1;transform:translate(-50%,0)}
 .hint[hidden]{display:none}
 
+/* ---- the transport row -------------------------------------------- */
+.actions{flex:0 0 auto;height:var(--actH);padding:8px 10px;border-top:1px solid var(--line);background:var(--bg);position:relative;z-index:12}
+.trow{display:grid;grid-template-columns:46px 1fr 46px 70px;gap:7px;height:100%}
+.actions button{min-height:0;height:100%;font-weight:650;font-size:14px;padding:0 4px;white-space:nowrap}
+.actions select{min-height:0;height:100%;padding:0 22px 0 8px;font-size:13px;text-align:center;width:auto}
+.actions #back,.actions #auto{font-size:15px;padding:0}
+.bnext{background:var(--acc);border-color:var(--acc);color:#fff}
+
+/* ---- the panes ---------------------------------------------------- */
+.side{display:flex;flex-direction:column;min-height:0;background:var(--panel)}
+.shead{flex:0 0 auto;position:relative}
+.grabrow{display:none;position:relative;align-items:center;justify-content:center;height:34px}
+.grab{flex:1;display:flex;justify-content:center;align-items:center;height:100%;touch-action:none;cursor:grab}
+.grab span{width:38px;height:4px;border-radius:2px;background:var(--line2)}
+#sClose{position:absolute;right:0;top:3px;width:30px;min-height:30px;height:30px;font-size:13px;border-color:transparent;background:transparent;color:var(--dim)}
+/* The phone-only stand-in for the removed in-sheet tab strip: just names
+   whichever pane is open. Positioned in the grabrow, which is hidden on
+   desktop, where the tab strip itself still does this job. */
+#paneTitle{display:none}
+/* Desktop's own cheap width win: 372px is a fixed guess, and a chain or a
+   journal table both want more of it than a ticket does. One button, one
+   class, no persistence logic beyond the existing localStorage pattern. */
+#sideWide{display:none}
+.sessrow{display:flex;gap:6px;align-items:center}
+.ssel{flex:1 1 auto;min-width:0;width:auto;min-height:34px;padding:0 28px 0 11px;font-family:var(--mono);font-size:12.5px;border-radius:8px}
+.sbtn{flex:0 0 auto;min-height:34px;padding:0 12px;font-size:12.5px;white-space:nowrap}
+.sbtn.sprim{background:var(--accs);border-color:var(--acc);color:var(--text)}
+.sbtn.sq{width:34px;padding:0;font-size:15px;font-weight:700;display:grid;place-items:center}
+a.sbtn{text-decoration:none;color:var(--dim);display:grid;place-items:center;font-size:20px;line-height:1}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.tab{min-height:36px;padding:0 6px;font-size:12.5px;background:var(--p2);border:1px solid var(--line2);
+  color:var(--dim);border-radius:8px;font-weight:600;white-space:nowrap}
+.tab:hover{border-color:var(--acc);color:var(--text)}
+.tab.on{background:var(--accs);border-color:var(--acc);color:var(--text);font-weight:700}
+.sidebody{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.sidebody::-webkit-scrollbar{width:8px} .sidebody::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+.pane{padding:12px 12px 24px}
+.foot{flex:0 0 auto;color:var(--dim2);font-size:10.5px;line-height:1.45;padding:8px 12px;border-top:1px solid var(--line)}
+.tabbar{display:none}
+.unzoom{position:fixed;left:50%;top:calc(var(--sat) + 10px);transform:translateX(-50%);z-index:200;min-height:0;padding:8px 14px;
+  font-size:13px;background:var(--fib);color:#14110a;border-color:var(--fib);box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.unzoom[hidden]{display:none}
+h3{font-size:10.5px;color:var(--dim2);font-weight:650;margin:0 0 10px;text-transform:uppercase;letter-spacing:1.2px}
+h3.sp{margin-top:18px}
+.empty{color:var(--dim);font-size:13px;line-height:1.55}
+
+.seg{display:flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden;margin-bottom:12px}
+.seg button{flex:1;border:none;border-radius:0;background:transparent;min-height:40px;color:var(--dim)}
+.seg button.on{background:rgba(123,108,246,.2);color:var(--text);font-weight:700;box-shadow:inset 0 -2px 0 var(--acc)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.chips button{min-height:34px;font-size:11.5px;font-family:var(--mono);padding:0 10px;font-weight:500}
+.chips button.on{border-color:var(--acc);color:var(--text);background:rgba(123,108,246,.14)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.grid2 label{font-size:10.5px;color:var(--dim2);text-transform:uppercase;letter-spacing:.9px;font-weight:600}
+.grid2 label span{display:block;margin-bottom:5px}
+.quote{background:var(--p2);border:1px solid var(--line2);border-radius:9px;padding:11px;margin-top:11px}
+.quote .big{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:-.3px}
+.greeks{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:8px}
+.greeks b{color:var(--text);font-weight:600}
+.kv{display:flex;justify-content:space-between;font-family:var(--mono);font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--dim)}
+.mgmt{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:11px}
+.mgmt button{min-height:40px;font-size:12.5px}
+.fibrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12.5px;padding:7px 9px;border-radius:6px}
+.fibrow+.fibrow{margin-top:1px}
+.fibrow .k{color:var(--dim)}
+.fibrow.ext .k{color:var(--fib)}
+.fibrow.edge{background:rgba(123,108,246,.12)}
+.fibrow.edge .k{color:var(--acc)}
+.fibrow.near{outline:1px solid var(--line2)}
+.fibrow small{color:var(--dim2);font-size:10.5px;margin-left:5px}
+.tape div{font-family:var(--mono);font-size:12px;color:var(--dim);padding:3px 0;line-height:1.45}
+.tape .hl{color:var(--text)} .tape .g{color:var(--up)} .tape .r{color:var(--dn)} .tape .y{color:var(--fib)}
+.scroll{max-height:none;overflow:visible}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px}
+th{text-align:left;color:var(--dim2);font-weight:650;padding:6px 4px;border-bottom:1px solid var(--line2);
+  text-transform:uppercase;letter-spacing:.7px;font-size:9.5px}
+td{padding:7px 4px;border-bottom:1px solid var(--line)}
+tr.atm td{background:rgba(123,108,246,.1)}
+tr.pick td{outline:1px solid var(--acc)}
+.chain td{cursor:pointer}
+.stats{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:13px;margin-bottom:12px}
+.stats span{color:var(--dim)}
+.gr{display:flex;gap:9px;padding:10px 0;border-bottom:1px solid var(--line)}
+.gr:last-child{border-bottom:none}
+.gr .m{font-family:var(--mono);font-size:13.5px;line-height:1.3}
+.gr .m.ok{color:var(--up)} .gr .m.bad{color:var(--dn)} .gr .m.mid{color:var(--fib)} .gr .m.h{color:var(--acc)}
+.gr .b{font-size:13px;line-height:1.55}
+.gr .b i{color:var(--dim2);font-style:italic}
+.setup{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.setup select{width:auto;flex:1;min-width:130px}
+.seed{font-size:12px;color:var(--acc);background:var(--p2);border:1px solid var(--line2);border-radius:7px;padding:9px 11px}
+
 /* ---- guide ---- */
-.sbtn.sq{width:34px;padding:0;font-size:15px;font-weight:700}
-.mp-guide{margin-left:auto;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--acc);border-radius:8px;
-  padding:9px 14px;background:rgba(123,108,246,.14);color:var(--text);font-weight:650;font-size:13px;min-height:0}
-.mp-guide + .mp-back{margin-left:0}
 .tour{position:fixed;inset:0;z-index:100}
 .tour[hidden]{display:none}
 .tour.center{background:rgba(3,5,10,.72)}
@@ -265,14 +353,6 @@ button.oc:disabled{opacity:.5;cursor:not-allowed}
 .oc.put .go{background:rgba(244,82,95,.17);color:var(--dn)}
 button.oc:disabled .go{background:rgba(137,148,166,.12);color:var(--dim)}
 button.oc:disabled .go b{display:none}
-/* On a desktop the chart stays pinned while the ticket scrolls beside it. The
-   buy cards sit under the size and order settings, below the fold on a laptop,
-   and scrolling down to them used to take the chart out of view. Only where the
-   window is tall enough to hold the whole chart column. */
-@media(min-width:900px) and (min-height:760px){
-  .left{position:sticky;top:146px}
-  .right{position:static}
-}
 /* ---- a report the model cannot price ---- */
 .evwarn{display:block;margin-bottom:7px;padding:8px 10px;border-radius:8px;border:1px solid rgba(245,165,36,.4);
   background:rgba(245,165,36,.1);color:#f5c060;font-weight:600;line-height:1.45}
@@ -281,26 +361,6 @@ button.oc:disabled .go b{display:none}
 .oc .ask em.up{color:var(--up)}
 .oc .ask em.dn{color:var(--dn)}
 .kv .pp{font-weight:700;margin-left:4px}
-.posbar{display:flex;justify-content:space-between;align-items:center;gap:10px;max-width:1300px;margin:8px auto 0;
-  padding:7px 11px;border-radius:9px;font-size:13px;border:1px solid var(--line2);background:var(--p2)}
-.posbar[hidden]{display:none}
-.posbar.up{border-color:rgba(45,212,167,.45);background:rgba(45,212,167,.08)}
-.posbar.dn{border-color:rgba(244,82,95,.45);background:rgba(244,82,95,.08)}
-.posbar .pw{font-family:var(--mono);font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.posbar .pv{font-family:var(--mono);white-space:nowrap}
-.posbar.up .pv{color:var(--up)}
-.posbar.dn .pv{color:var(--dn)}
-.posbar .pv b{font-size:14px;margin-right:6px}
-/* ---- the account strip ---- */
-.acct{display:flex;gap:14px;align-items:center;max-width:1300px;margin:8px auto 0;padding:6px 11px;border-radius:9px;
-  font-family:var(--mono);font-size:12px;color:var(--dim);border:1px solid var(--line2);background:var(--p2);min-height:0;
-  width:100%;text-align:left;white-space:nowrap;overflow-x:auto;scrollbar-width:none;font-weight:500}
-.acct::-webkit-scrollbar{display:none}
-.acct b{color:var(--text);font-weight:600}
-.acct .tup{color:var(--up)} .acct .tdn{color:var(--dn)}
-.acct .warn{color:var(--fib)} .acct .bad{color:var(--dn);font-weight:700}
-.acct .off{color:var(--dn);font-weight:700}
-.acct .lnk{margin-left:auto;color:var(--acc);font-weight:600}
 /* ---- the rules line under the cards ---- */
 .rl{margin-top:9px;font-size:11.5px;color:var(--dim);line-height:1.6;font-family:var(--mono)}
 .rl b{color:var(--text);font-weight:600}
@@ -309,9 +369,10 @@ button.oc:disabled .go b{display:none}
 .rf{display:flex;flex-direction:column;gap:4px;font-size:10.5px;color:var(--dim2);text-transform:uppercase;letter-spacing:.9px;font-weight:600}
 .rf small{text-transform:none;letter-spacing:0;font-weight:500;color:var(--dim2);font-size:10.5px}
 .chk.rc{align-items:flex-start;margin-top:10px}
+.chk.rc input{margin-top:2px}
 .chk.rc small{display:block;color:var(--dim2);font-size:11px;margin-top:1px}
 .rbook{margin-top:14px}
-.rbook h5{margin:12px 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--fib)}
+.rbook h5{margin:12px 0 4px;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--fib)}
 .rbook p{margin:0 0 7px;font-size:12.5px;line-height:1.5}
 .rbook p small{display:block;color:var(--dim2);font-size:11.5px}
 /* ---- debrief and record overlays ---- */
@@ -319,15 +380,15 @@ button.oc:disabled .go b{display:none}
 .ovl[hidden]{display:none}
 .ovl-card{max-width:520px;margin:6vh auto;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:16px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
 .ovl-card h4{margin:6px 0 4px;font-size:18px;letter-spacing:-.2px}
-.ovl-card textarea{width:100%;background:var(--p2);border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:9px 10px;font-family:inherit;font-size:14px;resize:vertical}
+.ovl-card textarea{width:100%;background:var(--p2);border:1px solid var(--line2);border-radius:8px;color:var(--text);padding:9px 10px;font-family:var(--sans);font-size:14px;resize:vertical}
 .dbf-l{display:block;margin-top:12px;font-size:12.5px;color:var(--dim)}
 .dbf-l textarea{margin-top:5px}
 .stars{display:flex;gap:6px;margin-top:6px}
 .stars button{min-height:36px;width:40px;padding:0;font-size:16px}
 .stars button.on{border-color:var(--fib);color:var(--fib);background:rgba(245,165,36,.12)}
-.rec-in{max-width:980px;margin:0 auto;padding:14px 14px 40px}
+.rec-in{max-width:980px;margin:0 auto;padding:calc(var(--sat) + 14px) 14px 40px}
 .rec-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.rec-top h4{margin:4px 0 0;font-size:22px;letter-spacing:-.4px}
+.rec-top h4{margin:4px 0 0;font-size:22px;letter-spacing:-.4px;font-family:var(--mono)}
 .rec-top button{margin-left:auto}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:14px}
 .tile{background:var(--panel);padding:12px 14px;display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -336,13 +397,13 @@ button.oc:disabled .go b{display:none}
 .tile i{font-style:normal;font-size:10.5px;color:var(--dim2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rsec{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 14px;margin-bottom:12px}
 .rsec h3{margin-bottom:8px}
-.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 .rgrid .rsec{margin-bottom:0}
 @media(max-width:700px){.rgrid{grid-template-columns:1fr}}
 svg.eq{display:block;width:100%;height:auto}
 .rchips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .rchips button{min-height:34px;font-size:12px}
-.rchips button.on{border-color:var(--acc);color:var(--text);background:rgba(109,156,245,.14)}
+.rchips button.on{border-color:var(--acc);color:var(--text);background:rgba(123,108,246,.16)}
 .sessrec{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap}
 .sessrec:last-child{border-bottom:0}
 .sessrec .d{font-family:var(--mono);color:var(--dim);min-width:150px}
@@ -361,79 +422,345 @@ svg.eq{display:block;width:100%;height:auto}
 .lesson p{margin:0 0 6px}
 .lesson ol{margin:4px 0 6px 18px;padding:0}
 .lesson li{margin:4px 0}
+/* ---- the data note, where the build puts one ---- */
+.simx{margin:0 0 12px;border:1px solid rgba(45,212,167,.35);background:rgba(45,212,167,.06);border-radius:9px;font-size:12px;line-height:1.5;color:var(--dim)}
+.simx summary{cursor:pointer;padding:9px 11px;color:var(--up);font-weight:600;list-style:none}
+.simx summary::-webkit-details-marker{display:none}
+.simx summary::after{content:"›";float:right;color:var(--dim);transition:transform .15s}
+.simx[open] summary::after{transform:rotate(90deg)}
+.simx>div{padding:0 11px 10px}
+.simx.gen{border-color:rgba(245,165,36,.4);background:rgba(245,165,36,.08)} .simx.gen summary{color:var(--fib)}
+
+/* =====================================================================
+   PHONE. Header, chart, one toolbar that switches between timeframes,
+   drawing and indicators, the transport row, and four buttons along the
+   bottom. Panes are a sheet that slides up over the chart and stops
+   above the transport row, so Next is always under your thumb.
+   ===================================================================== */
+@media(max-width:899px){
+  /* iOS zooms into any control smaller than 16px the moment it gets focus,
+     and does not zoom back out. Every control is 16px here. */
+  input,select,textarea,.tksel,.ssel,.ctsel,.stepper select,.stepper input,.actions select{font-size:16px}
+  .tksel{padding:3px 28px 3px 10px}
+  .px{font-size:18px}
+  .chg{font-size:11px;padding:2px 6px}
+  .ohlc,#sub{display:none}
+  #sess::before{content:none!important}
+  /* The account strip used to be a whole second row here -- min-height 26px
+     plus its own padding and the row's own margin-top, permanent chrome
+     whether or not there was anything to say. The one number worth glancing
+     at every minute -- today's running total -- moves into the header row
+     itself as a small pill; the rest (spent, trades used, limit, cooldown)
+     is one tap away in Record, same as before. */
+  .row2{display:none}
+  .acctmini{display:flex}
+  /* The header has room for the ticker, the price and the clock. New day is an icon. */
+  .row1{gap:8px}
+  .px{font-size:17px}
+  .row1 .tbtn{width:38px;padding:0;display:grid;place-items:center}
+  .row1 .tbtn span{display:none}
+  .row1 .tbtn svg{display:block!important}
+  .acct{gap:8px;font-size:10.5px;padding:3px 8px}
+  .hint{top:54px}
+  .clk #clk{font-size:13px}
+  .stage{display:flex;overflow:hidden}
+  .chartcol{flex:1;display:flex;flex-direction:column;position:relative}
+  .toolbar{position:absolute;top:6px;left:6px;right:6px;z-index:15;display:flex;align-items:stretch;height:44px;
+    border-radius:10px;overflow:hidden;background:rgba(13,18,32,.88);border:1px solid var(--line2);
+    box-shadow:0 8px 20px rgba(0,0,0,.4)}
+  .modes{border-right:1px solid var(--line)}
+  .tools{flex:1}
+  .tools .strip{flex:1}
+  .toolbar>.strip-rail,.toolbar>#rail{flex:1;min-width:0}
+  .shell[data-mode=tf] .strip-ov,.shell[data-mode=tf] .strip-rail,.shell[data-mode=tf] #ov,.shell[data-mode=tf] #rail,
+  .shell[data-mode=ind] .strip-tfbar,.shell[data-mode=ind] .strip-rail,.shell[data-mode=ind] #tfbar,.shell[data-mode=ind] #rail,
+  .shell[data-mode=draw] .tools{display:none}
+  .chartbox{flex:1}
+  /* Phase 2: a third, smaller stop -- Peek -- replaces the 62% default.
+     Full (.tall, 100%) is unchanged. A middle ~62% stop was tried and
+     dropped rather than kept as a third: every pane already scrolls inside
+     itself, so the only thing a middle stop bought over Peek+Full was
+     skipping one drag-up on the longer panes (Coach, Chain, Journal) --
+     the same single gesture Full already cost from the old 62% default,
+     just measured from a shorter starting point. Not worth a three-way
+     cycle on the grab gesture for that. Peek is sized so the Trade pane's
+     own inputs (expiry, strike, contracts) are workable without opening
+     Full, while the chart stays over half the screen -- see the commit
+     message for the measured numbers this was picked against. */
+  .side{position:absolute;left:0;right:0;bottom:0;height:36%;max-height:100%;border-top:1px solid var(--line2);border-radius:16px 16px 0 0;
+    box-shadow:0 -12px 40px rgba(0,0,0,.55);transform:translateY(106%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:10;visibility:hidden}
+  .side.open{transform:none;visibility:visible}
+  /* At Full the sheet covers the chart entirely, so the floating timeframe
+     toolbar (z-index 15, positioned against the same .stage box) has
+     nothing left to float over -- without this it painted on top of the
+     sheet's own header instead, which is what "Trade" looked like cut off
+     behind the clock icon in a first pass at this screen. Pre-existing
+     since the toolbar went floating in Phase 1, caught here by the same
+     screenshot check this phase's other changes were verified against. */
+  .side.tall{height:100%;border-radius:0;z-index:16}
+  .grabrow{display:flex}
+  #paneTitle{display:flex;position:absolute;left:2px;top:0;height:34px;align-items:center;
+    font-weight:700;font-size:13.5px;color:var(--text);pointer-events:none}
+  .shead{padding:0 12px 8px;border-bottom:1px solid var(--line)}
+  .sessrow{display:none;margin-bottom:8px}
+  .side[data-tab=setup] .sessrow{display:flex}
+  /* The in-sheet strip -- eight tabs in a row that had to scroll sideways,
+     "Tape >" cut off at the edge in the original recording, a hidden
+     affordance nobody would find by accident -- is gone here. The bottom
+     tab bar and the grid it opens (below) are the one way to switch panes
+     on a phone now; #paneTitle above names whichever one is open, the job
+     the strip's own .on highlight used to do. Desktop keeps the strip: it
+     was never the one with the scrolling problem (the base rule above
+     already lays it out as a 4-column grid), and its own layout doesn't
+     touch anything in this media query. */
+  .tabs{display:none}
+  .pane{padding:12px 12px 28px}
+  .foot{display:none}
+  /* The sheet's own bottom edge sits flush with the bottom of .stage --
+     which is also where the transport row (.actions, 46px tall) renders,
+     since .actions is laid out inside .chartcol/.stage while .side is
+     positioned absolutely against that same box. The transport row paints
+     on top (z-index 12 against the sheet's 10), so the last ~46px of
+     whatever the sheet is scrolled to renders directly underneath it --
+     that is what cut "Target: measured" in half in the original recording:
+     real, reachable-looking content with an opaque bar sitting on it. The
+     fix belongs on the scroll container, not the sheet's own geometry --
+     bottom padding past the transport row's height so nothing real can
+     land back there again. */
+  .sidebody{padding-bottom:60px}
+  /* The transport row and the tab bar used to cost 58px and ~53px of
+     permanent height each, whether or not there was anything urgent in
+     either. Fitting all eight controls (four transport, four panes) onto
+     one row would mean icon targets under 25px wide on a 390px phone --
+     collapsing the four panes to one switcher (below) is what actually
+     buys the room for that. Short of that, both rows are simply tightened:
+     less padding, and the tab bar drops its text labels for icon + aria-label,
+     which is most of what was making it 53px tall in the first place. */
+  .actions{height:46px;padding:5px 10px}
+  .tabbar{display:grid;grid-template-columns:repeat(4,1fr);flex:0 0 auto;padding:3px 6px var(--sab);border-top:1px solid var(--line);background:var(--panel)}
+  .tabbar button{min-height:38px;border:none;border-radius:9px;background:transparent;padding:0;display:flex;align-items:center;justify-content:center;color:var(--dim)}
+  .tabbar button small{display:none}
+  .tabbar button.on{color:var(--text);background:var(--accs)}
+  .tabbar button .i{width:21px;height:21px}
+  /* The fourth bottom-bar slot used to jump straight to Coach the moment
+     there was nothing better to call "more" -- an arbitrary landing pane
+     picked only because it wasn't Trade, Chain or Session. It now opens
+     this instead: all eight destinations, real tap targets, nothing
+     scrolled or cut off. Trade, Chain and Session keep their own one-tap
+     slot on the bar -- the three reached for mid-trade, with a position
+     already open -- and are repeated here too, so this stays the one place
+     that finds anything rather than a second, smaller nav of its own. The
+     other five (read once, or after the bell: Coach, Fib, Tape, Journal,
+     Rules) only live here now. */
+  .panegrid{position:fixed;left:10px;right:10px;bottom:calc(10px + var(--sab));z-index:25;background:var(--panel);
+    border:1px solid var(--line2);border-radius:14px;box-shadow:0 -12px 40px rgba(0,0,0,.55);padding:10px}
+  .panegrid[hidden]{display:none}
+  .panegrid:not([hidden]){display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .panegrid button{min-height:52px;border:1px solid var(--line2);border-radius:10px;background:var(--p2);
+    color:var(--dim);font-weight:650;font-size:14px}
+  .panegrid button.on{background:var(--accs);border-color:var(--acc);color:var(--text)}
+  .chips-tr{top:54px}
+}
+
+/* =====================================================================
+   DESKTOP. The chart column on the left: a toolbar of timeframes and
+   indicators above it, the drawing tools down its left edge, the
+   transport row under it. The panes in a sidebar on the right that
+   scrolls by itself. Nothing on the page scrolls except that sidebar.
+   ===================================================================== */
+@media(min-width:900px){
+  .stage{display:grid;grid-template-columns:minmax(0,1fr) 372px}
+  .shell.sidewide .stage{grid-template-columns:minmax(0,1fr) 520px}
+  .chartcol{display:grid;grid-template-columns:50px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto}
+  .toolbar{display:contents}
+  .modes{display:none}
+  .tools{grid-column:1/-1;grid-row:1;height:44px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .tools .strip-tfbar,.tools>#tfbar{flex:0 0 auto}
+  .tools .strip-ov,.tools>#ov{flex:1;min-width:0;border-left:1px solid var(--line)}
+  .toolbar>.strip-rail,.toolbar>#rail{grid-column:1;grid-row:2;position:relative;min-height:0;border-right:1px solid var(--line);background:var(--panel)}
+  .strip-rail .rail,.toolbar>#rail{position:absolute;inset:0;flex-direction:column;overflow-y:auto;overflow-x:hidden;padding:8px 0;gap:5px;align-items:center}
+  .strip-rail .sa{display:none!important}
+  .tool{width:36px;height:36px;padding:0;justify-content:center;border-color:transparent}
+  .tool small{display:none}
+  .tool:hover{border-color:var(--line2)}
+  .chartbox{grid-column:2;grid-row:2}
+  .actions{grid-column:1/-1;grid-row:3;height:56px}
+  .trow{grid-template-columns:52px minmax(200px,340px) 52px 86px;justify-content:start}
+  .side{border-left:1px solid var(--line)}
+  .shead{padding:10px 40px 0 12px}
+  .tabs{padding:10px 0}
+  .row1 .tbtn{display:none}
+  .sidebody{padding:0}
+  /* The one desktop win worth taking here: 372px is a fixed guess that
+     fits a ticket fine and crowds a chain table or a journal list. One
+     button (in the shead, right of the tab strip) toggles 372/520px;
+     nothing about the phone layout above touches this. */
+  #sideWide{display:flex;position:absolute;right:10px;top:8px;width:26px;min-height:26px;height:26px;padding:0;
+    align-items:center;justify-content:center;border:1px solid var(--line2);border-radius:7px;color:var(--dim);background:var(--p2)}
+  #sideWide:hover{border-color:var(--acc);color:var(--text)}
+  #sideWide.on{background:var(--accs);border-color:var(--acc);color:var(--text)}
+}
+@media(prefers-reduced-motion:reduce){button:active:not(:disabled){transform:none} .side{transition:none}}
 </style>
 </head>
 <body>
-
-<div class="top">
+<div class="shell" id="shell" data-mode="tf">
+<!--MP:HEAD-->
+<header class="top">
   <div class="row1">
-    <select class="tksel" id="tk" title="Change ticker (loads a new session)"></select>
+    <select class="tksel dd" id="tk" title="Change ticker (loads a new session)" aria-label="Ticker"></select>
     <span class="px" id="px">—</span>
     <span class="chg u" id="chg">—</span>
-    <div class="clk"><span id="clk">9:45</span><span class="clkx"><br><span id="sub">5m · live</span><br><span id="sess"></span></span></div>
+    <div class="ohlc" id="ohlc"></div>
+    <button class="acctmini" id="acctmini" type="button" title="Your account, under your rules. Tap for the track record."></button>
+    <div class="clk"><span id="clk">9:45</span><span class="clkx"><span id="sub">5m · live</span><span id="sess"></span></span></div>
+    <button class="tbtn prim" id="newTop" type="button" title="Load a different recorded day" aria-label="New day"><svg class="i" viewBox="0 0 24 24" style="display:none"><path d="M4 7h3.5c2 0 3 1 4 2.5l2 3c1 1.5 2 2.5 4 2.5H20M4 17h3.5c1.3 0 2.2-.4 3-1.2M13.5 8.2c.8-.8 1.7-1.2 3-1.2H20"/><path d="M18 4.5L20.5 7 18 9.5M18 14.5l2.5 2.5-2.5 2.5"/></svg><span>New day</span></button>
   </div>
-  <div class="sessrow">
-    <select id="sdate" class="ssel" title="Which recorded day to practise"></select>
-    <button id="sRestart" class="sbtn" title="Start this same day again from the 9:30 open">↺ Restart</button>
-    <button id="sNew" class="sbtn sprim" title="Load a different recorded day">New day</button>
-    <button id="sGuide" class="sbtn sq" title="How this page works" aria-label="How this page works">?</button>
+  <div class="row2">
+    <button class="acct" id="acct" type="button" title="Your account, under your rules. Tap for the track record."></button>
   </div>
-  <div class="posbar" id="posbar" hidden></div>
-  <button class="acct" id="acct" type="button" title="Your account, under your rules. Tap for the track record."></button>
-  <div class="ohlc" id="ohlc"></div>
-</div>
+</header>
 
-<div class="tfbar" id="tfbar"></div>
-
-<div class="wrap">
-<div class="left">
-  <div class="chartbox">
-    <canvas id="cv"></canvas>
-    <div class="ov" id="ov"></div>
-    <button class="fitbtn" id="fit">auto fit</button>
-    <div class="hint" id="hint" role="status" aria-live="polite" hidden></div>
+<section class="ntz" id="ntz" data-open="1">
+  <button class="ntzbar" id="ntzBar" type="button" aria-expanded="true" aria-controls="ntzBody">
+    <span class="ntztag">NTZ</span>
+    <span class="ntzhead">Trade the No-Trade Zone</span>
+    <span class="ntzsub">9:30&ndash;9:45 builds the range. Inside it you do nothing. A 5-minute close outside it is the trade.</span>
+    <span class="ntzchev" aria-hidden="true">&#9662;</span>
+  </button>
+  <div class="ntzbody" id="ntzBody">
+    <h5>What the zone is</h5>
+    <p>The <b>opening range</b>: the high and the low of the first fifteen minutes, 9:30 to 9:45. That band is the
+      No-Trade Zone. The chart shades it in blue the moment it is set and the log prints its high, low and width;
+      it toggles under <b>Indicators &rarr; OR</b>.</p>
+    <h5>Why you stay out of it</h5>
+    <p>Measured on the <span id="ntzN">147</span> sessions recorded in this library, those fifteen minutes hold
+      <b><span id="ntzOpen15">26.5%</span></b> of the whole day&rsquo;s movement, and the first thirty hold
+      <b><span id="ntzOpen30">37.3%</span></b>. Per minute the open is about <b><span id="ntzX">13 times</span></b>
+      as violent as lunch, which spends two entire hours on <span id="ntzLunch">16.6%</span>. So the band is the
+      widest spreads and the heaviest volume of the day with no side settled yet, and nearly every move made inside
+      it is given back inside it. Trading the band is paying the day&rsquo;s worst prices for the day&rsquo;s worst
+      odds.</p>
+    <h5>How to trade it tomorrow</h5>
+    <ol>
+      <li><b>9:30 to 9:45 &mdash; hands off.</b> No entry, no starter, no &ldquo;a few shares just to feel it&rdquo;.
+        Watch where the band is building and nothing else. <span class="no">Zero clicks.</span></li>
+      <li><b>9:45 &mdash; write the band down.</b> High, low, and the width between them. That width is your risk
+        unit for the rest of the day: every stop and target below is measured in it.</li>
+      <li><b>Wait for a 5-minute candle to close outside the band.</b> Above the high and you may only go long;
+        below the low and you may only go short. A wick through is <span class="no">not</span> a break &mdash; only
+        the close counts. Until one prints you are still inside the NTZ, and the answer is still no.</li>
+      <li><b>On that close, take the trade you already planned.</b> <span class="go">Entry</span> is the close.
+        <span class="go">Stop</span> is the far side of the band. <span class="go">Targets</span> are the 127% and
+        162% extensions, or the measured move &mdash; the band&rsquo;s own width projected past the edge it broke.
+        In the Trade pane each of those is one tap: <b>Stop: range edge</b>, <b>Target: 127%</b>,
+        <b>Target: 162%</b>, <b>Target: measured</b>.</li>
+      <li><b>Back inside the band means out.</b> Price returning into the NTZ is the break failing. Exit on that
+        close rather than making the stop do it for you, and you are back to no-trade until price closes outside
+        again.</li>
+      <li><b>No close outside all day means no trade all day.</b> It happens, and sitting out was the trade: the
+        Coach pane grades that as the right answer, not as a day you missed.</li>
+    </ol>
+    <p class="one">Inside the band your job is to wait. Outside it your job is to execute what you already wrote
+      down. This is &ldquo;no setup, no trade&rdquo; with a price attached to it.</p>
+    <button type="button" class="ntzdone" id="ntzDone">Got it &mdash; fold this away</button>
   </div>
+</section>
 
-  <div class="rail" id="rail">
-    <span class="lbl">draw</span>
-    <button class="tool on" data-t="cursor" title="Pointer: pan the chart and read candles (Esc)" aria-label="Pointer"><svg viewBox="0 0 24 24"><path d="M5 3l6 16 2.5-6.5L20 10z"/></svg><small>Pointer</small></button>
-    <button class="tool" data-t="trend" title="Trend line: drag from one point to another" aria-label="Trend line"><svg viewBox="0 0 24 24"><path d="M4 19L20 5"/><circle cx="4" cy="19" r="1.7"/><circle cx="20" cy="5" r="1.7"/></svg><small>Trend</small></button>
-    <button class="tool" data-t="hline" title="Level: tap a price to mark it with a horizontal line; drag it later to move it" aria-label="Horizontal level"><svg viewBox="0 0 24 24"><path d="M3 12h18"/><circle cx="12" cy="12" r="1.7"/></svg><small>Level</small></button>
-    <button class="tool" data-t="fib" title="Fib retracement: drag from a swing low to a swing high" aria-label="Fib retracement"><svg viewBox="0 0 24 24"><path d="M3 5h18M3 10h18M3 14h18M3 19h18"/></svg><small>Fib</small></button>
-    <button class="tool" data-t="rect" title="Box: drag to mark a zone" aria-label="Box"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1.5"/></svg><small>Box</small></button>
-    <button class="tool" data-t="measure" title="Measure: drag to see a move in dollars, percent and bars" aria-label="Measure"><svg viewBox="0 0 24 24"><path d="M4 20V8M4 8l4 3M4 8l-1 4M20 4v12M20 16l-4-3M20 16l1-4"/></svg><small>Measure</small></button>
-    <button class="tool" data-t="erase" title="Eraser: tap a drawing to delete it" aria-label="Eraser"><svg viewBox="0 0 24 24"><path d="M4 16l8-8 6 6-4 4H8z"/><path d="M3 21h18"/></svg><small>Erase</small></button>
-    <button class="tool" id="undo" title="Undo the last drawing (U)" aria-label="Undo last drawing"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h9a6 6 0 010 12H8"/></svg><small>Undo</small></button>
-    <button class="tool" id="clear" title="Clear every drawing" aria-label="Clear all drawings"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><small>Clear</small></button>
-  </div>
+<div class="stage">
+  <div class="chartcol">
+    <div class="toolbar" id="toolbar">
+      <div class="modes" id="modes">
+        <button type="button" data-mode="tf" class="on" title="Timeframe" aria-label="Timeframe"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></button>
+        <button type="button" data-mode="draw" title="Drawing tools" aria-label="Drawing tools"><svg class="i" viewBox="0 0 24 24"><path d="M4 20l4-1 10.5-10.5a2.1 2.1 0 00-3-3L5 16z"/><path d="M13 7l3 3"/></svg></button>
+        <button type="button" data-mode="ind" title="Indicators and chart style" aria-label="Indicators and chart style"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 12h3M11 12h9M4 17h12M20 17h0"/><circle cx="16" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="18" cy="17" r="2"/></svg></button>
+      </div>
+      <div class="tools">
+        <div class="tfbar" id="tfbar"></div>
+        <div class="ov" id="ov"></div>
+      </div>
+      <div class="rail" id="rail">
+        <span class="lbl">draw</span>
+        <button class="tool on" data-t="cursor" title="Pointer: pan the chart and read candles (Esc)" aria-label="Pointer"><svg viewBox="0 0 24 24"><path d="M5 3l6 16 2.5-6.5L20 10z"/></svg><small>Pointer</small></button>
+        <button class="tool" data-t="trend" title="Trend line: drag from one point to another" aria-label="Trend line"><svg viewBox="0 0 24 24"><path d="M4 19L20 5"/><circle cx="4" cy="19" r="1.7"/><circle cx="20" cy="5" r="1.7"/></svg><small>Trend</small></button>
+        <button class="tool" data-t="hline" title="Level: tap a price to mark it with a horizontal line; drag it later to move it" aria-label="Horizontal level"><svg viewBox="0 0 24 24"><path d="M3 12h18"/><circle cx="12" cy="12" r="1.7"/></svg><small>Level</small></button>
+        <button class="tool" data-t="fib" title="Fib retracement: drag from a swing low to a swing high" aria-label="Fib retracement"><svg viewBox="0 0 24 24"><path d="M3 5h18M3 10h18M3 14h18M3 19h18"/></svg><small>Fib</small></button>
+        <button class="tool" data-t="rect" title="Box: drag to mark a zone" aria-label="Box"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1.5"/></svg><small>Box</small></button>
+        <button class="tool" data-t="measure" title="Measure: drag to see a move in dollars, percent and bars" aria-label="Measure"><svg viewBox="0 0 24 24"><path d="M4 20V8M4 8l4 3M4 8l-1 4M20 4v12M20 16l-4-3M20 16l1-4"/></svg><small>Measure</small></button>
+        <button class="tool" data-t="erase" title="Eraser: tap a drawing to delete it" aria-label="Eraser"><svg viewBox="0 0 24 24"><path d="M4 16l8-8 6 6-4 4H8z"/><path d="M3 21h18"/></svg><small>Erase</small></button>
+        <button class="tool" id="undo" title="Undo the last drawing (U)" aria-label="Undo last drawing"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h9a6 6 0 010 12H8"/></svg><small>Undo</small></button>
+        <button class="tool" id="clear" title="Clear every drawing" aria-label="Clear all drawings"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><small>Clear</small></button>
+      </div>
+    </div>
 
-  <div class="actions">
-    <div class="trow">
-      <button id="back" title="Rewind one bar (left arrow)">◀</button>
-      <button class="bnext" id="next">Next bar</button>
-      <button id="auto" title="Play / pause (space)">▶</button>
-      <select id="spd" title="Playback speed">
-        <option value="0.5">0.5x</option><option value="1" selected>1x</option>
-        <option value="2">2x</option><option value="4">4x</option><option value="8">8x</option>
-      </select>
+    <div class="chartbox">
+      <canvas id="cv"></canvas>
+      <div class="chips-tr">
+        <button class="fitbtn" id="fit" type="button" title="Back to the newest bars and the automatic price scale">Reset view</button>
+        <div class="posbar" id="posbar" hidden></div>
+      </div>
+      <div class="hint" id="hint" role="status" aria-live="polite" hidden></div>
+    </div>
+
+    <div class="actions">
+      <div class="trow">
+        <button id="back" title="Rewind one bar (left arrow)">◀</button>
+        <button class="bnext" id="next">Next bar</button>
+        <button id="auto" title="Play / pause (space)">▶</button>
+        <select id="spd" class="dd" title="Playback speed" aria-label="Playback speed">
+          <option value="0.5">0.5x</option><option value="1" selected>1x</option>
+          <option value="2">2x</option><option value="4">4x</option><option value="8">8x</option>
+        </select>
+      </div>
     </div>
   </div>
+
+  <aside class="side" id="side" data-tab="trade">
+    <div class="shead">
+      <button id="sideWide" type="button" title="Widen the panel" aria-label="Widen the panel"><svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg></button>
+      <div class="grabrow"><span id="paneTitle"></span><div class="grab" id="grab" title="Drag down to close, up for the full height"><span></span></div>
+        <button id="sClose" class="sbtn sq" type="button" aria-label="Close">✕</button></div>
+      <div class="sessrow">
+        <!--MP:BACK-->
+        <select id="sdate" class="ssel dd" title="Which recorded day to practise" aria-label="Which recorded day"></select>
+        <button id="sRestart" class="sbtn sq" title="Start this same day again from the 9:30 open" aria-label="Restart this day">↺</button>
+        <button id="sNew" class="sbtn sprim" title="Load a different recorded day">New day</button>
+        <button id="sGuide" class="sbtn sq" title="How this page works" aria-label="How this page works">?</button>
+      </div>
+      <!--MP:NOTE-->
+      <div class="tabs" id="tabs">
+        <button class="tab on" data-p="trade">Trade</button>
+        <button class="tab" data-p="setup">Session</button>
+        <button class="tab" data-p="coach">Coach</button>
+        <button class="tab" data-p="chain">Chain</button>
+        <button class="tab" data-p="fib">Fib</button>
+        <button class="tab" data-p="tape">Tape</button>
+        <button class="tab" data-p="journal">Journal</button>
+        <button class="tab" data-p="rules">Rules</button>
+      </div>
+    </div>
+    <div class="sidebody" id="sidebody"><div class="pane" id="pane"></div></div>
+    <div class="foot">Simulated option quotes for practice. Not live market data, not financial advice.</div>
+  </aside>
 </div>
 
-<div class="right">
-  <div class="tabs" id="tabs">
-    <button class="tab on" data-p="trade">Trade</button>
-    <button class="tab" data-p="setup">Session</button>
-    <button class="tab" data-p="coach">Coach</button>
-    <button class="tab" data-p="chain">Chain</button>
-    <button class="tab" data-p="fib">Fib</button>
-    <button class="tab" data-p="tape">Tape</button>
-    <button class="tab" data-p="journal">Journal</button>
-    <button class="tab" data-p="rules">Rules</button>
-  </div>
-  <div class="pane" id="pane"></div>
+<nav class="tabbar" id="tabbar" aria-label="Panes">
+  <button type="button" data-l="trade" aria-label="Trade"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h16v14l-2-1.5L16 19l-2-1.5L12 19l-2-1.5L8 19l-2-1.5L4 19z"/><path d="M8 9h8M8 13h5"/></svg><small>Trade</small></button>
+  <button type="button" data-l="chain" aria-label="Chain"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="4" cy="6" r=".5"/></svg><small>Chain</small></button>
+  <button type="button" data-l="setup" aria-label="Session"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><small>Session</small></button>
+  <button type="button" data-l="more" aria-label="More"><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/></svg><small>More</small></button>
+</nav>
+<div class="panegrid" id="panegrid" hidden role="menu" aria-label="Choose a pane">
+  <button type="button" data-p="trade">Trade</button>
+  <button type="button" data-p="chain">Chain</button>
+  <button type="button" data-p="setup">Session</button>
+  <button type="button" data-p="coach">Coach</button>
+  <button type="button" data-p="fib">Fib</button>
+  <button type="button" data-p="tape">Tape</button>
+  <button type="button" data-p="journal">Journal</button>
+  <button type="button" data-p="rules">Rules</button>
 </div>
-<footer>Simulated price and simulated option quotes for practice. Not live market data, not financial advice.</footer>
+<button class="unzoom" id="unzoom" type="button" hidden>Zoomed in · tap to reset</button>
 </div>
 
 <div class="tour" id="tour" hidden>
@@ -467,12 +794,12 @@ svg.eq{display:block;width:100%;height:auto}
     <div id="recBody"></div>
   </div>
 </div>
-
 <script>
 /* ================= config ================= */
 const TICKERS={
   SPY :{px:585,v:.00075,iv:.13,inc:1},
   QQQ :{px:498,v:.00095,iv:.17,inc:1},
+  IWM :{px:240,v:.0011,iv:.20,inc:1},   // Russell 2000; $1 strikes, VIX-priced like SPY
   MSFT:{px:432,v:.0012,iv:.24,inc:2.5},
   DELL:{px:121,v:.0021,iv:.42,inc:1},
   AMD :{px:163,v:.0027,iv:.48,inc:1},
@@ -494,7 +821,7 @@ function cfg(t){
 }
 const TFS=[{k:'1m',m:1},{k:'2m',m:2},{k:'5m',m:5},{k:'10m',m:10},{k:'15m',m:15},
   {k:'30m',m:30},{k:'1H',m:60},{k:'4H',m:240},{k:'1D',m:'D'}];
-const MPD=390,HIST=34,OR_MIN=15,LV=[0,.236,.382,.5,.618,.786,1],YEAR=252*390;
+const MPD=390,HIST=34,OR_MIN=15,LV=[0,.382,.618,1],YEAR=252*390;
 let S={};
 const $=id=>document.getElementById(id);
 const val=id=>{const e=$(id);return e?e.value:'';};
@@ -542,10 +869,65 @@ function bs(S0,K,T,iv,type){
  * is scaled by how its own options traded relative to that index, measured
  * from real trades by tools/calibrate-vol.mjs, with the skew measured the same
  * way. Nothing here is a guess about a ticker's volatility.
+ *
+ * The level alone was not enough, because it was held flat across the day on
+ * a clock that ran evenly. A session's variance does not accrue evenly: in the
+ * recorded bars the first half hour carries about a third of the day and the
+ * last half hour about a twentieth (tools/measure-intraday-variance.mjs). A
+ * 0DTE at 3pm has a sixth of the session left but a thirteenth of its
+ * variance, so pricing it on the even clock charged the morning's volatility
+ * all afternoon -- a QQQ 0DTE ran about three times what the market charged.
+ * It cut the other way too: the same expiry measured with a full day left and
+ * with two hours left is a different implied volatility (QQQ, 2026-09-11:
+ * 21.6% against 7.9%), and both were being stored in one field and used as if
+ * they meant the same thing.
+ *
+ * So the anchor is variance, not volatility. The calibration says what one
+ * session of this ticker is worth, converted from whatever time to expiry it
+ * was measured at; the measured curve says how much of that is still ahead at
+ * the minute on screen; and the volatility handed to Black-Scholes is whatever
+ * expresses that variance over the time still on the clock.
  */
 const VOLD=window.MP_VOL||{};
 const VCALS=(window.MP_VOLCAL||[]).slice().sort((a,b)=>a.date<b.date?-1:1);
 const ETFS={SPY:1,QQQ:1,IWM:1,DIA:1};
+/* How a session's variance is spread across its minutes, and what one night
+   between two sessions is worth beside it. Measured from the recorded bars by
+   tools/measure-intraday-variance.mjs; see volatility/intraday.json. */
+const IVAR=window.MP_INTRADAY||null;
+/**
+ * The curve for a ticker: its own where enough of its days have been recorded,
+ * the pooled one otherwise. They are not alike -- the overnight gap is worth
+ * about a tenth of a session on AAPL and a whole one on NVDA -- so pooling
+ * them priced the index ETFs about a third too dear.
+ */
+function ivarFor(sym){
+  if(!IVAR)return null;
+  const own=IVAR.symbols&&IVAR.symbols[sym||S.ticker];
+  return {rem:(own&&own.rem)||IVAR.rem,
+    overnight:own&&own.overnight!=null?own.overnight:IVAR.overnight,
+    ownCurve:!!(own&&own.rem),ownNight:!!(own&&own.overnight!=null),days:own?own.days:0};
+}
+/** The fraction of one session's variance still ahead at minute `m` of it. */
+function varLeft(m,sym){
+  const t=ivarFor(sym);
+  if(!t||!t.rem)return Math.max(0,Math.min(1,(MPD-m)/MPD));   // unmeasured: the even clock
+  return t.rem[Math.max(0,Math.min(MPD,Math.round(m)))];
+}
+/** One overnight gap, in units of a session's variance. */
+function gapVar(sym){const t=ivarFor(sym);return t&&t.overnight!=null?t.overnight:0;}
+/** The variance ahead of minute `m` for a contract expiring `exDays` sessions later. */
+function varAhead(m,exDays,sym){return varLeft(m,sym)+(exDays||0)*(1+gapVar(sym));}
+/**
+ * The same, for a quote measured `tau` trading days from its expiry -- which is
+ * how a calibration records when it was taken. A whole number of days means it
+ * was measured outside the session, so each of those days is a night and a
+ * session; a fraction is the part of a session that was still ahead.
+ */
+function varAtTau(tau,sym){
+  const n=Math.floor(tau+1e-9),f=tau-n;
+  return (f>1e-9?varLeft(MPD*(1-f),sym):0)+n*(1+gapVar(sym));
+}
 /**
  * The calibration to price a ticker with: the latest one measured before the
  * replayed day, so nothing from after it is used. For days older than the first
@@ -571,27 +953,47 @@ function indexAt(name,min){
   if(rec&&rec.o!=null)return {v:rec.o,src:'open'};
   return null;
 }
+/** The horizon the typical-ratio fallback was measured at, since it borrows that calibration. */
+function typicalTau(){
+  const last=VCALS[VCALS.length-1];if(!last)return null;
+  const t=Object.values(last.symbols).map(v=>v.skewT).filter(v=>v>0).sort((a,b)=>a-b);
+  return t.length?t[Math.floor(t.length/2)]:null;
+}
+/**
+ * What one session of this ticker is worth in variance, on the day being
+ * replayed. The calibration measured a volatility at some time to expiry; that
+ * is a quantity of variance, and dividing by how many sessions' worth of
+ * variance stood ahead of it leaves the value of one session.
+ */
 function volModel(min){
   const sym=S.ticker,cal=calFor(sym),name=cal?cal.index:(sym==='SPY'||sym==='IWM'||sym==='DIA'?'VIX':'VXN');
   const lv=indexAt(name,min),last=VCALS[VCALS.length-1];
   const ratio=cal?cal.ratio:typicalRatio(name);
   const level=lv?lv.v:(cal?cal.refLevel:(last&&last.index[name]));
-  if(ratio==null||level==null){
+  const tau=cal?cal.skewT:typicalTau();
+  if(ratio==null||level==null||!(tau>0)){
     // Only reachable in a build with no calibration at all. Say so rather than
     // quietly inventing a number.
-    return {atm:cfg(sym).iv,skew:0,skewT:1,index:name,level:null,src:'none',cal:null,typical:false};
+    const iv=cfg(sym).iv;
+    return {sess:iv*iv/252,vCal:1,atmCal:iv,tau:1,skew:0,index:name,level:null,src:'none',cal:null,typical:false};
   }
-  return {atm:ratio*level/100,skew:cal?cal.skew:0,skewT:cal?cal.skewT:1,index:name,level,
+  const atmCal=ratio*level/100;                  // the volatility the market charged, at the measured horizon
+  const vCal=Math.max(1e-6,varAtTau(tau,sym));   // ... which stood this many sessions' variance from expiry
+  return {sess:atmCal*atmCal*tau/252/vCal,vCal,atmCal,tau,skew:cal?cal.skew:0,index:name,level,
     src:lv?lv.src:'reference',cal,typical:!cal};
 }
+/** The at-the-money volatility at a minute: the variance still ahead, over the time still on the clock. */
+function atmIv(exDays,min){
+  const m=volModel(min),T=Tleft(exDays,min),v=m.sess*varAhead(min,exDays);
+  return T>1e-9&&v>0?Math.sqrt(v/T):1e-6;
+}
 function ivFor(K,S0,exDays,min){
-  const m=volModel(min),x=Math.log(K/S0);
-  // Skew was measured per unit of log-moneyness at skewT days out. The same
-  // move in strike means less as the time left grows, so it scales with 1/sqrt(T).
-  const Td=Math.max(.25,Math.max(0,MPD-min)/MPD+exDays);
-  const k=m.skew*Math.sqrt(m.skewT/Td);
-  const xc=Math.max(-.06,Math.min(.06,x));      // measured within 2% of spot; held flat past 6%
-  return Math.max(m.atm*.5,Math.min(m.atm*2.5,m.atm+k*xc));
+  const m=volModel(min),atm=atmIv(exDays,min);
+  // Skew was measured per unit of log-moneyness at the calibration's own
+  // horizon. The same move in strike means less the more variance is ahead.
+  const k=m.skew*Math.sqrt(m.vCal/Math.max(1e-9,varAhead(min,exDays)));
+  const xc=Math.max(-.06,Math.min(.06,Math.log(K/S0)));   // measured within 2% of spot; held flat past 6%
+  return Math.max(atm*.5,Math.min(atm*2.5,atm+k*xc));
 }
 function Tleft(exDays,min){
   const at=min==null?S.cursor:min;
@@ -612,14 +1014,132 @@ function spreadOf(mid){
   const bid=Math.max(0,Math.floor((mid-width/2)/tick+1e-9)*tick);
   return {bid:+bid.toFixed(2),ask:+(bid+width).toFixed(2)};
 }
-/** A quote for one contract. `atMin` prices it at another minute of the day; the default is now. */
+/** What one contract is worth at a given minute, before the spread is put round it. */
+function valueAt(K,type,exDays,under,min){
+  return bs(under,K,Tleft(exDays,min),ivFor(K,under,exDays,min),type);
+}
+/* ================= recorded quotes ================= */
+/**
+ * The real bid and ask, where somebody was watching.
+ *
+ * Everything above is a model, and a model cannot be exact. Yahoo serves the
+ * chain as it stands and keeps no history, so the only way to have the real
+ * price of a contract at 11:04 is to have been reading the chain at 11:04 --
+ * which is what tools/record-options.mjs does, filing options/<SYM>/<DATE>.json
+ * beside the candles. A day that was recorded quotes those numbers; a day, a
+ * strike or a minute that was not falls back to the model and says so. Nothing
+ * is shown as a real quote unless it is one.
+ */
+let ROPT=null,ROPTfor=null;
+function loadRecordedOptions(sym,date){
+  const key=sym+'|'+date;
+  if(ROPTfor===key)return;
+  ROPTfor=key;ROPT=null;
+  if(!date)return;
+  fetch('options/'+encodeURIComponent(sym)+'/'+date+'.json',{cache:'force-cache'})
+    .then(r=>r.ok?r.json():null)
+    .then(j=>{
+      if(ROPTfor!==key||!j||!j.minutes||!j.minutes.length)return;
+      ROPT=j;
+      const n=j.minutes.length,lg=recLag();
+      log('Recorded option quotes for this day: '+n+' minute'+(n===1?'':'s')+' of real bid and ask across '+
+        j.expiries.map(e=>e.date).join(', ')+
+        (j.sources&&j.sources.length?', from '+j.sources.join(' and '):'')+
+        (lg==null?'':', typically '+lg+'s behind the clock when read')+
+        '. Contracts nobody recorded are still modelled, and marked.',lg!=null&&lg>90?'y':'hl');
+      renderAll();
+    })
+    .catch(()=>{});
+}
+/** How far behind the clock the feed was, typically, across the recorded day. */
+function recLag(){
+  const v=((ROPT&&ROPT.lag)||[]).filter(x=>x>=0).sort((a,b)=>a-b);
+  return v.length?v[Math.floor(v.length/2)]:null;
+}
+/** Which feed supplied the minute a quote came from. */
+function recSource(min){
+  if(!ROPT||!ROPT.src||!ROPT.sources)return null;
+  let row=-1;
+  for(let i=0;i<ROPT.minutes.length;i++){if(ROPT.minutes[i]<=min)row=i;else break;}
+  return row>=0?ROPT.sources[ROPT.src[row]]||null:null;
+}
+/** The recorded expiry a tenor means on the replayed day, or nothing where none was recorded. */
+function recExpiry(exDays){
+  if(!ROPT||!ROPT.expiries||!ROPT.expiries.length)return null;
+  const d=S.replay&&S.replay.date;if(!d)return null;
+  if(!exDays)return ROPT.expiries.some(e=>e.date===d)?d:null;
+  const want=addTradingDays(d,exDays);
+  let best=null,bd=1e9;
+  for(const e of ROPT.expiries){
+    if(e.date<=d)continue;
+    const gap=Math.abs((Date.parse(e.date)-Date.parse(want))/86400000);
+    if(gap<bd){bd=gap;best=e.date;}
+  }
+  // A tenor with no expiry near it was never listed, so say nothing rather than
+  // quoting a contract that is not the one being asked for.
+  return bd<=3?best:null;
+}
+/**
+ * How stale a recorded quote may be before the model takes over. A minute the
+ * recorder missed can borrow the one before it -- an option does not move much
+ * in sixty seconds -- but only just. Anything older is not this minute's price,
+ * and presenting it as one would be the same lie as generating it: a quote from
+ * 1:58 shown as the price at 3:00 is worse than an honest model.
+ */
+const MAXSTALE=2;
+/** The recorded bid and ask for one contract at one minute, or nothing. */
+function recQuote(K,type,exDays,min){
+  const exp=recExpiry(exDays);if(!exp)return null;
+  const e=ROPT.expiries.find(x=>x.date===exp);if(!e)return null;
+  const k=e.strikes.indexOf(K);if(k<0)return null;
+  let row=-1;
+  for(let i=0;i<ROPT.minutes.length;i++){if(ROPT.minutes[i]<=min)row=i;else break;}
+  for(;row>=0;row--){
+    if(min-ROPT.minutes[row]>MAXSTALE)return null;
+    const line=e[type][row];if(!line)continue;
+    const b=line[k*2],a=line[k*2+1];
+    if(b>=0&&a>0)return {bid:b/100,ask:a/100,at:ROPT.minutes[row],age:min-ROPT.minutes[row]};
+  }
+  return null;
+}
+/** The volatility a real price implies, so the greeks beside it are its own and not the model's. */
+function ivFromPrice(px,K,S0,T,type){
+  if(!(px>0)||!(T>0))return null;
+  let lo=.005,hi=5;
+  if(bs(S0,K,T,hi,type).price<px||bs(S0,K,T,lo,type).price>px)return null;
+  for(let i=0;i<60;i++){const m=(lo+hi)/2;bs(S0,K,T,m,type).price>px?hi=m:lo=m;}
+  return lo;
+}
+/**
+ * A quote for one contract. `atMin` prices it at another minute of the day; the
+ * default is now.
+ *
+ * A recorded bid and ask is used exactly as recorded, and the greeks beside it
+ * come from the volatility that price implies rather than from the model.
+ * Otherwise the model prices it, and time decay is the next hour of the measured
+ * variance curve rather than the Black-Scholes theta, which assumes every minute
+ * decays alike: on this clock the first hour of the day costs several times noon.
+ */
 function quote(K,type,exDays,under,atMin){
   const min=atMin==null?S.cursor:atMin;
-  const T=Tleft(exDays,min),iv=ivFor(K,under,exDays,min);
+  const T=Tleft(exDays,min);
+  const rec=recQuote(K,type,exDays,min);
+  if(rec){
+    const mid=(rec.bid+rec.ask)/2;
+    const iv=ivFromPrice(mid,K,under,T,type)||ivFor(K,under,exDays,min);
+    const g=bs(under,K,T,iv,type);
+    const then=recQuote(K,type,exDays,Math.min(MPD,min+60));
+    const hr=then?(then.bid+then.ask)/2-mid:valueAt(K,type,exDays,under,Math.min(MPD,min+60)).price-g.price;
+    return {...g,mid,bid:rec.bid,ask:rec.ask,iv,T,thetaHr:Math.min(0,hr),rec:true,recAt:rec.at,recAge:rec.age};
+  }
+  const iv=ivFor(K,under,exDays,min);
   const g=bs(under,K,T,iv,type);
   const mid=Math.max(0,g.price),sp=spreadOf(mid);
-  return {...g,mid,bid:sp.bid,ask:sp.ask,iv,T,thetaHr:g.theta*60};
+  const hr=valueAt(K,type,exDays,under,Math.min(MPD,min+60)).price-g.price;
+  return {...g,mid,bid:sp.bid,ask:sp.ask,iv,T,thetaHr:Math.min(0,hr),rec:false};
 }
+/** Whether the ticket is quoting recorded prices for the contract on it right now. */
+function recNow(){return !!(ROPT&&recQuote(S.strike,'call',S.exDays,S.cursor));}
 /** The same contract at 9:30, on the day's opening price: what "up or down today" is measured from. */
 function openQuote(K,type,exDays){
   return quote(K,type,exDays,S.mins[todayStart()].o,0);
@@ -654,15 +1174,54 @@ function eventNote(exDays){
 function volSource(){
   const m=volModel(S.cursor);
   if(m.src==='none')return 'No volatility calibration is embedded in this build, so option prices fall back to a fixed estimate.';
-  const lvl=m.level.toFixed(2),pct=(m.atm*100).toFixed(1)+'%';
+  const lvl=m.level.toFixed(2),pct=(atmIv(S.exDays,S.cursor)*100).toFixed(1)+'%';
   const where=m.src==='minute'?m.index+' at '+lbl(HIST,S.cursor)+' was '+lvl:
     m.src==='open'?m.index+' opened the day at '+lvl+' (no minute record for this day)':
     m.index+' '+lvl+' from the last calibration (no record for this day)';
   const how=m.typical?S.ticker+' has not been measured yet, so it is priced like the typical measured stock':
     S.ticker+' options trade at '+m.cal.ratio.toFixed(2)+'&times; '+m.index+' ('+(S.blind?'measured from real trades':m.cal.date===(S.replay&&S.replay.date)?'measured at this day&rsquo;s close':'measured '+m.cal.date+(m.cal.carried?', carried back to this earlier day':''))+')';
-  return 'At-the-money volatility <b>'+pct+'</b>: '+where+'; '+how+'.';
+  // The level is one number for the day; what a contract is actually charged
+  // is the share of it still ahead, which is why the figure moves with the clock.
+  const t=ivarFor();
+  const ahead=t&&t.rem
+    ?' <b>'+(varLeft(S.cursor)*100).toFixed(0)+'%</b> of the session&rsquo;s variance is still ahead at '+lbl(HIST,S.cursor)+
+      ' (an even clock would say '+((MPD-S.cursor)/MPD*100).toFixed(0)+'%), from '+
+      (t.ownCurve?S.ticker+'&rsquo;s own '+t.days+' recorded days':'all '+IVAR.sessions+' recorded sessions, since '+S.ticker+' has too few of its own')+
+      '; a night is worth '+gapVar().toFixed(2)+' of a session'+(t.ownNight?'':' (pooled)')+'.'
+    :'';
+  const modelled='At-the-money volatility <b>'+pct+'</b> for this expiry right now: '+where+'; '+how+'.'+ahead;
+  const r=ROPT&&recQuote(S.strike,'call',S.exDays,S.cursor);
+  if(r){
+    const src=recSource(r.at),lg=recLag();
+    // A feed that was minutes behind did not record this minute's price, whatever
+    // minute it was filed under, and that has to be on the ticket rather than buried.
+    const late=lg!=null&&lg>90
+      ?' <b class="rl bad">The feed was about '+Math.round(lg/60)+' minute'+(Math.round(lg/60)===1?'':'s')+
+        ' behind the clock, so these are its prices from around '+lbl(HIST,Math.max(0,r.at-Math.round(lg/60)))+'.</b>'
+      :lg!=null?' The feed was '+lg+'s behind when it was read.':'';
+    return '<b>Recorded quotes.</b> This contract&rsquo;s bid and ask are the real ones'+
+      (src?', from '+src:'')+', read at '+lbl(HIST,r.at)+
+      (r.age?' ('+r.age+' minute'+(r.age===1?'':'s')+' before this bar; that minute was not recorded)':'')+
+      ' on the day being replayed, not modelled.'+late+' '+
+      (ROPT.minutes.length<MPD?'<i>'+ROPT.minutes.length+' of '+MPD+' minutes of this session were recorded.</i> ':'')+
+      'Anything the recording missed falls back to the model: '+modelled;
+  }
+  if(ROPT)return '<b>Modelled.</b> This day has recorded quotes, but none for this contract at this minute'+
+    (recExpiry(S.exDays)?'':' (no recording of this expiry)')+', so it is priced by the model. '+modelled;
+  return modelled;
 }
 function strikes(under){
+  // Where the chain was recorded, offer the strikes that were actually
+  // recorded around the price: a strike nobody caught cannot be quoted for real.
+  const exp=recExpiry(S.exDays);
+  if(exp){
+    const e=ROPT.expiries.find(x=>x.date===exp);
+    if(e&&e.strikes.length){
+      let mid=0;e.strikes.forEach((k,i)=>{if(Math.abs(k-under)<Math.abs(e.strikes[mid]-under))mid=i;});
+      const out=e.strikes.slice(Math.max(0,mid-5),mid+6);
+      if(out.length)return out;
+    }
+  }
   const inc=cfg(S.ticker).inc;
   const atm=Math.round(under/inc)*inc;
   const out=[];for(let k=-5;k<=5;k++)out.push(+(atm+k*inc).toFixed(2));
@@ -733,14 +1292,25 @@ function barsOf(r){
 /** The days that can be picked: the newest twelve of each ticker. Older ones are history behind them. */
 const PICK=(window.MP_SESSIONS||[]).filter(r=>!r.hist);
 /*
- * The library: every day ever recorded, published beside the page as one
- * pack per ticker, with an index of what is there. Surprise me and New day
- * draw from it, so a day cannot be learned and traded on memory; the picker
- * stays on the newest twelve, which are embedded. Where the packs cannot be
- * fetched -- the page opened from disk -- the embedded days stand in.
+ * The library: every day ever recorded, published beside the page as one pack
+ * per ticker, with an index of what is there. The page embeds only the newest
+ * days, so that it still opens from disk, but the picker lists the whole
+ * library and fetches a pack when an older day is chosen. Nothing is capped at
+ * what happens to be embedded: the point of the library is that it only grows,
+ * and a pool you cannot get to the bottom of is a pool you cannot learn.
+ *
+ * Where the packs cannot be fetched -- the page opened from a file -- the
+ * embedded days stand in and the tape says so.
  */
 let LIB=null;const PACKS={};
-fetch('sessions/index.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&typeof j==='object'){LIB=j;if(S.tab==='setup')pane();}}).catch(()=>{});
+fetch('sessions/index.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{
+  if(!j||typeof j!=='object')return;
+  LIB=j;
+  // The index arrives after the first render, so both pickers are rebuilt on it.
+  if(typeof renderTickers==='function')renderTickers();
+  if(typeof renderSessRow==='function')renderSessRow();
+  if(S.tab==='setup')pane();
+}).catch(()=>{});
 function libDates(sym){return LIB&&LIB[sym]?LIB[sym]:PICK.filter(r=>r.symbol===sym).map(r=>r.date).sort();}
 function libSymbols(){return LIB?Object.keys(LIB).sort():[...new Set(PICK.map(r=>r.symbol))].sort();}
 function libSize(){return libSymbols().reduce((a,s)=>a+libDates(s).length,0);}
@@ -867,6 +1437,7 @@ function init(ticker,regime,vm,seed,replayPick){
   }else{
     log('Generated session — '+ticker+'. No recorded days are embedded, so this is a simulated random walk.','y');
   }
+  loadRecordedOptions(ticker,live?live.date:null);
   resize();renderAll();
 }
 function log(t,c){S.log.push({t,c});if(S.tab==='tape')pane();}
@@ -961,8 +1532,10 @@ function setRange(){
   const hi=Math.max(...seg.map(b=>b.h)),lo=Math.min(...seg.map(b=>b.l)),r=hi-lo;
   S.or={hi,lo,r};
   const F={};LV.forEach(p=>F[(p*100).toFixed(1).replace('.0','')+'%']=lo+r*p);
-  F['127.2%']=hi+r*.272;F['161.8%']=hi+r*.618;F['261.8%']=hi+r*1.618;
-  F['-27.2%']=lo-r*.272;F['-61.8%']=lo-r*.618;F['-161.8%']=lo-r*1.618;
+  // The levels that get used: 0, 38.2, 61.8 and 100, then the 127.2 and 161.8
+  // extensions each way. 23.6, 50, 78.6 and 261.8 were clutter.
+  F['127.2%']=hi+r*.272;F['161.8%']=hi+r*.618;
+  F['-27.2%']=lo-r*.272;F['-61.8%']=lo-r*.618;
   S.fib=F;
 }
 
@@ -998,7 +1571,7 @@ function autoFib(){
   else return null;
   const r=b.p-a.p,up=r>0,lv={};
   LV.forEach(p=>lv[(p*100).toFixed(1).replace('.0','')+'%']=b.p-r*p);
-  lv['127.2%']=b.p+r*.272;lv['161.8%']=b.p+r*.618;lv['261.8%']=b.p+r*1.618;
+  lv['127.2%']=b.p+r*.272;lv['161.8%']=b.p+r*.618;
   return {a:{m:s+a.i,p:a.p},b:{m:s+b.i,p:b.p},up,lv,src,thr,live:src==='swing'&&b===cur};
 }
 /** The auto fib for the bars on screen, computed once per revealed minute. */
@@ -1290,25 +1863,26 @@ function trim(f){if(!S.pos)return;exit(price(),Math.max(1,Math.round(S.pos.qty*f
 /* ================= canvas ================= */
 const cv=$('cv'),cx=cv.getContext('2d');
 let G={};
+/**
+ * The canvas is exactly its box: the chart takes whatever the shell leaves it
+ * after the header, the toolbar and the transport row, on any screen. The
+ * page never scrolls, so Safari's address bar no longer collapses and expands
+ * under a gesture, which is what used to change the height mid-drag.
+ */
 function resize(){
-  const w=cv.parentElement.clientWidth;
-  const desktop=window.innerWidth>=900;
-  // On a phone the height is fixed once per width. Safari's address bar
-  // collapses and expands as you scroll, which changes innerHeight and fired
-  // a resize on every gesture -- the chart changed height under your fingers
-  // and the whole page shifted. Only a change of width (a rotation) resizes it.
-  let h;
-  if(desktop)h=Math.round(Math.min(540,w*.5));
-  else if(G.hFor===w&&G.h)h=G.h;
-  else h=Math.round(Math.min(window.innerHeight*.46,430));
-  G.hFor=w;
-  const dpr=window.devicePixelRatio||1;
-  cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';
-  cx.setTransform(dpr,0,0,dpr,0,0);
-  G.w=w;G.h=h;draw();
+  const box=cv.parentElement,w=box.clientWidth,h=box.clientHeight;
+  if(w&&h&&(G.w!==w||G.h!==h)){
+    const dpr=window.devicePixelRatio||1;
+    cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+    cv.style.width=w+'px';cv.style.height=h+'px';
+    cx.setTransform(dpr,0,0,dpr,0,0);
+    G.w=w;G.h=h;
+  }
+  draw();
 }
 window.addEventListener('resize',resize);
 window.addEventListener('orientationchange',()=>setTimeout(resize,220));
+if(window.ResizeObserver)new ResizeObserver(()=>resize()).observe(cv.parentElement);
 
 /* ============ chart text ============ */
 // TradingView draws its axes in the system UI face at about 12px, in a light
@@ -1337,24 +1911,35 @@ function scale(){
   const count=Math.max(10,Math.min(S.view.count,B.length));
   const left=Math.max(0,right-count+1);
   const vis=B.slice(left,right+1);if(!vis.length)return null;
-  let lo,hi;
-  if(S.yMan){lo=S.yMan.lo;hi=S.yMan.hi;}
-  else{
-    lo=Math.min(...vis.map(b=>b.l));hi=Math.max(...vis.map(b=>b.h));
-    const todayVis=vis.some(b=>b.day===HISTN);
-    if(S.ind.or&&S.or&&todayVis){lo=Math.min(lo,S.or.lo);hi=Math.max(hi,S.or.hi);}
-    if(S.pos)[S.pos.stopU,S.pos.targetU].forEach(v=>{if(v!=null){lo=Math.min(lo,v);hi=Math.max(hi,v);}});
-    const pd=(hi-lo)*.07||1;lo-=pd;hi+=pd;
+  // The auto-fit range for whatever is visible right now, computed whether
+  // or not a manual stretch is active: it is what a manual range is checked
+  // against below, and it is what draws when there is none.
+  let naLo=Math.min(...vis.map(b=>b.l)),naHi=Math.max(...vis.map(b=>b.h));
+  const todayVis=vis.some(b=>b.day===HISTN),daySpan=new Set(vis.map(b=>b.day)).size;
+  if(S.ind.or&&S.or&&todayVis&&daySpan<=2){naLo=Math.min(naLo,S.or.lo);naHi=Math.max(naHi,S.or.hi);}
+  if(S.pos)[S.pos.stopU,S.pos.targetU].forEach(v=>{if(v!=null){naLo=Math.min(naLo,v);naHi=Math.max(naHi,v);}});
+  const naPad=(naHi-naLo)*.07||1;naLo-=naPad;naHi+=naPad;
+  // A manual stretch (drag or pinch on the price axis) is honoured only while
+  // it still roughly covers what has scrolled into view. Panning or zooming
+  // time used to leave it framing bars that are long gone -- $700 stuck on
+  // screen while the visible candles trade at $50 -- so it is dropped, and
+  // the chart re-fits itself, the moment it stops meaningfully overlapping.
+  if(S.yMan){
+    const overlap=Math.min(S.yMan.hi,naHi)-Math.max(S.yMan.lo,naLo);
+    const span=Math.max(S.yMan.hi-S.yMan.lo,naHi-naLo)||1;
+    if(overlap<span*.25)S.yMan=null;
   }
+  const lo=S.yMan?S.yMan.lo:naLo,hi=S.yMan?S.yMan.hi:naHi;
   // The price axis is as wide as its widest label rather than a fixed 64px:
   // larger type needs a wider axis, and a guess that is too small clips digits.
   cx.font=cfont(F,500);
   const padR=Math.max(50,Math.ceil(Math.max(cx.measureText(hi.toFixed(2)).width,cx.measureText(lo.toFixed(2)).width))+18);
+  cv.parentElement.style.setProperty('--axisw',padR+'px');
   // RGAP keeps empty chart between the newest candle and the axis. Its only job
   // is to clear the auto-fib labels, which are right-aligned to the axis; with
   // those off, the candles get the room instead.
   cx.font=cfont(F-1,600);
-  const RGAP=S.ind.fib?Math.ceil(cx.measureText('-161.8%').width)+18:16;
+  const RGAP=S.ind.fib?Math.ceil(cx.measureText('161.8%').width)+18:16;
   const cw=(G.w-padL-padR-RGAP)/count;
   G={...G,padL,padR,padT,padB,volH,rsiH,ph,lo,hi,cw,left,right,count,B,RGAP,
     x:i=>padL+(i-left+.5)*cw,
@@ -1391,7 +1976,7 @@ function tag(t,x,y,c,bg){const F=fs();cx.save();cx.font=cfont(F-1,600);
 
 function draw(){
   if(!S.mins||!scale())return;
-  const {w,h,padL,padR,padT,ph,volH,rsiH,cw,B,left,right}=G;
+  const {w,h,padL,padR,padT,ph,volH,rsiH,cw,B,left,right,lo,hi}=G;
   cx.clearRect(0,0,w,h);cx.fillStyle='#0a0e14';cx.fillRect(0,0,w,h);
   const F=fs();
   // Price grid on round steps, spaced so the labels never crowd each other.
@@ -1456,8 +2041,13 @@ function draw(){
     for(let i=left;i<=right;i++){const b=B[i],bh=mx?(b.v/mx)*vh:0;
       cx.fillStyle=b.c>=b.o?'rgba(45,212,167,.22)':'rgba(244,82,95,.22)';
       cx.fillRect(G.x(i)-bwv/2,padT+ph-bh,bwv,bh);}}
-  const todayVis=B.slice(left,right+1).some(b=>b.day===HISTN);
-  if(S.ind.or&&S.or&&todayVis){
+  const visB=B.slice(left,right+1),todayVis=visB.some(b=>b.day===HISTN);
+  // These are measured against a single session; spread across a multi-day
+  // zoomed-out view they stop being readable and just crowd the candles, so
+  // they wait for the visible span to narrow back down to about one or two
+  // days before they draw at all.
+  const zoomedIn=new Set(visB.map(b=>b.day)).size<=2;
+  if(S.ind.or&&S.or&&todayVis&&zoomedIn){
     cx.save();cx.fillStyle='rgba(109,156,245,.06)';
     cx.fillRect(padL,G.y(S.or.hi),w-padL-padR,G.y(S.or.lo)-G.y(S.or.hi));cx.restore();
     ln(padL,G.y(S.or.hi),w-padR,G.y(S.or.hi),'rgba(109,156,245,.7)',1.2);
@@ -1466,7 +2056,7 @@ function draw(){
   // The levels a day is traded against: yesterday's high, low and close, and
   // the open. Drawn only when they are in view, so a stretched scale does not
   // pull the chart flat to fit a level a dollar away.
-  if(S.ind.lvl&&todayVis){
+  if(S.ind.lvl&&todayVis&&zoomedIn){
     const s0=todayStart(),L=[['open',S.mins[s0].o,'#9aa4b4']];
     if(HISTN>0){
       const pd=S.mins.slice(s0-MPD,s0);
@@ -1485,9 +2075,9 @@ function draw(){
   }
   // auto fib: the last swing's levels, labelled in the axis gutter, with the
   // swing itself drawn faintly from its start to its end
-  const AF=S.ind.fib&&todayVis?getAutoFib():null;
+  const AF=S.ind.fib&&todayVis&&zoomedIn?getAutoFib():null;
   if(AF){
-    const prio=['0%','100%','161.8%','127.2%','50%','61.8%','38.2%','261.8%','78.6%','23.6%'];
+    const prio=['0%','100%','161.8%','127.2%','61.8%','38.2%'];
     const x0=G.x(barIdxForMin(AF.a.m)),x1=G.x(barIdxForMin(AF.b.m));
     ln(x0,G.y(AF.a.p),x1,G.y(AF.b.p),'rgba(180,143,173,.45)',1.2,[4,3]);
     [[x0,AF.a.p],[x1,AF.b.p]].forEach(([X,p])=>{cx.beginPath();cx.arc(X,G.y(p),3,0,6.284);cx.fillStyle='#b48ead';cx.fill();});
@@ -1621,6 +2211,17 @@ function draw(){
   flushLtags();
   cx.restore();   // end of the second price-pane clip
 
+  // A wick reaching past the price frame used to just clip at the edge with
+  // nothing said about it -- indistinguishable from the data being gone. A
+  // manual stretch or a spike can still put a bar out of frame; now it says so.
+  {let hiOff=false,loOff=false;
+   for(let i=left;i<=right;i++){const b=B[i];if(b.h>hi)hiOff=true;if(b.l<lo)loOff=true;}
+   const chev=(y,up)=>{cx.save();cx.fillStyle='rgba(233,237,245,.55)';cx.beginPath();
+     const cx0=padL+(w-padL-padR)/2,d=up?-1:1;
+     cx.moveTo(cx0-7,y+6*d);cx.lineTo(cx0,y);cx.lineTo(cx0+7,y+6*d);cx.lineTo(cx0,y+2.5*d);cx.closePath();cx.fill();cx.restore();};
+   if(hiOff)chev(padT+3,true);
+   if(loOff)chev(padT+ph-3,false);}
+
   if(S.hover&&S.hover.in){const{mx,my}=S.hover;
     ln(mx,padT,mx,padT+ph,'rgba(223,230,239,.24)',1,[3,3]);
     ln(padL,my,w-padR,my,'rgba(223,230,239,.24)',1,[3,3]);
@@ -1630,14 +2231,17 @@ function draw(){
     if(y>padT&&y<padT+ph)tag(last.c.toFixed(2),w-padR+1,y,'#06090f',last.c>=last.o?'#26a37a':'#e0524a');}
   // On a phone the bar readout lives in the chart's corner, TradingView style,
   // instead of a line in the sticky header; the hovered bar when there is one.
+  // Pushed down clear of the floating timeframe/draw/indicator toolbar, which
+  // sits on top of the chart's own top-left corner on a phone -- otherwise
+  // this drew directly underneath it and was never seen.
   if(w<600){
     let b=last,when='';
     if(S.hover&&S.hover.in){const bi=Math.round(G.ix(S.hover.mx));if(bi>=0&&bi<B.length){b=B[bi];
       when=(tfMin()==='D'?dayLbl(b.day):(b.day===HISTN?'':dayLbl(b.day)+' ')+tlblAbs(b.t,!!b.x))+'  ';}}
     if(b){cx.save();cx.font=cfont(F-1,600);cx.textBaseline='top';cx.fillStyle='rgba(11,16,23,.75)';
       const t=when+'O '+b.o.toFixed(2)+'  H '+b.h.toFixed(2)+'  L '+b.l.toFixed(2)+'  C '+b.c.toFixed(2)+'  V '+(b.v/1000).toFixed(0)+'k';
-      const tw=cx.measureText(t).width;cx.fillRect(padL+2,padT,tw+10,F+6);
-      cx.fillStyle=b.c>=b.o?'#2dd4a7':'#f4525f';cx.fillText(t,padL+7,padT+3);cx.restore();}
+      const oy=padT+46,tw=cx.measureText(t).width;cx.fillRect(padL+2,oy,tw+10,F+6);
+      cx.fillStyle=b.c>=b.o?'#2dd4a7':'#f4525f';cx.fillText(t,padL+7,oy+3);cx.restore();}
   }
   $('fit').classList.toggle('show',!!S.yMan||S.view.right!=null);
 }
@@ -1673,7 +2277,7 @@ function shape(d,prev,k){
 }
 
 /* ============ TradingView-style axis interaction ============ */
-const pts=new Map();let drag=null,pinch=null,lastTapAxis=0;
+const pts=new Map();let drag=null,pinch=null,lastTapAxis=0,lastTapBody=0,lastTapPos=null;
 function pos(e){const r=cv.getBoundingClientRect();return{mx:e.clientX-r.left,my:e.clientY-r.top};}
 function inYAxis(mx){return mx>G.w-G.padR;}
 function inXAxis(my){return my>G.padT+G.ph+G.volH+(G.rsiH||0)+2;}
@@ -1729,7 +2333,7 @@ cv.addEventListener('pointerdown',e=>{
       count:S.view.count,lo:G.lo,hi:G.hi};S.pend=null;return;}
   if(inYAxis(mx)){
     const now=Date.now();
-    if(now-lastTapAxis<300){S.yMan=null;lastTapAxis=0;draw();return;}
+    if(now-lastTapAxis<300){S.yMan=null;lastTapAxis=0;hint('Price scale fit to what is on screen.');draw();return;}
     lastTapAxis=now;
     lockY();drag={mode:'yaxis',my,lo:S.yMan.lo,hi:S.yMan.hi};return;
   }
@@ -1740,6 +2344,10 @@ cv.addEventListener('pointerdown',e=>{
     if(h){const d=S.draw[h.k];S.sel=h.k;
       drag={mode:'shape',k:h.k,part:h.part,mx,my,m1:d.m1,p1:d.p1,m2:d.m2,p2:d.p2,m0:minAt(mx),y0:G.yp(my)};draw();return;}
     S.sel=null;
+    const now2=Date.now();
+    if(now2-lastTapBody<300&&lastTapPos&&Math.hypot(mx-lastTapPos.mx,my-lastTapPos.my)<24){
+      lastTapBody=0;S.yMan=null;hint('Price scale fit to what is on screen.');draw();return;}
+    lastTapBody=now2;lastTapPos={mx,my};
     drag={mode:'pan',mx,my,right:G.right,lo:G.lo,hi:G.hi};S.hover={mx,my,in:1};draw();return;}
   if(S.tool==='erase'){erase(mx,my);draw();return;}
   const m=minAt(mx),p=snap(my,mx);
@@ -1752,7 +2360,8 @@ cv.addEventListener('pointermove',e=>{
     const[a,b]=[...pts.values()];
     const dx=Math.max(1,Math.abs(a.mx-b.mx)),dy=Math.max(1,Math.abs(a.my-b.my));
     S.view.count=Math.max(12,Math.min(400,Math.round(pinch.count*pinch.dx/dx)));
-    if(Math.abs(dy/pinch.dy-1)>.06){
+    const dyChange=Math.abs(dy/pinch.dy-1),dxChange=Math.abs(dx/pinch.dx-1);
+    if(dyChange>.18&&dyChange>dxChange*1.3){
       lockY();const mid=(pinch.lo+pinch.hi)/2,r=(pinch.hi-pinch.lo)*pinch.dy/dy;
       S.yMan={lo:mid-r/2,hi:mid+r/2};}
     draw();return;
@@ -1846,9 +2455,12 @@ function headline(){
   paintPosBar();paintAcct();
   const b=S.mins[revealed()-1];
   $('px').textContent='$'+b.c.toFixed(2);
-  const open=S.mins[todayStart()].o,d=b.c-open;
+  const open=S.mins[todayStart()].o,d=b.c-open,pct=(d>=0?'+':'')+(d/open*100).toFixed(2)+'%';
   const e=$('chg');e.className='chg '+(d>=0?'u':'d');
-  e.textContent=(d>=0?'+':'')+d.toFixed(2)+' ('+(d>=0?'+':'')+(d/open*100).toFixed(2)+'%)';
+  // The dollar change is dropped on a phone: it was most of this chip's
+  // ~104px, in a header that also needs room for the account pill, and the
+  // percentage is the more useful number of the two at a glance anyway.
+  e.textContent=window.innerWidth<600?pct:(d>=0?'+':'')+d.toFixed(2)+' ('+pct+')';
   $('clk').textContent=lbl(HIST,S.cursor)+(S.cursor>=MPD?' close':'');
   $('sub').textContent=S.tf+' · '+(S.mode==='options'?'options':'shares');
   const B=bars(),L=B[B.length-1];
@@ -1867,7 +2479,9 @@ function btns(){
 }
 
 function pane(){
-  const p=$('pane');
+  const p=$('pane'),sd=$('side');
+  if(sd&&sd.dataset.tab!==S.tab)sd.dataset.tab=S.tab;
+  if(typeof paintLaunchers==='function')paintLaunchers();
   if(S.tab!=='rules')p.dataset.rules='';
   if(S.tab==='trade'){
     // Same ticket as last time? Then only the numbers move. See ticketKey().
@@ -2219,7 +2833,7 @@ function wireTrade(){
     const q=b.dataset.q,need=(what)=>{log(what,'y');return;};
     if(['far','mid','t127','t161','mm'].includes(q)&&!S.or)return need('The opening range forms at 9:45.');
     if(q==='far')$('stop').value=(bull?S.or.lo:S.or.hi).toFixed(2);
-    if(q==='mid')$('stop').value=S.fib['50%'].toFixed(2);
+    if(q==='mid')$('stop').value=((S.or.hi+S.or.lo)/2).toFixed(2);
     if(q==='t127')$('tgt').value=(bull?S.fib['127.2%']:S.fib['-27.2%']).toFixed(2);
     if(q==='t161')$('tgt').value=(bull?S.fib['161.8%']:S.fib['-61.8%']).toFixed(2);
     if(q==='mm')$('tgt').value=(bull?S.or.hi+S.or.r:S.or.lo-S.or.r).toFixed(2);
@@ -2277,14 +2891,14 @@ function wireChain(){
       if(td.dataset.t)S.optType=td.dataset.t;
       S.mode='options';
       log('Loaded '+S.strike+' '+S.optType+' '+exLabel(S.exDays)+' into the ticket.','hl');
-      S.tab='trade';document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.p==='trade'));
+      setTab('trade');
       renderAll();});});
 }
 function paneFib(){
   const c=price();
   const AF=getAutoFib();let auto='';
   if(AF){
-    const aorder=['261.8%','161.8%','127.2%','0%','23.6%','38.2%','50%','61.8%','78.6%','100%'];
+    const aorder=['161.8%','127.2%','0%','38.2%','61.8%','100%'];
     let an=null,ad=1e9;aorder.forEach(k=>{const d=Math.abs(AF.lv[k]-c);if(d<ad){ad=d;an=k;}});
     const when=m=>{const d=Math.floor(m/MPD),mm=m-d*MPD;return (d===HISTN?'':dayLbl(d)+' ')+tlbl(mm+1);};
     const what=AF.src==='swing'?(AF.up?'the last swing up':'the last swing down')+(AF.live?', still running':''):AF.src==='day'?'the day\'s range so far':'yesterday\'s range';
@@ -2294,7 +2908,7 @@ function paneFib(){
       return `<div class="fibrow ${ext?'ext':''} ${edge?'edge':''} ${k===an?'near':''}"><span class="k">${k}${edge?`<small>${k==='0%'?'end of the move':'start of the move'}</small>`:''}</span><span>${AF.lv[k].toFixed(2)}<small>${dist>0?'+':''}${dist}%</small></span></div>`;}).join('');
   }
   if(!S.fib)return auto+'<h3 class="sp">Opening range</h3><div class="empty">Forms at 9:45, from the first 15 minutes. Its levels appear here then.</div>';
-  const order=['261.8%','161.8%','127.2%','100%','78.6%','61.8%','50%','38.2%','23.6%','0%','-27.2%','-61.8%','-161.8%'];
+  const order=['161.8%','127.2%','100%','61.8%','38.2%','0%','-27.2%','-61.8%'];
   let near=null,nd=1e9;order.forEach(k=>{const d=Math.abs(S.fib[k]-c);if(d<nd){nd=d;near=k;}});
   return auto+`<h3 class="${auto?'sp':''}">Levels from the 9:30–9:45 range</h3>`+order.map(k=>{
     const ext=k.includes('127')||k.includes('161')||k.includes('261')||k.startsWith('-');
@@ -2365,7 +2979,7 @@ function paneCoach(){
       const inR=t.stopU<=S.or.hi&&t.stopU>=S.or.lo;
       add(inR?'ok':'mid',inR
         ?'Stop sat inside the opening range — a move back inside invalidates the breakout, so that is logical placement.'
-        :'Stop was outside the range entirely. Anchoring to the 50% or the far edge gives tighter, more defensible risk.');
+        :'Stop was outside the range entirely. Anchoring to the mid-range or the far edge gives tighter, more defensible risk.');
     }
     const ext=t.exits.some(e=>e.why.includes('127')||e.why.includes('161'));
     if(ext)add('ok','You scaled out at the fib extensions — exactly what those levels are for.');
@@ -2787,6 +3401,19 @@ function paintAcct(){
       :'<span class="off">rules off</span>')+
     (S.blind?'<span class="warn">blind</span>':'')+(S.ended?'<span>ended</span>':'')+
     '<span class="lnk">Record &rsaquo;</span>';
+  // The phone's stand-in, in the header row: just the number that moves
+  // minute to minute (today's running total), with a dot for anything that
+  // needs attention. There turned out to be little room left in that row
+  // once the ticker, price and change chip were already in it -- measured
+  // at under 50px free on a 440px phone -- so this is whole dollars only,
+  // no trade count. The full breakdown is the same tap away, in Record,
+  // which this opens too.
+  const m=$('acctmini');
+  if(m){
+    const flag=cd>0||lossCls==='bad'||use.outlay>=RULES.cap-1e-9;
+    m.innerHTML='<b class="'+(today>=0?'tup':'tdn')+'">'+(today>=0?'+$':'−$')+Math.round(Math.abs(today))+'</b>'+
+      (flag?'<span class="warn">&#9679;</span>':'');
+  }
 }
 /** The line under the cards: what the rules allow right now, in numbers. */
 function rulesLine(qty){
@@ -3004,6 +3631,7 @@ let recFilter='all';
 function openRecord(){const r=$('rec');if(!r)return;renderRecord();r.hidden=false;document.body.style.overflow='hidden';r.scrollTop=0;}
 function closeRecord(){const r=$('rec');if(!r)return;r.hidden=true;document.body.style.overflow='';}
 $('acct').onclick=openRecord;
+$('acctmini').onclick=openRecord;
 window.addEventListener('resize',paintAcct);   // the phone form, if the width changes after the paint
 $('recClose').onclick=closeRecord;
 function recTrades(){
@@ -3151,24 +3779,24 @@ function wireRecord(){
 const TOUR=[
   {t:null,h:"Practise on real trading days",
    b:"Every candle here is a real 1-minute bar from a recorded session. You step through the day, trade calls, puts or shares, and see how it would have gone, with nothing at risk. This tour takes about a minute."},
-  {t:".sessrow",h:"Pick what to practise",
-   b:"The box above switches the ticker. The date picks one of the newest twelve recorded days. Restart replays the same day from the 9:30 open; New day draws a random day from the whole library instead -- any day ever recorded, one you have not had before first -- so the practice cannot be learned. Your chart settings carry over."},
+  {t:".sessrow",tab:"setup",h:"Pick what to practise",
+   b:"The ticker box in the header switches the symbol. The date here picks one of the newest twelve recorded days. Restart replays the same day from the 9:30 open; New day draws a random day from the whole library instead -- any day ever recorded, one you have not had before first -- so the practice cannot be learned. Your chart settings carry over."},
   {t:"#cv",h:"The chart",
-   b:"Drag to scroll back in time; pinch, or use the mouse wheel, to zoom. Drag the price scale on the right to stretch it and double-tap it to reset. The shaded band that appears at 9:45 is the opening range: the high and low of the first 15 minutes. The tinted candles before 9:30 are the pre-market, and the dotted lines are the levels the day is traded against: yesterday's high, low and close, the pre-market high and low, and the open."},
-  {t:"#tfbar",h:"Timeframe",
+   b:"Drag to scroll back in time; pinch, or use the mouse wheel, to zoom. Drag the price scale on the right to stretch it, or double-tap anywhere on the chart to fit it to what is on screen. The shaded band that appears at 9:45 is the opening range: the high and low of the first 15 minutes. The tinted candles before 9:30 are the pre-market, and the dotted lines are the levels the day is traded against: yesterday's high, low and close, the pre-market high and low, and the open."},
+  {t:"#tfbar",mode:"tf",h:"Timeframe",
    b:"How much time each candle covers. The replay still moves a minute at a time underneath, so you can switch whenever you like."},
-  {t:"#ov",h:"Indicators and chart style",
+  {t:"#ov",mode:"ind",h:"Indicators and chart style",
    b:"Tap a chip to switch an indicator on or off; a short note explains each one as it turns on. The first box changes the chart style: candles, Heikin Ashi, line and so on."},
-  {t:"#rail",h:"Drawing tools",
+  {t:"#rail",mode:"draw",h:"Drawing tools",
    b:"Pick a tool, then drag on the chart: trend lines, price levels, fib retracements, boxes, and a ruler that measures a move in dollars and percent. After each drawing the pointer comes back by itself, and every drawing can be picked up: drag an end to reshape it, the body to move it, Delete to remove it. Undo and Clear are at the end."},
   {t:".trow",h:"Move through the day",
    b:"Next steps forward one candle. The play button runs on its own at the speed beside it. The back arrow rewinds one candle and undoes anything you did in it: that is how you go back and try the other decision."},
-  {t:"#pane",h:"The ticket",tab:"trade",
+  {t:"#sidebody",h:"The ticket",tab:"trade",
    b:"This is where you trade. Choose the expiration, strike and size, then write the plan: which setup this is, and a stop and a target on the stock price. Only then tap the Call card if you think the stock will rise, or the Put card if you think it will fall. Each shows what it costs and what tapping it will do. Your open position sits below. Switch to Shares and the cards become Long and Short."},
   {t:"#acct",h:"Your account, your rules",
    b:"The account you actually trade -- $1,000 to start, or set it to whatever yours holds -- under the rules you wrote for it: how much you may buy in a day, the loss that ends the day, the trade count, the most a stop may risk. A card refuses anything outside them and says which rule, on the card. Tap this strip for your track record. The Rules tab changes the numbers and the balance."},
-  {t:"#tabs",h:"Everything else",
-   b:"All eight are always in view. Session picks the day, has today's stats, ends the day and opens the record. Coach grades each trade against the rules and the setup, and shows what the day offered at the bell. Chain lists every strike. Fib has the swing levels and the opening range. Tape logs everything that happened. Journal is today's trades. Rules is the account."},
+  {t:"#tabs",sheet:true,h:"Everything else",
+   b:"Every pane is here; on a phone the bar along the bottom opens them. Session picks the day, has today's stats, ends the day and opens the record. Coach grades each trade against the rules and the setup, and shows what the day offered at the bell. Chain lists every strike. Fib has the swing levels and the opening range. Tape logs everything that happened. Journal is today's trades. Rules is the account."},
   {t:null,h:"Your trades are kept",
    b:"Closed trades go to your Journal at the 4:00 bell, or when you send them from the Session tab. They are marked as practice, so they never mix with your real results. Open this guide again any time with the ? button."}
 ];
@@ -3179,28 +3807,18 @@ function tourShow(i){
   stopAuto();
   tourI=i;
   const st=TOUR[i];
-  if(st.tab&&S.tab!==st.tab){
-    S.tab=st.tab;
-    document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.p===st.tab));
-    pane();
-  }
+  // On a phone the thing being pointed at may live in the sheet or behind a
+  // toolbar mode, so the step opens what it needs and closes what is in the way.
+  if(st.tab){if(isPhone())openSheet(st.tab);else if(S.tab!==st.tab)setTab(st.tab);}
+  else if(st.sheet&&isPhone())openSheet();
+  else if(isPhone()&&st.t){const el=document.querySelector(st.t);if(el&&!$('side').contains(el))closeSheet();}
+  if(st.mode&&isPhone())setMode(st.mode);
   $('tour').hidden=false;
   $('tourStep').textContent=(i+1)+' of '+TOUR.length;
   $('tourTitle').textContent=st.h;
   $('tourBody').textContent=st.b;
   $('tourBack').disabled=i===0;
   $('tourNext').textContent=i===TOUR.length-1?'Done':'Next';
-  const el=st.t?document.querySelector(st.t):null;
-  if(el){
-    // Line the target up just under the sticky header instead of centring it:
-    // centred, a phone has no room left for the card above or below the chart.
-    // Targets inside a bar that is actually sticky do not move with the page.
-    const bar=el.closest('.top,.actions');
-    if(!bar||getComputedStyle(bar).position!=='sticky'){
-      const head=document.querySelector('.top'),hh=head?head.getBoundingClientRect().height:0;
-      window.scrollBy(0,el.getBoundingClientRect().top-hh-12);
-    }
-  }
   // Placed straight away -- measuring forces layout, so the numbers are already
   // right -- and again on the next frames and a beat later, in case a font or
   // the scroll settles after. Relying on the frame alone left the spotlight on
@@ -3208,6 +3826,7 @@ function tourShow(i){
   tourPlace();
   requestAnimationFrame(()=>requestAnimationFrame(tourPlace));
   setTimeout(tourPlace,80);
+  setTimeout(tourPlace,340);   // the sheet takes 280ms to slide up on a phone
   $('tourNext').focus({preventScroll:true});
 }
 function tourPlace(){
@@ -3258,7 +3877,7 @@ $('guideOpen')&&($('guideOpen').onclick=()=>tourShow(0));
  */
 function stripArrows(el){
   if(!el||el.parentElement.classList.contains('strip'))return;
-  const w=document.createElement('div');w.className='strip';
+  const w=document.createElement('div');w.className='strip strip-'+el.id;
   el.parentNode.insertBefore(w,el);w.appendChild(el);
   const bg=getComputedStyle(el).backgroundColor;
   w.style.setProperty('--sbg',bg&&bg!=='rgba(0, 0, 0, 0)'?bg:getComputedStyle(document.body).backgroundColor);
@@ -3274,7 +3893,7 @@ function stripArrows(el){
   new MutationObserver(upd).observe(el,{childList:true,subtree:true,attributes:true});
   upd();setTimeout(upd,300);
 }
-['ov','tfbar','rail'].forEach(id=>stripArrows($(id)));
+['ov','tfbar','rail','tabs'].forEach(id=>stripArrows($(id)));
 // The page itself never pinch-zooms: iOS ignores user-scalable=no, so a pinch
 // with one finger off the canvas zoomed the page and the chart went with it.
 document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
@@ -3311,17 +3930,26 @@ function renderSessRow(){
   const sel=$('sdate');if(!sel)return;
   if(!REPLAY.length){sel.innerHTML='<option>Generated day</option>';sel.disabled=true;return;}
   if(S.blind){sel.innerHTML='<option>Blind day · revealed at the bell</option>';sel.disabled=true;return;}
-  const ds=PICK.filter(r=>r.symbol===S.ticker).map(r=>r.date).sort().reverse();
+  // Every day of this ticker in the library, newest first -- not just the ones
+  // embedded in the page. An older one is fetched when it is chosen.
+  const all=libDates(S.ticker).slice().sort().reverse();
   const cur=S.replay&&S.replay.date;
-  if(cur&&!ds.includes(cur))ds.unshift(cur);   // a library day, older than the picker's twelve
+  if(cur&&!all.includes(cur))all.unshift(cur);
   sel.disabled=false;
-  sel.innerHTML=ds.map(d=>{
+  const month=d=>{const x=new Date(d+'T12:00:00Z');
+    return ['January','February','March','April','May','June','July','August','September','October','November','December'][x.getUTCMonth()]+' '+x.getUTCFullYear();};
+  let html='',group=null;
+  for(const d of all){
+    const m=month(d);
+    if(m!==group){if(group)html+='</optgroup>';html+='<optgroup label="'+m+'">';group=m;}
     // A day with nothing recorded before it opens on a handful of candles with
     // empty higher timeframes. Still pickable, but labelled so it is no surprise.
-    const depth=REPLAY.filter(x=>x.symbol===S.ticker&&x.date<d).length;
-    const note=!PICK.some(x=>x.symbol===S.ticker&&x.date===d)?' · from the library':depth===0?' · no history':depth<MIN_HIST?' · thin history':'';
-    return '<option value="'+d+'"'+(S.replay&&S.replay.date===d?' selected':'')+'>'+dayName(d)+note+'</option>';
-  }).join('');
+    const depth=libDates(S.ticker).filter(x=>x<d).length;
+    const note=depth===0?' · no history':depth<MIN_HIST?' · thin history':'';
+    html+='<option value="'+d+'"'+(cur===d?' selected':'')+'>'+dayName(d)+note+'</option>';
+  }
+  if(group)html+='</optgroup>';
+  sel.innerHTML=html;
 }
 /**
  * Every way of leaving a session comes through here: a ticker change, a new
@@ -3353,10 +3981,20 @@ function startSession(ticker,pick,o){
 
 /* ================= wiring ================= */
 const tkSel=$('tk');
-const PICKABLE=PICK.length?[...new Set(PICK.map(r=>r.symbol))].sort():Object.keys(TICKERS);
-PICKABLE.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;tkSel.appendChild(o);});
+/** Every ticker the library has, not only those with days embedded in the page. */
+function renderTickers(){
+  const list=libSymbols().length?libSymbols():Object.keys(TICKERS);
+  const cur=S&&S.ticker;
+  tkSel.innerHTML=list.map(t=>'<option value="'+t+'"'+(t===cur?' selected':'')+'>'+t+'</option>').join('');
+}
+renderTickers();
 tkSel.onchange=()=>{if(!startSession(tkSel.value))tkSel.value=S.ticker;};
-$('sdate').onchange=e=>{if(!startSession(S.ticker,{symbol:S.ticker,date:e.target.value}))renderSessRow();};
+$('sdate').onchange=e=>{
+  const d=e.target.value;
+  // A day the page did not embed has to come from its pack.
+  const lib=!PICK.some(r=>r.symbol===S.ticker&&r.date===d);
+  if(!startSession(S.ticker,{symbol:S.ticker,date:d,lib}))renderSessRow();
+};
 $('sRestart').onclick=()=>startSession(S.ticker,S.replay?{symbol:S.ticker,date:S.replay.date}:null,{seed:S.seed});
 $('sNew').onclick=()=>{
   // A different day for the same ticker, not a reroll that lands on this one.
@@ -3400,9 +4038,7 @@ $('rail').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)
   if(b.id==='undo'){hint(S.draw.length?'Removed the last drawing.':'Nothing to undo.');S.draw.pop();S.sel=null;return draw();}
   if(b.id==='clear'){hint(S.draw.length?'Cleared '+S.draw.length+' drawing'+(S.draw.length===1?'':'s')+'.':'No drawings to clear.');S.draw=[];S.sel=null;return draw();}
   S.sel=null;setTool(b.dataset.t);});
-$('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');S.tab=b.dataset.p;pane();});
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;setTab(b.dataset.p);});
 function stepBar(){
   if(S.cursor>=MPD)return;
   snapshot();
@@ -3419,6 +4055,7 @@ $('auto').onclick=()=>{if(S.auto)return stopAuto();$('auto').textContent='❚❚
 document.addEventListener('keydown',e=>{
   if($('rec')&&!$('rec').hidden){if(e.key==='Escape')closeRecord();return;}
   if($('dbf')&&!$('dbf').hidden){if(e.key==='Escape')$('dbf').hidden=true;return;}
+  if($('panegrid')&&!$('panegrid').hidden){if(e.key==='Escape')closeGrid();return;}
   if(tourI>=0){
     if(e.key==='Escape')tourEnd();
     else if(e.key==='ArrowRight')tourShow(tourI+1);
@@ -3438,9 +4075,143 @@ document.addEventListener('keydown',e=>{
   else if((e.key==='Delete'||e.key==='Backspace')&&S.sel!=null){S.draw.splice(S.sel,1);S.sel=null;hint('Drawing removed.');draw();}
   else if(k==='escape'){S.sel=null;setTool('cursor',true);draw();}
 });
+
+/* ================= the shell ================= */
+/**
+ * One fixed screen. On a phone the panes are a sheet over the chart, opened
+ * from the bar along the bottom; the toolbar under the chart shows one of
+ * timeframes, drawing tools or indicators at a time. On a desktop the same
+ * elements sit side by side and none of this moves.
+ */
+const isPhone=()=>window.innerWidth<900;
+function setMode(m){
+  $('shell').dataset.mode=m;
+  document.querySelectorAll('#modes button').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+}
+document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+function setTab(t){
+  S.tab=t;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.p===t));
+  pane();
+  // The tab that was picked is scrolled into view where the row scrolls.
+  const on=document.querySelector('.tab.on');if(on&&on.scrollIntoView)on.scrollIntoView({block:'nearest',inline:'nearest'});
+}
+function openSheet(t){if(t)setTab(t);$('side').classList.add('open');paintLaunchers();}
+function closeSheet(){$('side').classList.remove('open','tall');paintLaunchers();}
+const MAIN={trade:1,chain:1,setup:1};
+const LABELS={trade:'Trade',chain:'Chain',setup:'Session',coach:'Coach',fib:'Fib',tape:'Tape',journal:'Journal',rules:'Rules'};
+function paintLaunchers(){
+  const side=$('side'),bar=$('tabbar');if(!side||!bar)return;
+  const open=side.classList.contains('open');
+  bar.querySelectorAll('button').forEach(b=>{
+    const l=b.dataset.l;
+    b.classList.toggle('on',open&&(l===S.tab||(l==='more'&&!MAIN[S.tab])));
+  });
+  const t=$('paneTitle');if(t)t.textContent=LABELS[S.tab]||'';
+  const g=$('panegrid');if(g)g.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p===S.tab));
+}
+// The fourth bottom-bar slot opens the grid below instead of guessing a
+// pane to land on; picking a destination there, or on the bar itself,
+// always closes the grid first.
+function openGrid(){const g=$('panegrid');if(!g)return;g.hidden=false;paintLaunchers();document.addEventListener('click',gridOutside,true);}
+function closeGrid(){const g=$('panegrid');if(!g||g.hidden)return;g.hidden=true;document.removeEventListener('click',gridOutside,true);}
+function gridOutside(e){if(e.target.closest('#panegrid,[data-l=more]'))return;closeGrid();}
+$('tabbar').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const l=b.dataset.l;
+  if(l==='more'){$('panegrid').hidden?openGrid():closeGrid();return;}
+  closeGrid();
+  const open=$('side').classList.contains('open');
+  if(open&&S.tab===l)closeSheet();else openSheet(l);
+});
+$('panegrid').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  closeGrid();openSheet(b.dataset.p);
+});
+$('sClose').onclick=closeSheet;
+$('newTop').onclick=()=>$('sNew').click();
+// The grabber: drag down to close (from Peek) or back to Peek (from Full),
+// drag up to Full, double-tap toggles Peek/Full directly -- unchanged from
+// before Phase 2, because it was already exactly a two-stop model (a
+// default height plus .tall); Peek is just a shorter default than 62% was.
+(function(){
+  const g=$('grab'),side=$('side');let y0=null;
+  g.addEventListener('pointerdown',e=>{y0=e.clientY;g.setPointerCapture(e.pointerId);side.style.transition='none';});
+  g.addEventListener('pointermove',e=>{if(y0==null)return;side.style.transform='translateY('+Math.max(0,e.clientY-y0)+'px)';});
+  const end=e=>{if(y0==null)return;const dy=e.clientY-y0;y0=null;
+    side.style.transition='';side.style.transform='';
+    if(dy>70)side.classList.contains('tall')?side.classList.remove('tall'):closeSheet();
+    else if(dy<-40)side.classList.add('tall');};
+  g.addEventListener('pointerup',end);g.addEventListener('pointercancel',end);
+  g.addEventListener('dblclick',()=>side.classList.toggle('tall'));
+})();
+// The desktop width toggle: 372px (the grid default) or 520px, remembered
+// the same way the NTZ banner's fold state is.
+(function(){
+  const btn=$('sideWide');if(!btn)return;
+  let wide=false;
+  try{wide=localStorage.getItem('mpSideWide')==='1';}catch(e){}
+  const set=w=>{wide=w;$('shell').classList.toggle('sidewide',w);btn.classList.toggle('on',w);
+    const lbl=w?'Narrow the panel':'Widen the panel';btn.title=lbl;btn.setAttribute('aria-label',lbl);
+    try{localStorage.setItem('mpSideWide',w?'1':'0');}catch(e){}};
+  set(wide);
+  btn.onclick=()=>set(!wide);
+})();
+// Leaving the phone layout for the desktop one, the sheet becomes the sidebar
+// and must not stay hidden.
+window.matchMedia('(min-width:900px)').addEventListener('change',e=>{if(e.matches){$('side').classList.remove('open','tall');closeGrid();}paintLaunchers();});
+/**
+ * Page zoom is prevented above, but iOS has more than one way in, and once
+ * in there was no way out: the page kept the zoom until it was reloaded.
+ * If the visual viewport ever reports a scale, a pill offers the way back.
+ * Rewriting the viewport tag makes Safari apply its initial scale again.
+ */
+(function(){
+  const vv=window.visualViewport,pill=$('unzoom');if(!vv||!pill)return;
+  const chk=()=>{pill.hidden=!(vv.scale>1.02);};
+  vv.addEventListener('resize',chk);chk();
+  pill.onclick=()=>{
+    const m=document.querySelector('meta[name=viewport]');if(!m)return;
+    const c=m.getAttribute('content');
+    m.setAttribute('content',c.replace(/initial-scale=1(?![.\d])/,'initial-scale=1.001'));
+    setTimeout(()=>{m.setAttribute('content',c);setTimeout(chk,80);},60);
+  };
+})();
 (function(){const first=randomReplay();init(first?first.symbol:'SPY','random',1,undefined,first);})();
 (function(){let seen=true;try{seen=!!localStorage.getItem('mpGuideSeen');}catch(e){}
   if(!seen)setTimeout(()=>tourShow(0),700);})();
+/* ---- the NTZ banner -------------------------------------------------
+   Open on a first visit, and after that however it was last left: it is a
+   reminder above the chart, not a dialog, and nothing should have to be
+   dismissed twice. The panel floats over the chart, so folding it never
+   moves the candles.
+
+   The percentages are read out of the measured variance curve rather
+   than written into the copy. The library grows and the curve is measured
+   again; a number typed into the sentence would quietly stop being true. */
+(function(){
+  const box=$('ntz'),bar=$('ntzBar');if(!box||!bar)return;
+
+  const IV=window.MP_INTRADAY;
+  if(IV&&Array.isArray(IV.rem)&&IV.rem.length>390){
+    const rem=IV.rem,at=m=>rem[Math.max(0,Math.min(rem.length-1,m))],
+      share=(a,b)=>(Math.max(0,at(a)-at(b))*100).toFixed(1)+'%',
+      put=(id,v)=>{const e=$(id);if(e)e.textContent=v;};
+    put('ntzOpen15',share(0,15));put('ntzOpen30',share(0,30));put('ntzLunch',share(120,240));
+    if(IV.sessions)put('ntzN',String(IV.sessions));
+    // Variance per minute over the opening fifteen against the lunch hours.
+    const o=(at(0)-at(15))/15,l=(at(120)-at(240))/120;
+    if(l>0&&o>l)put('ntzX',Math.round(o/l)+' times');
+  }
+
+  let open=true;
+  try{const v=localStorage.getItem('mpNtzOpen');if(v!==null)open=v==='1';}catch(e){}
+  const set=o=>{open=o;box.dataset.open=o?'1':'0';bar.setAttribute('aria-expanded',o?'true':'false');
+    try{localStorage.setItem('mpNtzOpen',o?'1':'0');}catch(e){}};
+  set(open);
+  bar.addEventListener('click',()=>set(!open));
+  const done=$('ntzDone');if(done)done.addEventListener('click',e=>{e.stopPropagation();set(false);});
+})();
 </script>
 </body>
 </html>
