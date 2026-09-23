@@ -969,11 +969,11 @@ output (`reports/`, `site/`, `cache/`, `logs/`) is ignored, so only source is
 tracked.
 
 ```bash
-git -C "C:/Users/GamerX/OneDrive/Market Prep" remote add origin https://github.com/martinez90177/stocktradingapp.git
+git -C "C:/Users/GamerX/OneDrive/Desktop/Stock App" remote add origin https://github.com/martinez90177/stocktradingapp.git
 ```
 
 ```bash
-git -C "C:/Users/GamerX/OneDrive/Market Prep" push -u origin main
+git -C "C:/Users/GamerX/OneDrive/Desktop/Stock App" push -u origin main
 ```
 
 Create `stocktradingapp` on GitHub first. **Consider private**: `watchlist.json`
