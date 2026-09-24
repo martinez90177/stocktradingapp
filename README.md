@@ -1117,6 +1117,36 @@ powershell -ExecutionPolicy Bypass -File .\Setup-Schedule.ps1 -Remove
 If the machine is asleep at 8:15 the run happens on wake rather than being
 skipped, and each run appends to `logs/run.log`.
 
+## The options recording schedule
+
+Registered as its own Windows task, **"Market Prep - Options Recorder"**,
+separate from the report because it runs for hours rather than seconds:
+`tools/record-options.mjs` starts at **9:15 AM** local/market time, waits for
+the 9:30 open, records the real chain every minute, and exits itself at the
+4:00 bell.
+
+This is the only way the practice terminal's option prices stop being
+modelled: no feed, Schwab included, serves historical option quotes, so a day
+nobody recorded this way stays modelled forever. Once a day is recorded,
+`writeOptionPacks` picks it up automatically and the practice page uses the
+real bid/ask for that day, falling back to the model only for a day, strike
+or minute nobody caught. The library grows by one trading day at a time and
+nothing before this was set up can be recovered.
+
+```powershell
+# change the start time
+powershell -ExecutionPolicy Bypass -File .\Setup-OptionsSchedule.ps1 -Time "09:10"
+
+# run it right now (only useful while the market is open)
+Start-ScheduledTask -TaskName "Market Prep - Options Recorder"
+
+# remove it
+powershell -ExecutionPolicy Bypass -File .\Setup-OptionsSchedule.ps1 -Remove
+```
+
+Each run appends to `logs/options.log`. If the machine is off during market
+hours, that day is simply not recorded -- there is no catching it up later.
+
 ---
 
 ## Reading the report
