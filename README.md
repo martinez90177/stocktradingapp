@@ -1133,6 +1133,12 @@ real bid/ask for that day, falling back to the model only for a day, strike
 or minute nobody caught. The library grows by one trading day at a time and
 nothing before this was set up can be recovered.
 
+`record-options-scheduled.cmd` runs `publish-site.mjs` itself the moment
+`record-options.mjs` exits, so the day's recording (however much of it there
+was) is live on the practice page within moments of the close -- no separate
+task guessing when 4:00 has passed, no waiting for the next morning's report
+run.
+
 ```powershell
 # change the start time
 powershell -ExecutionPolicy Bypass -File .\Setup-OptionsSchedule.ps1 -Time "09:10"
