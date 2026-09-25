@@ -552,7 +552,13 @@ svg.eq{display:block;width:100%;height:auto}
      that finds anything rather than a second, smaller nav of its own. The
      other five (read once, or after the bell: Coach, Fib, Tape, Journal,
      Rules) only live here now. */
-  .panegrid{position:fixed;left:10px;right:10px;bottom:calc(10px + var(--sab));z-index:25;background:var(--panel);
+  /* --tabbarh is the tab bar's own real measured height (set in JS, near the
+     other resize-driven custom properties) -- without clearing it, the grid
+     floated at a fixed 10px off the safe area and sat directly on top of the
+     bar that opens it: measured, the grid covered the "More" button's own
+     center and top, leaving only a thin sliver of its bottom edge tappable,
+     and covered Trade/Chain/Session entirely. */
+  .panegrid{position:fixed;left:10px;right:10px;bottom:calc(var(--tabbarh,50px) + 10px);z-index:25;background:var(--panel);
     border:1px solid var(--line2);border-radius:14px;box-shadow:0 -12px 40px rgba(0,0,0,.55);padding:10px}
   .panegrid[hidden]{display:none}
   .panegrid:not([hidden]){display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
@@ -1883,6 +1889,23 @@ function resize(){
 window.addEventListener('resize',resize);
 window.addEventListener('orientationchange',()=>setTimeout(resize,220));
 if(window.ResizeObserver)new ResizeObserver(()=>resize()).observe(cv.parentElement);
+/**
+ * The tab bar's real rendered height (including the safe-area inset it pads
+ * itself with), read into a custom property so the pane-picker grid can float
+ * just above it instead of guessing a fixed offset -- a guess that turned out
+ * to be wrong: the grid sat flush against the safe area and painted directly
+ * over the bar that opens it. Measured on load and on the same events the
+ * canvas itself re-measures against, since the bar's height only moves with
+ * layout changes, not every frame.
+ */
+function syncTabbarHeight(){
+  const bar=document.getElementById('tabbar');if(!bar)return;
+  const h=bar.getBoundingClientRect().height;
+  if(h)document.documentElement.style.setProperty('--tabbarh',h+'px');
+}
+syncTabbarHeight();
+window.addEventListener('resize',syncTabbarHeight);
+window.addEventListener('orientationchange',()=>setTimeout(syncTabbarHeight,220));
 
 /* ============ chart text ============ */
 // TradingView draws its axes in the system UI face at about 12px, in a light
@@ -4113,7 +4136,16 @@ function paintLaunchers(){
 // The fourth bottom-bar slot opens the grid below instead of guessing a
 // pane to land on; picking a destination there, or on the bar itself,
 // always closes the grid first.
-function openGrid(){const g=$('panegrid');if(!g)return;g.hidden=false;paintLaunchers();document.addEventListener('click',gridOutside,true);}
+//
+// Opening the grid closes the sheet first. The grid is a fixed overlay
+// (z-index 25) that outranks the sheet at Peek (10) -- with both open at
+// once it painted over the sheet's own header, and measuring the real hit
+// targets there (not just their center points) showed the close button
+// blocked at both its top and bottom edges and the grab handle reachable
+// only through a thin sliver in the middle. Closing the sheet first makes
+// the two mutually exclusive instead of stacked: the grid opens over a
+// clear chart, and picking a destination reopens the sheet on it.
+function openGrid(){const g=$('panegrid');if(!g)return;closeSheet();g.hidden=false;paintLaunchers();document.addEventListener('click',gridOutside,true);}
 function closeGrid(){const g=$('panegrid');if(!g||g.hidden)return;g.hidden=true;document.removeEventListener('click',gridOutside,true);}
 function gridOutside(e){if(e.target.closest('#panegrid,[data-l=more]'))return;closeGrid();}
 $('tabbar').addEventListener('click',e=>{
