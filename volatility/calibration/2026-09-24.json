@@ -1,0 +1,160 @@
+{
+  "date": "2026-09-24",
+  "measuredAt": "2026-09-24T19:09:40.863Z",
+  "index": {
+    "VXN": 20.91,
+    "VIX": 15.52
+  },
+  "symbols": {
+    "AAPL": {
+      "index": "VXN",
+      "atm": 0.1904,
+      "ratio": 0.911,
+      "skew": -0.481,
+      "skewT": 1.13,
+      "prints": 8,
+      "spot": 337.26,
+      "expiry": "2026-09-25"
+    },
+    "AMD": {
+      "index": "VXN",
+      "atm": 0.4374,
+      "ratio": 2.092,
+      "skew": 2.042,
+      "skewT": 1.13,
+      "prints": 20,
+      "spot": 625.0442,
+      "expiry": "2026-09-25"
+    },
+    "AMZN": {
+      "index": "VXN",
+      "atm": 0.2451,
+      "ratio": 1.172,
+      "skew": 0.985,
+      "skewT": 1.13,
+      "prints": 6,
+      "spot": 249.6732,
+      "expiry": "2026-09-25"
+    },
+    "CRWD": {
+      "index": "VXN",
+      "atm": 0.4677,
+      "ratio": 2.237,
+      "skew": 0.992,
+      "skewT": 1.13,
+      "prints": 8,
+      "spot": 263.34,
+      "expiry": "2026-09-25"
+    },
+    "DELL": {
+      "index": "VXN",
+      "atm": 0.6021,
+      "ratio": 2.88,
+      "skew": 7.203,
+      "skewT": 1.13,
+      "prints": 17,
+      "spot": 544.72,
+      "expiry": "2026-09-25"
+    },
+    "GOOGL": {
+      "index": "VXN",
+      "atm": 0.2763,
+      "ratio": 1.321,
+      "skew": 2.888,
+      "skewT": 1.13,
+      "prints": 10,
+      "spot": 341.2,
+      "expiry": "2026-09-25"
+    },
+    "INTC": {
+      "index": "VXN",
+      "atm": 0.601,
+      "ratio": 2.874,
+      "skew": 0.736,
+      "skewT": 1.13,
+      "prints": 10,
+      "spot": 126.29,
+      "expiry": "2026-09-25"
+    },
+    "IWM": {
+      "index": "VIX",
+      "atm": 0.1752,
+      "ratio": 1.129,
+      "skew": 0.636,
+      "skewT": 1.13,
+      "prints": 15,
+      "spot": 281.641,
+      "expiry": "2026-09-25"
+    },
+    "META": {
+      "index": "VXN",
+      "atm": 0.484,
+      "ratio": 2.315,
+      "skew": 2.468,
+      "skewT": 1.13,
+      "prints": 13,
+      "spot": 775.99,
+      "expiry": "2026-09-25"
+    },
+    "MSFT": {
+      "index": "VXN",
+      "atm": 0.2184,
+      "ratio": 1.044,
+      "skew": -0.126,
+      "skewT": 1.13,
+      "prints": 15,
+      "spot": 497.355,
+      "expiry": "2026-09-25"
+    },
+    "MU": {
+      "index": "VXN",
+      "atm": 0.4254,
+      "ratio": 2.034,
+      "skew": 1.551,
+      "skewT": 1.13,
+      "prints": 19,
+      "spot": 1072.288,
+      "expiry": "2026-09-25"
+    },
+    "NVDA": {
+      "index": "VXN",
+      "atm": 0.2767,
+      "ratio": 1.323,
+      "skew": -0.425,
+      "skewT": 1.13,
+      "prints": 7,
+      "spot": 224.11,
+      "expiry": "2026-09-25"
+    },
+    "QQQ": {
+      "index": "VXN",
+      "atm": 0.1562,
+      "ratio": 0.747,
+      "skew": 0.005,
+      "skewT": 1.13,
+      "prints": 39,
+      "spot": 740.6194,
+      "expiry": "2026-09-25"
+    },
+    "SPY": {
+      "index": "VIX",
+      "atm": 0.1147,
+      "ratio": 0.739,
+      "skew": -0.272,
+      "skewT": 1.13,
+      "prints": 35,
+      "spot": 767.505,
+      "expiry": "2026-09-25"
+    },
+    "TSLA": {
+      "index": "VXN",
+      "atm": 0.3374,
+      "ratio": 1.614,
+      "skew": 3.115,
+      "skewT": 1.13,
+      "prints": 12,
+      "spot": 378.66,
+      "expiry": "2026-09-25"
+    }
+  }
+}

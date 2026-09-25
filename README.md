@@ -1117,6 +1117,13 @@ powershell -ExecutionPolicy Bypass -File .\Setup-Schedule.ps1 -Remove
 If the machine is asleep at 8:15 the run happens on wake rather than being
 skipped, and each run appends to `logs/run.log`.
 
+Both this task and the options recorder below run through `run-hidden.vbs`,
+which launches the actual `.cmd` with a hidden window style. Task Scheduler's
+normal interactive logon type always pops a console window open otherwise,
+and the alternative (LogonType S4U, which never attaches to the desktop at
+all) needs admin rights to grant "log on as a batch job" -- not assumed here.
+Nothing shows on screen when either task runs.
+
 ## The options recording schedule
 
 Registered as its own Windows task, **"Market Prep - Options Recorder"**,

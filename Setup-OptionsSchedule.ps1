@@ -9,8 +9,12 @@
         powershell -ExecutionPolicy Bypass -File .\Setup-OptionsSchedule.ps1 -Remove
         powershell -ExecutionPolicy Bypass -File .\Setup-OptionsSchedule.ps1 -Time "09:15"
 
-    Runs as the current user, no admin rights needed. The time is LOCAL
-    machine time; this machine is on Eastern, so it is also market time.
+    Runs as the current user, no admin rights needed, with no console window:
+    the action goes through run-hidden.vbs, which launches
+    record-options-scheduled.cmd with a hidden window style rather than the
+    console window Task Scheduler would otherwise leave open for the ~6.75
+    hours this runs. The time is LOCAL machine time; this machine is on
+    Eastern, so it is also market time.
 #>
 [CmdletBinding()]
 param(
@@ -48,7 +52,8 @@ if (-not $env:SCHWAB_APP_KEY -or -not $env:SCHWAB_APP_SECRET) {
 $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday `
     -At ([datetime]::ParseExact($Time, "HH:mm", $null))
 
-$action = New-ScheduledTaskAction -Execute $runner -WorkingDirectory $here
+$hider = Join-Path $here "run-hidden.vbs"
+$action = New-ScheduledTaskAction -Execute "wscript.exe" -Argument "//B `"$hider`" `"$runner`"" -WorkingDirectory $here
 
 # Runs until the 4:00 bell (about 6h45m from a 9:15 start); the time limit is
 # a safety net against a hang, not the normal way this stops.

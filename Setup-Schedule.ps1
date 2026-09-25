@@ -5,8 +5,11 @@
         powershell -ExecutionPolicy Bypass -File .\Setup-Schedule.ps1 -Remove
         powershell -ExecutionPolicy Bypass -File .\Setup-Schedule.ps1 -Times "07:45","09:20"
 
-    Runs as the current user, no admin rights needed. Times are LOCAL machine
-    time; this machine is on Eastern, so they are also market time.
+    Runs as the current user, no admin rights needed, with no console window:
+    the action goes through run-hidden.vbs, which launches run-scheduled.cmd
+    with a hidden window style rather than the console window Task Scheduler
+    would otherwise pop open every run. Times are LOCAL machine time; this
+    machine is on Eastern, so they are also market time.
 #>
 [CmdletBinding()]
 param(
@@ -42,7 +45,8 @@ $triggers = foreach ($t in $Times) {
     New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday, Tuesday, Wednesday, Thursday, Friday -At $parsed
 }
 
-$action = New-ScheduledTaskAction -Execute $runner -WorkingDirectory $here
+$hider = Join-Path $here "run-hidden.vbs"
+$action = New-ScheduledTaskAction -Execute "wscript.exe" -Argument "//B `"$hider`" `"$runner`"" -WorkingDirectory $here
 
 # StartWhenAvailable matters: if the machine was asleep at 8:15, the run happens
 # on wake instead of being skipped for the day.
