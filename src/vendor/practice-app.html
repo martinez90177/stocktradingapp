@@ -2100,7 +2100,13 @@ function draw(){
   const series=(a,col)=>{cx.save();cx.strokeStyle=col;cx.lineWidth=1.3;cx.beginPath();let on=false;
     for(let i=Math.max(0,left-1);i<=right;i++){const X=G.x(i),Y=G.y(a[i]);on?cx.lineTo(X,Y):(cx.moveTo(X,Y),on=true);}
     cx.stroke();cx.restore();};
-  if(S.ind.vwap){let pv=0,vv=0;series(B.map(b=>{const tp=(b.h+b.l+b.c)/3;pv+=tp*b.v;vv+=b.v;return pv/vv;}),'#b48ead');}
+  // Session VWAP: resets at the start of each trading day so it tracks that
+  // day's volume-weighted average rather than drifting flat across the whole
+  // multi-day history an intraday timeframe can hold.
+  if(S.ind.vwap){let pv=0,vv=0,curDay=null;series(B.map(b=>{
+    if(b.day!==curDay){curDay=b.day;pv=0;vv=0;}
+    const tp=(b.h+b.l+b.c)/3;pv+=tp*b.v;vv+=b.v;return vv?pv/vv:null;
+  }),'#b48ead');}
   if(S.ind.ema9){const k=2/10;let e=null;series(B.map(b=>e=e===null?b.c:b.c*k+e*(1-k)),'#88c0d0');}
   if(S.ind.ema20){const k=2/21;let e=null;series(B.map(b=>e=e===null?b.c:b.c*k+e*(1-k)),'#ebcb8b');}
   if(S.ind.ema50){const k=2/51;let e=null;series(B.map(b=>e=e===null?b.c:b.c*k+e*(1-k)),'#a3be8c');}
