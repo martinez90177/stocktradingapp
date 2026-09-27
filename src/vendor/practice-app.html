@@ -1416,7 +1416,7 @@ function init(ticker,regime,vm,seed,replayPick){
     // fib starts off: it follows the last swing (see autoFib), useful when you
     // want it and clutter when you do not. The draw tool puts one wherever you
     // choose instead.
-    ind:{fib:0,or:1,lvl:1,ext:1,vwap:0,ema9:0,ema20:0,ema50:0,bb:0,rsi:0,vol:1,magnet:0},
+    ind:{fib:0,or:1,lvl:0,piv:0,ext:1,vwap:0,ema9:0,ema20:0,ema50:0,bb:0,rsi:0,vol:1,magnet:0},
     // The account and the record -- see "your account, your rules" below.
     setup:null,pendingLedger:[],rewinds:0,peakNet:0,belled:false,ended:false,
     sid:ticker+'|'+(live?live.date:'gen'+sd)+'|'+Date.now().toString(36),
@@ -2095,6 +2095,20 @@ function draw(){
     L.forEach(([k,v,c])=>{
       const y=G.y(v);if(y<padT+4||y>padT+ph-4)return;
       ln(padL,y,w-padR,y,c,1,[2,4]);ltag(k+' '+v.toFixed(2),y-1,c);});
+  }
+  // Standard floor-trader pivots: PP, R1-R3 and S1-S3 from yesterday's high,
+  // low and close, held fixed for the whole session (unlike the levels above,
+  // this only needs a prior day to exist at all).
+  if(S.ind.piv&&HISTN>0&&todayVis&&zoomedIn){
+    const s0=todayStart(),pd=S.mins.slice(s0-MPD,s0);
+    let ph_=-Infinity,pl_=Infinity;for(const b of pd){if(b.h>ph_)ph_=b.h;if(b.l<pl_)pl_=b.l;}
+    const pc_=pd[pd.length-1].c,pp=(ph_+pl_+pc_)/3,rg=ph_-pl_;
+    const P=[['R3',ph_+2*(pp-pl_),'#e0524a'],['R2',pp+rg,'#e0524a'],['R1',2*pp-pl_,'#e0524a'],
+      ['PP',pp,'#e0b73a'],
+      ['S1',2*pp-ph_,'#2dd4a7'],['S2',pp-rg,'#2dd4a7'],['S3',pl_-2*(ph_-pp),'#2dd4a7']];
+    P.forEach(([k,v,c])=>{
+      const y=G.y(v);if(y<padT+4||y>padT+ph-4)return;
+      ln(padL,y,w-padR,y,c,1,[6,3]);ltag(k+' '+v.toFixed(2),y-1,c);});
   }
   // auto fib: the last swing's levels, labelled in the axis gutter, with the
   // swing itself drawn faintly from its start to its end
@@ -4041,6 +4055,7 @@ const INDS=[
   ['fib','auto fib','Fib retracements and extensions of the last swing on the chart, following it as it runs'],
   ['or','range','Opening range: the high and low of the first 15 minutes'],
   ['lvl','levels','Prior day high, low and close, the pre-market high and low, and the open: the levels the day is traded against'],
+  ['piv','pivots','Standard pivot points: PP, R1-R3 and S1-S3, floor-trader levels from yesterday\'s high, low and close'],
   ['ext','ext hrs','Pre-market from 4:00 and after-hours to 8:00, in 5-minute bars, tinted'],
   ['vwap','vwap','VWAP: the average price paid since the open, weighted by volume'],
   ['ema9','ema9','9-bar exponential moving average: the fastest trend line'],
