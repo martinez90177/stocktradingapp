@@ -56,9 +56,11 @@ $hider = Join-Path $here "run-hidden.vbs"
 $action = New-ScheduledTaskAction -Execute "wscript.exe" -Argument "//B `"$hider`" `"$runner`"" -WorkingDirectory $here
 
 # Runs until the 4:00 bell (about 6h45m from a 9:15 start); the time limit is
-# a safety net against a hang, not the normal way this stops.
+# a safety net against a hang, not the normal way this stops. WakeToRun wakes
+# a sleeping machine for the 9:15 trigger, same reasoning as Setup-Schedule.ps1.
 $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
+    -WakeToRun `
     -DontStopIfGoingOnBatteries `
     -AllowStartIfOnBatteries `
     -ExecutionTimeLimit (New-TimeSpan -Hours 8) `

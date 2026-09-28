@@ -48,10 +48,14 @@ $triggers = foreach ($t in $Times) {
 $hider = Join-Path $here "run-hidden.vbs"
 $action = New-ScheduledTaskAction -Execute "wscript.exe" -Argument "//B `"$hider`" `"$runner`"" -WorkingDirectory $here
 
-# StartWhenAvailable matters: if the machine was asleep at 8:15, the run happens
-# on wake instead of being skipped for the day.
+# StartWhenAvailable matters: if the machine is logged off (or was asleep and
+# stayed asleep past 8:15), the run happens as soon as it's available instead
+# of being skipped for the day. WakeToRun goes a step further and wakes a
+# sleeping machine for the trigger itself, so a normal overnight sleep does
+# not depend on someone waking it back up before 8:15.
 $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
+    -WakeToRun `
     -DontStopIfGoingOnBatteries `
     -AllowStartIfOnBatteries `
     -ExecutionTimeLimit (New-TimeSpan -Minutes 20) `
