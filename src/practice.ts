@@ -44,13 +44,11 @@ ${FONT_CSS}
   border:1px solid var(--line2);border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.55;color:var(--dim);
   box-shadow:0 18px 50px rgba(0,0,0,.6)}
 .sim>div b{display:block;color:var(--text);margin-bottom:4px} .sim>div strong{color:var(--text)}
-.mp-guide{display:inline-flex;align-items:center;border:1px solid var(--acc);border-radius:8px;padding:0 12px;min-height:32px;
-  background:var(--accs);color:var(--text);font-weight:650;font-size:12.5px;white-space:nowrap}
 .mp-back{display:inline-flex;align-items:center;gap:6px;text-decoration:none;border:1px solid var(--line2);border-radius:8px;
   padding:0 12px;min-height:32px;color:var(--dim);font-weight:650;font-size:12.5px;white-space:nowrap}
 .mp-back:hover{color:var(--text);border-color:var(--acc);background:var(--accs)}
 /* On a phone the masthead is gone: the report link and the data note sit in
-   the Session pane instead, and the guide opens from the ? beside them. */
+   the Session pane instead. */
 .simx{display:none}
 @media(max-width:899px){
   .mp-head{display:none}
@@ -106,7 +104,6 @@ function bannerFor(reportHref: string, sessions: ReplaySession[], vol?: Practice
   return `<header class="mp-head">
   <div class="mp-brand"><b>Practice</b><span>Real days replayed bar by bar, on your account, under your rules</span></div>
   <details class="sim ${n.real ? "real" : ""}"><summary>${n.title}<i>${n.sub}</i></summary><div><b>${n.title}</b>${n.body}</div></details>
-  <button type="button" class="mp-guide" id="guideOpen">How to use this page</button>
   <a class="mp-back" href="${reportHref}">&larr; Report</a>
 </header>`;
 }

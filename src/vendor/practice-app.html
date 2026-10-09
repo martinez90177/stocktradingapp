@@ -82,52 +82,6 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .acctmini b{font-weight:700} .acctmini .tup{color:var(--up)} .acctmini .tdn{color:var(--dn)}
 .acctmini .warn{color:var(--fib);font-weight:700}
 
-/* ---- the NTZ banner: the one rule the whole day is built on --------
-   Above the chart rather than inside a pane, because it is what there is
-   to read before the first click, not something to go looking for. It
-   folds to a single line once it has been read, and stays as it was left. */
-.ntz{flex:0 0 auto;border-bottom:1px solid var(--line);position:relative;z-index:24;
-  background:linear-gradient(180deg,rgba(123,108,246,.17),rgba(123,108,246,.05))}
-.ntzbar{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:9px 14px;min-height:0;
-  background:none;border:0;border-radius:0;color:var(--text)}
-.ntzbar:active:not(:disabled){transform:none}
-.ntztag{flex:0 0 auto;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;color:#cfc7ff;
-  border:1px solid rgba(123,108,246,.55);background:rgba(123,108,246,.2);border-radius:6px;padding:3px 7px}
-.ntzhead{flex:0 0 auto;font-size:19px;font-weight:700;letter-spacing:-.4px;white-space:nowrap}
-.ntzsub{flex:1;min-width:0;color:var(--dim);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ntzchev{flex:0 0 auto;margin-left:auto;color:var(--dim);font-size:13px;transition:transform .16s}
-.ntz[data-open="0"] .ntzchev{transform:rotate(-90deg)}
-.ntz[data-open="0"] .ntzbody{display:none}
-/* Expanded, it floats over the chart rather than pushing it: unfolded in the
-   flow it took 479 of a phone's 844 pixels and left the candles 125, which is
-   the opposite of the point. The bar above it is the only part in the flow. */
-.ntzbody{position:absolute;left:0;right:0;top:100%;padding:12px 16px 14px;font-size:13px;line-height:1.6;
-  color:#b9c2d0;background:var(--panel);border-bottom:1px solid var(--line2);
-  box-shadow:0 20px 50px rgba(0,0,0,.6);max-height:min(66vh,560px);overflow:auto;overscroll-behavior:contain}
-.ntzbody h5{margin:13px 0 5px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim2)}
-.ntzbody h5:first-child{margin-top:2px}
-.ntzbody p{margin:0 0 7px}
-.ntzbody ol{margin:0;padding-left:21px}
-.ntzbody li{margin:0 0 8px}
-.ntzbody b{color:var(--text);font-weight:650}
-.ntzbody .no{color:var(--dn);font-weight:650}
-.ntzbody .go{color:var(--up);font-weight:650}
-.ntzbody .one{margin:11px 0 0;padding:9px 12px;border-left:2px solid var(--acc);border-radius:0 7px 7px 0;
-  background:rgba(123,108,246,.09);color:var(--text)}
-/* Sticky, because the panel scrolls on most screens and the way out of it
-   should not be something to go looking for at the bottom. */
-.ntzdone{position:sticky;bottom:0;display:block;width:100%;margin:12px 0 0;min-height:42px;font-size:13.5px;
-  background:var(--p2);box-shadow:0 -10px 16px 6px var(--panel)}
-@media(max-width:899px){
-  .ntzbar{flex-wrap:wrap;gap:8px;padding:8px 13px}
-  .ntzhead{font-size:16px}
-  .ntzsub{flex:1 0 100%;order:3;font-size:12px}   /* single truncated line, folded stays compact -- the full rule is one tap away in the panel */
-  .ntz[data-open="1"] .ntzsub{display:none}
-  .ntzbody{max-height:min(72vh,620px);padding:12px 13px 14px}
-}
-/* A 1440px screen would otherwise set this prose in 1400px lines. */
-@media(min-width:900px){.ntzbody>*{max-width:980px}}
-
 /* ---- the stage: chart column and the panes ------------------------ */
 .stage{flex:1;min-height:0;position:relative}
 .chartcol{min-width:0;min-height:0}
@@ -282,17 +236,7 @@ tr.pick td{outline:1px solid var(--acc)}
 .setup select{width:auto;flex:1;min-width:130px}
 .seed{font-size:12px;color:var(--acc);background:var(--p2);border:1px solid var(--line2);border-radius:7px;padding:9px 11px}
 
-/* ---- guide ---- */
-.tour{position:fixed;inset:0;z-index:100}
-.tour[hidden]{display:none}
-.tour.center{background:rgba(3,5,10,.72)}
-.tour-spot{position:fixed;border-radius:10px;border:2px solid var(--acc);box-shadow:0 0 0 9999px rgba(3,5,10,.72);
-  pointer-events:none}
-.tour-card{position:fixed;background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:15px 16px 13px;
-  box-shadow:0 18px 50px rgba(0,0,0,.6)}
-.tour-step{font-family:var(--mono);font-size:11px;color:var(--acc);font-weight:600;letter-spacing:.4px}
-.tour-card h4{margin:6px 0;font-size:16px;letter-spacing:-.2px}
-.tour-card p{margin:0;color:#c3cad6;font-size:13.5px;line-height:1.55}
+/* ---- overlay card parts, shared by the Debrief and the Track record ---- */
 .tour-nav{display:flex;gap:8px;align-items:center;margin-top:14px}
 .tour-nav button{min-height:36px;padding:0 14px;font-size:13px}
 .tour-skip{margin-right:auto;background:transparent;border-color:transparent;color:var(--dim);padding-left:0}
@@ -567,6 +511,21 @@ svg.eq{display:block;width:100%;height:auto}
   .panegrid button.on{background:var(--accs);border-color:var(--acc);color:var(--text)}
   .chips-tr{top:54px}
 }
+/* The header row is the ticker, price, change, the day's P&L pill, the clock
+   and New day, at their natural widths. On a 375px phone that left the P&L
+   pill a 22px sliver showing "+$", and at 320px it pushed New day off the
+   screen. Tighter spacing buys the pill its room; below 375px even that is
+   not enough, and the change pill is the one that goes. */
+@media(max-width:420px){
+  .row1{gap:6px}
+  .tksel{padding:3px 24px 3px 9px}
+  .chg{padding:2px 4px}
+  .row1 .tbtn{width:34px}
+}
+@media(max-width:374px){
+  .row1 .chg{display:none}
+  .px{font-size:16px}
+}
 
 /* =====================================================================
    DESKTOP. The chart column on the left: a toolbar of timeframes and
@@ -627,52 +586,6 @@ svg.eq{display:block;width:100%;height:auto}
   </div>
 </header>
 
-<section class="ntz" id="ntz" data-open="1">
-  <button class="ntzbar" id="ntzBar" type="button" aria-expanded="true" aria-controls="ntzBody">
-    <span class="ntztag">NTZ</span>
-    <span class="ntzhead">Trade the No-Trade Zone</span>
-    <span class="ntzsub">9:30&ndash;9:45 builds the range. Inside it you do nothing. A 5-minute close outside it is the trade.</span>
-    <span class="ntzchev" aria-hidden="true">&#9662;</span>
-  </button>
-  <div class="ntzbody" id="ntzBody">
-    <h5>What the zone is</h5>
-    <p>The <b>opening range</b>: the high and the low of the first fifteen minutes, 9:30 to 9:45. That band is the
-      No-Trade Zone. The chart shades it in blue the moment it is set and the log prints its high, low and width;
-      it toggles under <b>Indicators &rarr; OR</b>.</p>
-    <h5>Why you stay out of it</h5>
-    <p>Measured on the <span id="ntzN">147</span> sessions recorded in this library, those fifteen minutes hold
-      <b><span id="ntzOpen15">26.5%</span></b> of the whole day&rsquo;s movement, and the first thirty hold
-      <b><span id="ntzOpen30">37.3%</span></b>. Per minute the open is about <b><span id="ntzX">13 times</span></b>
-      as violent as lunch, which spends two entire hours on <span id="ntzLunch">16.6%</span>. So the band is the
-      widest spreads and the heaviest volume of the day with no side settled yet, and nearly every move made inside
-      it is given back inside it. Trading the band is paying the day&rsquo;s worst prices for the day&rsquo;s worst
-      odds.</p>
-    <h5>How to trade it tomorrow</h5>
-    <ol>
-      <li><b>9:30 to 9:45 &mdash; hands off.</b> No entry, no starter, no &ldquo;a few shares just to feel it&rdquo;.
-        Watch where the band is building and nothing else. <span class="no">Zero clicks.</span></li>
-      <li><b>9:45 &mdash; write the band down.</b> High, low, and the width between them. That width is your risk
-        unit for the rest of the day: every stop and target below is measured in it.</li>
-      <li><b>Wait for a 5-minute candle to close outside the band.</b> Above the high and you may only go long;
-        below the low and you may only go short. A wick through is <span class="no">not</span> a break &mdash; only
-        the close counts. Until one prints you are still inside the NTZ, and the answer is still no.</li>
-      <li><b>On that close, take the trade you already planned.</b> <span class="go">Entry</span> is the close.
-        <span class="go">Stop</span> is the far side of the band. <span class="go">Targets</span> are the 127% and
-        162% extensions, or the measured move &mdash; the band&rsquo;s own width projected past the edge it broke.
-        In the Trade pane each of those is one tap: <b>Stop: range edge</b>, <b>Target: 127%</b>,
-        <b>Target: 162%</b>, <b>Target: measured</b>.</li>
-      <li><b>Back inside the band means out.</b> Price returning into the NTZ is the break failing. Exit on that
-        close rather than making the stop do it for you, and you are back to no-trade until price closes outside
-        again.</li>
-      <li><b>No close outside all day means no trade all day.</b> It happens, and sitting out was the trade: the
-        Coach pane grades that as the right answer, not as a day you missed.</li>
-    </ol>
-    <p class="one">Inside the band your job is to wait. Outside it your job is to execute what you already wrote
-      down. This is &ldquo;no setup, no trade&rdquo; with a price attached to it.</p>
-    <button type="button" class="ntzdone" id="ntzDone">Got it &mdash; fold this away</button>
-  </div>
-</section>
-
 <div class="stage">
   <div class="chartcol">
     <div class="toolbar" id="toolbar">
@@ -731,7 +644,6 @@ svg.eq{display:block;width:100%;height:auto}
         <select id="sdate" class="ssel dd" title="Which recorded day to practise" aria-label="Which recorded day"></select>
         <button id="sRestart" class="sbtn sq" title="Start this same day again from the 9:30 open" aria-label="Restart this day">↺</button>
         <button id="sNew" class="sbtn sprim" title="Load a different recorded day">New day</button>
-        <button id="sGuide" class="sbtn sq" title="How this page works" aria-label="How this page works">?</button>
       </div>
       <!--MP:NOTE-->
       <div class="tabs" id="tabs">
@@ -767,20 +679,6 @@ svg.eq{display:block;width:100%;height:auto}
   <button type="button" data-p="rules">Rules</button>
 </div>
 <button class="unzoom" id="unzoom" type="button" hidden>Zoomed in · tap to reset</button>
-</div>
-
-<div class="tour" id="tour" hidden>
-  <div class="tour-spot" id="tourSpot"></div>
-  <div class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-labelledby="tourTitle">
-    <div class="tour-step" id="tourStep"></div>
-    <h4 id="tourTitle"></h4>
-    <p id="tourBody"></p>
-    <div class="tour-nav">
-      <button type="button" class="tour-skip" id="tourSkip">Skip tour</button>
-      <button type="button" id="tourBack">Back</button>
-      <button type="button" class="tour-next" id="tourNext">Next</button>
-    </div>
-  </div>
 </div>
 
 <div class="ovl" id="dbf" hidden>
@@ -3812,106 +3710,6 @@ function wireRecord(){
     const e=$('recMsg');if(e)e.textContent=n+' trade'+(n===1?'':'s')+' and '+m+' session'+(m===1?'':'s')+' merged.';};
 }
 
-/* ================= guide ================= */
-/**
- * A walk through the page, one control at a time: a spotlight on the thing,
- * and a card saying what it does. Opens by itself on a first visit and from
- * the ? button after that. Nothing can be clicked through the dimmed page
- * while it runs, so the tour cannot place a trade by accident.
- */
-const TOUR=[
-  {t:null,h:"Practise on real trading days",
-   b:"Every candle here is a real 1-minute bar from a recorded session. You step through the day, trade calls, puts or shares, and see how it would have gone, with nothing at risk. This tour takes about a minute."},
-  {t:".sessrow",tab:"setup",h:"Pick what to practise",
-   b:"The ticker box in the header switches the symbol. The date here picks one of the newest twelve recorded days. Restart replays the same day from the 9:30 open; New day draws a random day from the whole library instead -- any day ever recorded, one you have not had before first -- so the practice cannot be learned. Your chart settings carry over."},
-  {t:"#cv",h:"The chart",
-   b:"Drag to scroll back in time; pinch, or use the mouse wheel, to zoom. Drag the price scale on the right to stretch it, or double-tap anywhere on the chart to fit it to what is on screen. The shaded band that appears at 9:45 is the opening range: the high and low of the first 15 minutes. The tinted candles before 9:30 are the pre-market, and the dotted lines are the levels the day is traded against: yesterday's high, low and close, the pre-market high and low, and the open."},
-  {t:"#tfbar",mode:"tf",h:"Timeframe",
-   b:"How much time each candle covers. The replay still moves a minute at a time underneath, so you can switch whenever you like."},
-  {t:"#ov",mode:"ind",h:"Indicators and chart style",
-   b:"Tap a chip to switch an indicator on or off; a short note explains each one as it turns on. The first box changes the chart style: candles, Heikin Ashi, line and so on."},
-  {t:"#rail",mode:"draw",h:"Drawing tools",
-   b:"Pick a tool, then drag on the chart: trend lines, price levels, fib retracements, boxes, and a ruler that measures a move in dollars and percent. After each drawing the pointer comes back by itself, and every drawing can be picked up: drag an end to reshape it, the body to move it, Delete to remove it. Undo and Clear are at the end."},
-  {t:".trow",h:"Move through the day",
-   b:"Next steps forward one candle. The play button runs on its own at the speed beside it. The back arrow rewinds one candle and undoes anything you did in it: that is how you go back and try the other decision."},
-  {t:"#sidebody",h:"The ticket",tab:"trade",
-   b:"This is where you trade. Choose the expiration, strike and size, then write the plan: which setup this is, and a stop and a target on the stock price. Only then tap the Call card if you think the stock will rise, or the Put card if you think it will fall. Each shows what it costs and what tapping it will do. Your open position sits below. Switch to Shares and the cards become Long and Short."},
-  {t:"#acct",h:"Your account, your rules",
-   b:"The account you actually trade -- $1,000 to start, or set it to whatever yours holds -- under the rules you wrote for it: how much you may buy in a day, the loss that ends the day, the trade count, the most a stop may risk. A card refuses anything outside them and says which rule, on the card. Tap this strip for your track record. The Rules tab changes the numbers and the balance."},
-  {t:"#tabs",sheet:true,h:"Everything else",
-   b:"Every pane is here; on a phone the bar along the bottom opens them. Session picks the day, has today's stats, ends the day and opens the record. Coach grades each trade against the rules and the setup, and shows what the day offered at the bell. Chain lists every strike. Fib has the swing levels and the opening range. Tape logs everything that happened. Journal is today's trades. Rules is the account."},
-  {t:null,h:"Your trades are kept",
-   b:"Closed trades go to your Journal at the 4:00 bell, or when you send them from the Session tab. They are marked as practice, so they never mix with your real results. Open this guide again any time with the ? button."}
-];
-let tourI=-1;
-function tourShow(i){
-  if(i<0)return;
-  if(i>=TOUR.length){tourEnd();return;}
-  stopAuto();
-  tourI=i;
-  const st=TOUR[i];
-  // On a phone the thing being pointed at may live in the sheet or behind a
-  // toolbar mode, so the step opens what it needs and closes what is in the way.
-  if(st.tab){if(isPhone())openSheet(st.tab);else if(S.tab!==st.tab)setTab(st.tab);}
-  else if(st.sheet&&isPhone())openSheet();
-  else if(isPhone()&&st.t){const el=document.querySelector(st.t);if(el&&!$('side').contains(el))closeSheet();}
-  if(st.mode&&isPhone())setMode(st.mode);
-  $('tour').hidden=false;
-  $('tourStep').textContent=(i+1)+' of '+TOUR.length;
-  $('tourTitle').textContent=st.h;
-  $('tourBody').textContent=st.b;
-  $('tourBack').disabled=i===0;
-  $('tourNext').textContent=i===TOUR.length-1?'Done':'Next';
-  // Placed straight away -- measuring forces layout, so the numbers are already
-  // right -- and again on the next frames and a beat later, in case a font or
-  // the scroll settles after. Relying on the frame alone left the spotlight on
-  // the previous step wherever frames were being held back.
-  tourPlace();
-  requestAnimationFrame(()=>requestAnimationFrame(tourPlace));
-  setTimeout(tourPlace,80);
-  setTimeout(tourPlace,340);   // the sheet takes 280ms to slide up on a phone
-  $('tourNext').focus({preventScroll:true});
-}
-function tourPlace(){
-  if(tourI<0)return;
-  const st=TOUR[tourI],spot=$('tourSpot'),card=$('tourCard'),box=$('tour');
-  const el=st.t?document.querySelector(st.t):null;
-  const vw=document.documentElement.clientWidth,vh=innerHeight,cw=Math.min(360,vw-24);
-  card.style.width=cw+'px';
-  if(!el){
-    box.classList.add('center');spot.style.display='none';
-    card.style.left=((vw-cw)/2)+'px';
-    card.style.top=Math.max(12,(vh-card.offsetHeight)/2)+'px';
-    return;
-  }
-  box.classList.remove('center');
-  const r=el.getBoundingClientRect(),pad=6;
-  const top0=Math.max(4,r.top-pad),bot0=Math.min(vh-4,r.bottom+pad);
-  spot.style.display='block';
-  spot.style.left=Math.max(4,r.left-pad)+'px';
-  spot.style.top=top0+'px';
-  spot.style.width=(Math.min(vw-4,r.right+pad)-Math.max(4,r.left-pad))+'px';
-  spot.style.height=Math.max(0,bot0-top0)+'px';
-  const ch=card.offsetHeight;
-  let top=bot0+10;
-  if(top+ch>vh-10)top=top0-10-ch;          // no room below: above it
-  if(top<10)top=vh-ch-12;                  // no room either side: pinned to the bottom
-  const left=Math.max(12,Math.min(vw-cw-12,r.left+r.width/2-cw/2));
-  card.style.left=left+'px';
-  card.style.top=Math.max(10,top)+'px';
-}
-function tourEnd(){
-  tourI=-1;$('tour').hidden=true;
-  try{localStorage.setItem('mpGuideSeen','1');}catch(e){}
-}
-$('tourNext').onclick=()=>tourShow(tourI+1);
-$('tourBack').onclick=()=>tourShow(tourI-1);
-$('tourSkip').onclick=tourEnd;
-window.addEventListener('resize',tourPlace);
-window.addEventListener('scroll',tourPlace,{passive:true});
-$('sGuide')&&($('sGuide').onclick=()=>tourShow(0));
-$('guideOpen')&&($('guideOpen').onclick=()=>tourShow(0));
-
 /* ================= strips that overflow ================= */
 /**
  * Arrows at the edges of any strip wider than its box: the tabs on a phone,
@@ -4100,13 +3898,6 @@ document.addEventListener('keydown',e=>{
   if($('rec')&&!$('rec').hidden){if(e.key==='Escape')closeRecord();return;}
   if($('dbf')&&!$('dbf').hidden){if(e.key==='Escape')$('dbf').hidden=true;return;}
   if($('panegrid')&&!$('panegrid').hidden){if(e.key==='Escape')closeGrid();return;}
-  if(tourI>=0){
-    if(e.key==='Escape')tourEnd();
-    else if(e.key==='ArrowRight')tourShow(tourI+1);
-    else if(e.key==='ArrowLeft')tourShow(tourI-1);
-    if(e.key!=='Enter'&&e.key!==' '&&e.key!=='Tab')e.preventDefault();
-    return;
-  }
   if(/input|select|textarea/i.test(e.target.tagName))return;
   const k=e.key.toLowerCase();
   if(e.key==='ArrowRight'){e.preventDefault();stepBar();}
@@ -4199,7 +3990,7 @@ $('newTop').onclick=()=>$('sNew').click();
   g.addEventListener('dblclick',()=>side.classList.toggle('tall'));
 })();
 // The desktop width toggle: 372px (the grid default) or 520px, remembered
-// the same way the NTZ banner's fold state is.
+// between visits.
 (function(){
   const btn=$('sideWide');if(!btn)return;
   let wide=false;
@@ -4231,40 +4022,6 @@ window.matchMedia('(min-width:900px)').addEventListener('change',e=>{if(e.matche
   };
 })();
 (function(){const first=randomReplay();init(first?first.symbol:'SPY','random',1,undefined,first);})();
-(function(){let seen=true;try{seen=!!localStorage.getItem('mpGuideSeen');}catch(e){}
-  if(!seen)setTimeout(()=>tourShow(0),700);})();
-/* ---- the NTZ banner -------------------------------------------------
-   Open on a first visit, and after that however it was last left: it is a
-   reminder above the chart, not a dialog, and nothing should have to be
-   dismissed twice. The panel floats over the chart, so folding it never
-   moves the candles.
-
-   The percentages are read out of the measured variance curve rather
-   than written into the copy. The library grows and the curve is measured
-   again; a number typed into the sentence would quietly stop being true. */
-(function(){
-  const box=$('ntz'),bar=$('ntzBar');if(!box||!bar)return;
-
-  const IV=window.MP_INTRADAY;
-  if(IV&&Array.isArray(IV.rem)&&IV.rem.length>390){
-    const rem=IV.rem,at=m=>rem[Math.max(0,Math.min(rem.length-1,m))],
-      share=(a,b)=>(Math.max(0,at(a)-at(b))*100).toFixed(1)+'%',
-      put=(id,v)=>{const e=$(id);if(e)e.textContent=v;};
-    put('ntzOpen15',share(0,15));put('ntzOpen30',share(0,30));put('ntzLunch',share(120,240));
-    if(IV.sessions)put('ntzN',String(IV.sessions));
-    // Variance per minute over the opening fifteen against the lunch hours.
-    const o=(at(0)-at(15))/15,l=(at(120)-at(240))/120;
-    if(l>0&&o>l)put('ntzX',Math.round(o/l)+' times');
-  }
-
-  let open=true;
-  try{const v=localStorage.getItem('mpNtzOpen');if(v!==null)open=v==='1';}catch(e){}
-  const set=o=>{open=o;box.dataset.open=o?'1':'0';bar.setAttribute('aria-expanded',o?'true':'false');
-    try{localStorage.setItem('mpNtzOpen',o?'1':'0');}catch(e){}};
-  set(open);
-  bar.addEventListener('click',()=>set(!open));
-  const done=$('ntzDone');if(done)done.addEventListener('click',e=>{e.stopPropagation();set(false);});
-})();
 </script>
 </body>
 </html>

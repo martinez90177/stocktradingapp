@@ -589,8 +589,8 @@ function keyLevelsBlock(a: Analysis): string {
       const methods = l.methods.map((m) => METHOD_LABEL[m] ?? m).join(" · ");
       return `<tr class="${cls}">
         <td class="mono strong">${num(l.price)}</td>
-        <td class="mono ${l.distancePct >= 0 ? "pos" : "neg"}">${signed(l.distancePct, 2, "%")}</td>
-        <td class="mono dimc">${signed(l.distanceAtr, 1)} ATR</td>
+        <td class="mono ${l.distancePct >= 0 ? "pos" : "neg"}">${signed(l.distancePct, 2, "%")}<span class="sub atrsub">${signed(l.distanceAtr, 1)} ATR</span></td>
+        <td class="mono dimc atrcol">${signed(l.distanceAtr, 1)} ATR</td>
         <td>${confCell(l)}</td>
         <td class="whys">${esc(methods)}</td>
       </tr>`;
@@ -601,7 +601,7 @@ function keyLevelsBlock(a: Analysis): string {
   return `<div class="keylv">
     <h3>Levels in play <i>&mdash; within about ${REACH} ATR of ${num(a.price)}</i></h3>
     <div class="tablewrap"><table class="levels">
-      <thead><tr><th>Price</th><th>Dist</th><th>ATR</th><th class="confh">Confluence</th><th>What agrees</th></tr></thead>
+      <thead><tr><th>Price</th><th>Dist</th><th class="atrcol">ATR</th><th class="confh">Confluence</th><th>What agrees</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
     <p class="conflegend">Confluence counts how many <b>independent methods</b> land on that price &mdash; a Fibonacci level, a moving average, the volume point of control and a prior swing all at once is a level the market is watching from four directions. It rates the <b>price level</b>, not the trade. The trade rating is the letter grade at the top.</p>
@@ -1012,7 +1012,9 @@ html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--sans);padding-bottom:60px}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .pos{color:var(--up)} .neg{color:var(--down)} .strong{font-weight:650}
-.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+/* viewport-fit=cover puts the page under a landscape iPhone's notch, so the
+   gutters grow to clear it. */
+.wrap{max-width:1120px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left))}
 a{color:inherit;text-decoration:none}
 
 header.top{border-bottom:1px solid var(--line);padding:26px 0 0;position:relative;overflow:hidden}
@@ -1076,7 +1078,9 @@ header.top>.wrap{position:relative}
 .detailhost.single>section.ticker.active{display:block}
 
 h2.sec{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim2);margin:30px 0 12px;font-weight:600}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:10px}
+/* Every auto-fill grid caps its minimum at the container width: a bare 255px
+   minimum on a 320px phone forces a column wider than the screen. */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(255px,100%),1fr));gap:10px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:block;transition:border-color .12s}
 .card:hover{border-color:var(--accent)}
 .cardtop{display:flex;align-items:center;gap:8px}
@@ -1204,7 +1208,7 @@ a.ntitle:hover{color:var(--accent);text-decoration:underline}
 .ntag.bearish{background:rgba(239,83,80,.16);color:var(--down)}
 
 h2.sec i{font-style:normal;text-transform:none;letter-spacing:0;font-weight:400;opacity:.8}
-.mvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:11px}
+.mvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));gap:11px}
 .mv{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
 .mvtop{display:flex;align-items:baseline;gap:8px}
 .mvsym{font-size:15px;letter-spacing:.2px}
@@ -1253,8 +1257,10 @@ span.c-desk{display:inline}
 .stat span{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--dim2)}
 .stat b{font-size:13px;font-weight:620}
 
-.panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
-.panel{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:12px}
+.panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:12px}
+/* min-width:0 lets a wide table scroll inside its .tablewrap. Left at the
+   grid default the panel grows to the table's width and runs off the screen. */
+.panel{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:12px;min-width:0}
 .panel h3{margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:1.1px;color:var(--dim2);font-weight:620}
 .empty{color:var(--dim2);font-size:12.5px;margin:0}
 
@@ -1267,6 +1273,7 @@ table.levels tr.res td:first-child{box-shadow:inset 2px 0 0 var(--down);padding-
 table.levels tr.sup td:first-child{box-shadow:inset 2px 0 0 var(--up);padding-left:9px}
 table.levels tr.at td:first-child{box-shadow:inset 2px 0 0 var(--gold);padding-left:9px}
 td .sub{display:block;font-size:10px;color:var(--dim2)}
+td .sub.atrsub{display:none}
 .conf{display:inline-flex;align-items:center;justify-content:center;width:26px;height:20px;border-radius:4px;background:linear-gradient(90deg,var(--accent) var(--w),var(--line) var(--w));font-family:var(--mono);font-size:11px;font-weight:700}
 
 th.confh{min-width:86px}
@@ -1333,7 +1340,6 @@ ol.rlist li:hover{border-left-color:var(--gold)}
   dialog.rules{max-height:92vh;border-radius:12px}
   .rhead{padding:20px 18px 15px} .rhead h2{font-size:21px}
   .rbody{padding:4px 18px 18px} .rfoot{padding:11px 18px}
-  .rulesbtn{margin-left:0;width:100%;text-align:center}
 }
 
 .panel.wide{grid-column:1/-1}
@@ -1368,7 +1374,7 @@ table.opts tr.put td:first-child{box-shadow:inset 2px 0 0 var(--down);padding-le
 .fibset{margin-bottom:14px}
 .fibhead{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-bottom:7px;font-size:12px}
 .fibhead span{color:var(--dim2);font-size:11px;font-family:var(--mono)}
-.fibcols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fibcols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 table.mini th{font-size:9.5px}
 table.mini td{padding:4px 6px 4px 0;font-size:11.5px}
 table.mini tr.gp td{background:rgba(230,180,34,.1)}
@@ -1388,10 +1394,38 @@ table.mini tr.gp td{background:rgba(230,180,34,.1)}
 footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:var(--dim2);font-size:11.5px;line-height:1.6}
 
 @media(max-width:720px){
-  .wrap{padding:0 11px}
+  .wrap{padding:0 max(11px,env(safe-area-inset-right)) 0 max(11px,env(safe-area-inset-left))}
+  .mark h1{font-size:27px}
+  #countdown{font-size:23px}
+  /* The rail's flex row wrapped into ragged lines with a divider hanging off
+     the end of each; on a phone it is a three-up grid instead. */
+  .rail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .railcell{padding:10px 10px 6px 0;margin-right:0;border-right:0}
+  .railcell span{letter-spacing:.6px}
+  .gen .fresh{margin-left:0}
+  /* Five buttons in one row ran off the screen, and the header clips its
+     overflow, so Practice and the rules could not be reached at all. The two
+     views share the first row; the links fill the next and wrap if they must. */
+  .views{flex-wrap:wrap}
+  .viewbtn{flex:1 1 45%;justify-content:center;white-space:nowrap;padding:12px}
+  .practicebtn,.rulesbtn{flex:1 1 auto;justify-content:center;text-align:center;margin-left:0;white-space:nowrap;padding:12px}
+  .navchip{padding:7px 10px}
+  .dnav{flex-wrap:wrap;row-gap:10px}
+  .dnav button{padding:8px 13px}
+  .czbar button{padding:7px 12px}
   section.ticker{padding:12px;border-radius:10px}
-  .panels{grid-template-columns:1fr}
-  .fibcols{grid-template-columns:1fr}
+  .panels{grid-template-columns:minmax(0,1fr)}
+  .fibcols{grid-template-columns:minmax(0,1fr)}
+  /* Levels in play: the ATR column moves under the distance, which leaves
+     "what agrees" room to read as a line rather than a word per row. */
+  th.atrcol,td.atrcol{display:none}
+  td .sub.atrsub{display:block;white-space:nowrap}
+  th.confh{min-width:0}
+  /* Six columns squeezed to a phone wrap every figure onto three lines and
+     push Liquidity out of sight. Kept at full width it scrolls sideways
+     instead, with the contract pinned so each row stays labelled. */
+  table.opts{min-width:620px}
+  table.opts td:first-child,table.opts th:first-child{position:sticky;left:0;background:var(--panel2);z-index:1}
   .tid h2{font-size:18px}
   .tname{display:none}
   .stats{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}

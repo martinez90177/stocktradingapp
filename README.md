@@ -193,7 +193,7 @@ timeframes, chart style and indicator chips above the chart, the drawing
 tools down its left edge, the transport row (rewind, Next, play, speed)
 under it, and a sidebar on the right with the day picker, the eight pane tabs
 as two rows of four, and the pane. A slim masthead above it all holds the
-data note behind a chip, the guide, and the link back to the report.
+data note behind a chip and the link back to the report.
 
 On a **phone** the same parts are stacked: header, chart, one toolbar row, the
 transport row, and a bar of four buttons along the bottom -- Trade, Chain,
@@ -214,13 +214,6 @@ drifted until the file opened from disk and the site served were different
 pages.
 
 ### Finding your way
-
-A **guide** walks through the page one control at a time: a spotlight on the
-thing and a card saying what it does. It opens by itself on a first visit, and
-from the **?** beside the day picker (the Session pane on a phone) or **How to
-use this page** in the desktop masthead after that. The dimmed page cannot be
-clicked while it runs, so the tour cannot place a trade. On a phone each step
-opens the sheet or switches the toolbar to the thing it is pointing at.
 
 Every drawing tool is labelled under its icon (Pointer, Trend, Level, Fib, Box,
 Measure, Erase, Undo, Clear) and has a hover description. Picking a tool, or
