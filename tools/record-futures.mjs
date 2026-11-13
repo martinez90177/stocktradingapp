@@ -4,9 +4,10 @@
  *   node tools/record-futures.mjs            # both symbols
  *   node tools/record-futures.mjs MNQ        # one symbol
  *
- * Yahoo serves one-minute history for only the last seven days, so this is run
- * on a schedule and every day it sees is merged into futures/<SYM>/<date>.json
- * and kept. A run never deletes anything: bars are merged by timestamp, and a
+ * Yahoo serves one-minute history for about the last thirty days, at most seven
+ * days per request, so each run walks that whole window in weekly chunks (a
+ * missed run is made up by the next one) and every day it sees is merged into
+ * futures/<SYM>/<date>.json and kept, so the library only grows. A run never deletes anything: bars are merged by timestamp, and a
  * bar already on file is only replaced by a fresher copy of the same minute.
  *
  * It also keeps two coarser files per symbol for context on the 1h / 4h / daily
@@ -54,11 +55,11 @@ export function tradingDate(t) {
 }
 const etSecOfDay = (t) => (((t + etOffset(t)) % 86400) + 86400) % 86400;
 
-async function fetchBars(yahooSym, interval, range) {
+async function fetchBars(yahooSym, interval, range, win) {
   let lastErr;
   for (const host of HOSTS) {
     try {
-      const r = await fetch(`${host}/v8/finance/chart/${encodeURIComponent(yahooSym)}?interval=${interval}&range=${range}`, { headers: UA });
+      const r = await fetch(`${host}/v8/finance/chart/${encodeURIComponent(yahooSym)}?interval=${interval}&${win ? `period1=${win[0]}&period2=${win[1]}` : `range=${range}`}`, { headers: UA });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const j = await r.json();
       const res = j.chart?.result?.[0];
@@ -92,7 +93,13 @@ async function recordSymbol(sym) {
   const ysym = SYMBOLS[sym];
 
   // --- one-minute bars, grouped into Globex sessions ---
-  let bars = await fetchBars(ysym, "1m", "7d");
+  // The last ~29 days, a week per request; Yahoo refuses 1m data older than 30 days.
+  const now = Math.floor(Date.now() / 1000), WEEK = 7 * 86400, FROM = now - 29 * 86400;
+  let bars = [];
+  for (let end = now; end > FROM; end -= WEEK) {
+    try { bars = bars.concat(await fetchBars(ysym, "1m", null, [Math.max(end - WEEK, FROM), end])); }
+    catch (e) { if (end === now) throw e; console.error(`${sym}: older chunk skipped (${e.message})`); }
+  }
   // The newest bar is still forming (its timestamp is not on a minute boundary); wait for it to finish.
   bars = bars.filter((b) => b[0] % 60 === 0);
   const byDate = new Map();

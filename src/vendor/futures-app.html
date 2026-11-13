@@ -83,6 +83,32 @@ main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 332px;min-height:0}
 #banner.bad{background:#3d1a1f;color:#ffccd0;border:1px solid #6b2229}
 #banner.good{background:#0d3029;color:#a7f0de;border:1px solid #155e4f}
 #banner.info{background:#1a2440;color:#c4d3ff;border:1px solid #2c3f73}
+/* the horizontal-line toolbar: TradingView's floating drawing toolbar */
+.lvlBtn.on{color:var(--accent);background:var(--hover)}
+#lvlBar{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:8;display:flex;align-items:center;gap:2px;padding:3px;
+  background:var(--raise);border:1px solid var(--line2);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.45);max-width:calc(100% - 16px)}
+#lvlBar[hidden],#lvPal[hidden]{display:none}
+#lvlBar button{padding:0;width:30px;height:30px;color:var(--text)}
+#lvlBar button.on{background:var(--hover)}
+#lvlBar .sep{width:1px;height:20px;background:var(--line2);margin:0 3px;flex:none}
+#lvlBar .wgrp,#lvlBar .sgrp{display:flex;gap:1px}
+#lvlBar .wgrp i{display:block;width:16px;background:currentColor;border-radius:1px}
+#lvlBar .sgrp i{display:block;width:18px;height:0;border-top:2px solid currentColor}
+#lvlBar .sgrp i.st1{border-top-style:dashed}#lvlBar .sgrp i.st2{border-top-style:dotted}
+#lvlBar .sw{display:block;width:18px;height:18px;border-radius:3px;border:1px solid rgba(255,255,255,.25)}
+#lvText{width:92px;height:30px;font-size:12px;border-color:transparent;background:transparent}
+#lvText:hover{border-color:var(--line2)}
+#lvDel:hover{color:var(--dnT)}
+#lvPal{position:absolute;z-index:9;background:var(--raise);border:1px solid var(--line2);border-radius:6px;padding:8px;box-shadow:0 8px 28px rgba(0,0,0,.5);width:244px}
+#lvPal .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
+#lvPal .grid button{padding:0;width:20px;height:20px;border-radius:3px;border:1px solid transparent}
+#lvPal .grid button:hover{transform:scale(1.15);background:inherit}
+#lvPal .grid button.on{outline:2px solid #fff;outline-offset:1px}
+#lvPal .row{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line2);font-size:12px;color:var(--mute)}
+#lvPal input[type=color]{width:34px;height:24px;padding:0;border:1px solid var(--line2);background:transparent;cursor:pointer}
+#lvPal input[type=range]{flex:1;height:auto;padding:0;border:0;accent-color:var(--accent)}
+@media (pointer:coarse){#lvlBar button{width:36px;height:36px}#lvPal .grid button{width:22px;height:22px}#lvPal{width:266px}}
+@media (max-width:560px){#lvlBar{top:4px;gap:1px}#lvlBar .wgrp button,#lvlBar .sgrp button{width:26px}#lvlBar .sep{margin:0 2px}#lvText{width:60px;flex:none;padding:4px 6px}}
 #zoomBtns{position:absolute;right:70px;bottom:32px;display:flex;gap:2px;z-index:3;background:var(--raise);border:1px solid var(--line);border-radius:4px;padding:2px;opacity:.9}
 #zoomBtns button{padding:4px 9px;font-size:15px;line-height:1}
 #menu{position:fixed;display:none;z-index:60;background:var(--raise);border:1px solid var(--line);border-radius:6px;padding:4px 0;box-shadow:0 6px 24px rgba(0,0,0,.5);min-width:230px}
@@ -322,6 +348,8 @@ dialog .btns button.on:hover{background:var(--accentH)}
   <symbol id="i-sound" viewBox="0 0 18 18"><path d="M3 7h2.6L9 4.2v9.6L5.6 11H3z" fill="currentColor"/><path d="M11.5 6.5a3.6 3.6 0 0 1 0 5M13.3 4.6a6.2 6.2 0 0 1 0 8.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
   <symbol id="i-mute" viewBox="0 0 18 18"><path d="M3 7h2.6L9 4.2v9.6L5.6 11H3z" fill="currentColor"/><path d="M11.6 7l3.8 4M15.4 7l-3.8 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
   <symbol id="i-gear" viewBox="0 0 18 18"><path d="M3 5h7M13 5h2M3 13h2M8 13h7M3 9h3M9 9h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="11.5" cy="5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="6.5" cy="13" r="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="7.5" cy="9" r="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+  <symbol id="i-hline" viewBox="0 0 18 18"><path d="M1.5 9h15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="9" cy="9" r="2.2" fill="var(--bg)" stroke="currentColor" stroke-width="1.4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 18 18"><path d="M3.5 5h11M7 5V3.5h4V5M5 5l.8 9.5h6.4L13 5M7.6 7.5v4.5M10.4 7.5v4.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-latest" viewBox="0 0 18 18"><path d="M4 4.5 8.5 9 4 13.5M9 4.5 13.5 9 9 13.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 <div id="app">
@@ -337,6 +365,7 @@ dialog .btns button.on:hover{background:var(--accentH)}
   <div class="grp desk">
     <button class="indVwap on" title="Session VWAP">VWAP</button>
     <button class="indEma" title="EMA 9 and 21">EMA</button>
+    <button class="lvlBtn" title="Horizontal line (Alt+H): click the chart to place it"><svg class="i"><use href="#i-hline"/></svg></button>
   </div>
   <span class="vsep desk"></span>
   <div class="grp">
@@ -362,6 +391,8 @@ dialog .btns button.on:hover{background:var(--accentH)}
   </div>
 </header>
 <div id="tfRow" class="mobile">
+  <button class="lvlBtn ind" title="Horizontal line: tap the chart to place it" aria-label="Horizontal line"><svg class="i"><use href="#i-hline"/></svg></button>
+  <span class="vsep"></span>
   <div class="tfbar" id="tfbarM"></div>
   <span class="vsep"></span>
   <button class="indVwap ind on">VWAP</button><button class="indEma ind">EMA</button>
@@ -378,6 +409,17 @@ dialog .btns button.on:hover{background:var(--accentH)}
       <div id="banner"></div>
       <div id="zoomBtns"><button id="zOut" title="Zoom out">−</button><button id="zIn" title="Zoom in">+</button><button id="zLive" title="Jump to the latest candle (or double-click / double-tap the chart)"><svg class="i"><use href="#i-latest"/></svg></button></div>
       <div id="loading">Loading real futures bars…</div>
+      <div id="lvlBar" hidden>
+        <button id="lvColor" title="Line colour"><span class="sw"></span></button>
+        <span class="sep"></span>
+        <span class="wgrp"><button data-w="1" title="1px"><i style="height:1px"></i></button><button data-w="2" title="2px"><i style="height:2px"></i></button><button data-w="3" title="3px"><i style="height:3px"></i></button><button data-w="4" title="4px"><i style="height:4px"></i></button></span>
+        <span class="sep"></span>
+        <span class="sgrp"><button data-s="0" title="Solid"><i class="st0"></i></button><button data-s="1" title="Dashed"><i class="st1"></i></button><button data-s="2" title="Dotted"><i class="st2"></i></button></span>
+        <span class="sep"></span>
+        <input id="lvText" type="text" maxlength="24" placeholder="Text" title="A label on the line">
+        <button id="lvDel" title="Remove line (Delete)"><svg class="i"><use href="#i-trash"/></svg></button>
+      </div>
+      <div id="lvPal" hidden></div>
     </div>
     <div id="playbar">
       <button id="bRestart" title="Restart this session from the start time"><svg class="i"><use href="#i-restart"/></svg></button>
@@ -598,6 +640,10 @@ const tradingDate=t=>dateStr(etLocal(t)+21600);
 const p2=n=>String(n).padStart(2,'0');
 const hhmm=t=>{const s=secOfDay(t);return p2(Math.floor(s/3600))+':'+p2(Math.floor(s%3600/60))};
 const shortDate=t=>new Date(etLocal(t)*1000).toLocaleDateString('en-US',{timeZone:'UTC',month:'short',day:'numeric'});
+/* The crosshair's time-axis stamp, as TradingView writes it: "Thu 12 Nov '26  09:35". */
+const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const tvStamp=(t,withTime)=>{const d=new Date(etLocal(t)*1000);
+  return WD[d.getUTCDay()]+' '+d.getUTCDate()+' '+MO[d.getUTCMonth()]+" '"+String(d.getUTCFullYear()).slice(2)+(withTime?'  '+hhmm(t):'')};
 const longDate=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'short',month:'short',day:'numeric',year:'numeric'});
 
 /* ---------- candles ---------- */
@@ -626,6 +672,14 @@ let P={q:0,avg:0,lots:[]};
 let ORD=[];
 let RT=null;
 let PAL=[];                         // price alerts for this session
+/* Horizontal lines the trader draws: kept per contract, across sessions, the way
+ * TradingView keeps drawings on a symbol. {id,price,color,width,style,text} */
+const LVLS=store.get('ppfut.lvl',{});
+let selLvl=null,placeLvl=false;
+const curLvls=()=>D?(LVLS[D.sym]||(LVLS[D.sym]=[])):[];
+const saveLvls=()=>store.set('ppfut.lvl',LVLS);
+const LVL_DASH=[[],[6,4],[1.5,3]];
+let lastLvlStyle=store.get('ppfut.lvlStyle',{color:'#2962ff',width:1,style:0});
 let OID=1;
 let DAY={startBal:ACC.balance};
 let LOCK={day:false,session:false};
@@ -741,7 +795,7 @@ async function loadSession(sym,date,startKey){
   if(symChanged)loadTicketFor(sym);
   playing=false;updatePlayBtn();
   $('loading').style.display='none';
-  PAL=[];
+  PAL=[];selLvl=null;placeLvl=false;if($('lvlBar'))$('lvlBar').hidden=true;
   // warnings already given for this account aren't repeated just because a new day loaded
   ALERT.day=0;ALERT.dd=levelOf(Math.max(0,1-(ACC.balance-floorAmt())/SET.dd));
   banner(ACC.status==='breached'?'Account failed. Start a new attempt to keep trading.':'', 'bad');
@@ -1271,6 +1325,20 @@ function draw(){
   const lp=R.price,ly=yOf(g,lp),lb=SER[SER.length-1],lcol=lb[4]>=lb[1]?'#089981':'#f23645';
   cx.setLineDash([2,3]);cx.strokeStyle=lcol;cx.beginPath();cx.moveTo(0,Math.round(ly)+.5);cx.lineTo(g.w,Math.round(ly)+.5);cx.stroke();cx.setLineDash([]);
 
+  // the trader's horizontal lines, under every order label
+  const lvTags=[];
+  for(const L of curLvls()){
+    const y=yOf(g,L.price);if(y<-4||y>g.h+4)continue;
+    const yy=Math.round(y)+(L.width%2?.5:0),sel=L===selLvl;
+    cx.strokeStyle=L.color;cx.lineWidth=L.width;cx.setLineDash(LVL_DASH[L.style]||[]);
+    cx.beginPath();cx.moveTo(0,yy);cx.lineTo(g.w,yy);cx.stroke();cx.setLineDash([]);cx.lineWidth=1;
+    if(L.text){cx.font=FONT();cx.fillStyle=L.color;cx.textAlign='right';cx.textBaseline='bottom';cx.fillText(L.text,g.w-8,yy-3)}
+    if(sel){for(const hx of[g.w*.25,g.w*.5,g.w*.75]){cx.fillStyle='#131722';cx.strokeStyle=L.color;cx.lineWidth=1.5;
+      cx.beginPath();cx.arc(hx,yy,4.5,0,7);cx.fill();cx.stroke();cx.lineWidth=1}}
+    HIT.push({k:'lineY',y,ref:{k:'lvl',o:L}});
+    lvTags.push(L);
+  }
+
   // ticket preview (TradingView shows where TP / SL would land)
   if(previewOn&&!P.q){
     const ref=TK.type==='market'?R.price:(TK.price||R.price),tk=I().tick,q=TK.qty;
@@ -1318,16 +1386,26 @@ function draw(){
   }
   drawEntries();
   for(const al of PAL)orderLine(g,al.price,'#ff9800',[{t:'🔔 '+fx(al.price),fg:'#ffb74d'},{t:'✕',k:'xal',o:al}],{k:'alert',o:al},true,true,0);
+  for(const L of lvTags)axisTag(g,yOf(g,L.price),L.price.toFixed(2),L.color,inkOn(L.color));
   JOBS.sort((a,b)=>a.pri-b.pri).forEach(j=>j.fn());
   // last price tag on top of the axis
   axisTag(g,ly,lp.toFixed(2),lcol,'#fff');
   // crosshair
   const ch=crossSticky||mouse;
-  if(ch&&ch.x<g.w&&ch.y<g.h&&!(drag&&drag.kind!=='pan')){
+  if(ch&&ch.x<g.w&&ch.y<g.h&&!(drag&&drag.kind!=='pan'&&drag.kind!=='lvl')){
+    // The vertical line snaps to the middle of the candle under it, as on TradingView,
+    // and the time axis gets a stamp of that candle's date and time.
+    const ci=Math.round(g.right-(g.w-ch.x)/view.barW),last=SER.length-1;
+    const ct=ci<0?SER[0][0]+ci*TF*60:ci>last?SER[last][0]+(ci-last)*TF*60:SER[ci][0];
+    const vx=Math.round(xOf(g,ci))+.5;
     cx.setLineDash([3,3]);cx.strokeStyle='#9598a1';
-    cx.beginPath();cx.moveTo(0,Math.round(ch.y)+.5);cx.lineTo(g.w,Math.round(ch.y)+.5);cx.moveTo(Math.round(ch.x)+.5,0);cx.lineTo(Math.round(ch.x)+.5,g.h);cx.stroke();cx.setLineDash([]);
+    cx.beginPath();cx.moveTo(0,Math.round(ch.y)+.5);cx.lineTo(g.w,Math.round(ch.y)+.5);cx.moveTo(vx,0);cx.lineTo(vx,g.h);cx.stroke();cx.setLineDash([]);
     const cp=snap(priceAt(g,ch.y));
     axisTag(g,ch.y,cp.toFixed(2),'#363a45','#d1d4dc');
+    {const txt=tvStamp(ct,TF<1440);cx.font=FONT();
+     const tw=Math.ceil(cx.measureText(txt).width)+16,th=PADB-2,tx=Math.max(0,Math.min(g.w-tw,Math.round(vx-tw/2)));
+     cx.fillStyle='#363a45';cx.fillRect(tx,g.h+1,tw,th);
+     cx.fillStyle='#d1d4dc';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(txt,tx+tw/2,g.h+1+th/2+.5);}
     // TradingView's "+" on the price scale: click it to place an order at that price
     if(!coarse()){
       const bx=g.w-20,by=Math.round(ch.y-9);
@@ -1348,6 +1426,8 @@ function draw(){
       ((TF>=60&&CTX[D.sym]&&CTX[D.sym].loading)?' <span class="mute">loading history…</span>':'');
   }
 }
+/** Black or white text, whichever reads on that background. */
+function inkOn(hex){const n=parseInt(hex.slice(1,7),16);return((n>>16)*299+((n>>8)&255)*587+(n&255)*114)/1000>150?'#131722':'#fff'}
 function axisTag(g,y,text,bg,fg){
   const h=coarse()?20:18;cx.font=FONT();cx.fillStyle=bg;cx.fillRect(g.w,Math.round(y-h/2),PADR,h);
   cx.fillStyle=fg;cx.textAlign='left';cx.textBaseline='middle';cx.fillText(text,g.w+5,Math.round(y)+1);
@@ -1422,7 +1502,9 @@ cv.addEventListener('pointerdown',e=>{
     if(view.follow){view.follow=false;view.x1=geom().right}
     return;
   }
-  const g=geom(),h=hitAt(m);
+  const g=geom();
+  if(placeLvl&&m.x<g.w){addLvl(snap(priceAt(g,m.y)));drag={kind:'lvl',o:selLvl,y0:m.y,moved:false};return}
+  const h=hitAt(m);
   if(h){
     if(h.k==='x'){cancelOrder(h.o.id);return}
     if(h.k==='xbr'){h.o.br[h.leg]=0;if(!h.o.br.tp&&!h.o.br.sl)h.o.br=null;dirty.chart=true;return}
@@ -1432,6 +1514,7 @@ cv.addEventListener('pointerdown',e=>{
     if(h.k==='newTP'||h.k==='newSL'){drag={kind:'newBr',tag:h.k==='newTP'?'TP':'SL',x0:m.x,y0:m.y,moved:false,price:null};return}
     const ref=h.ref;
     if(ref&&ref.k==='alert'){drag={kind:'alert',o:ref.o,y0:m.y,moved:false};cv.style.cursor='ns-resize';return}
+    if(ref&&ref.k==='lvl'){selectLvl(ref.o);drag={kind:'lvl',o:ref.o,y0:m.y,moved:false};cv.style.cursor='ns-resize';return}
     if(ref&&ref.k==='line'){if(!ref.o.ro)selId=ref.o.id;drag={kind:'order',o:ref.o,orig:ref.o.price,y0:m.y,moved:false};cv.style.cursor='ns-resize';return}
     if(ref&&ref.k==='brline'){drag={kind:'brleg',o:ref.o,leg:ref.leg,orig:ref.o.br[ref.leg],y0:m.y,moved:false};cv.style.cursor='ns-resize';return}
   }
@@ -1461,6 +1544,7 @@ cv.addEventListener('pointermove',e=>{
     }else if(drag.kind==='axis'){view.yz=Math.max(.15,Math.min(8,drag.yz0*Math.exp((m.y-drag.y0)/Math.max(140,g.h)*1.8)))}  // full-height drag ≈ 6x
     else if(drag.kind==='order'){drag.o.price=snap(priceAt(g,m.y));dirty.orders=dirty.ladder=true}
     else if(drag.kind==='alert'){drag.o.price=snap(priceAt(g,m.y))}
+    else if(drag.kind==='lvl'){if(drag.moved){drag.o.price=snap(priceAt(g,m.y));mouse={x:m.x,y:yOf(g,drag.o.price)}}}
     else if(drag.kind==='brleg'){
       const pr=snap(priceAt(g,m.y)),s=drag.o.side,d=(pr-drag.o.price)*s,tk=I().tick;
       if(drag.leg==='tp'&&d>0)drag.o.br.tp=Math.round(d/tk);
@@ -1489,6 +1573,8 @@ function endPointer(e){
         if(err){o.price=drag.orig;toast(err)}
       }
       cv.style.cursor='crosshair';
+    }else if(drag.kind==='lvl'){
+      saveLvls();cv.style.cursor='crosshair';
     }else if(drag.kind==='brleg'){
       if(!drag.moved){/* tap */}
     }else if(drag.kind==='newBr'){
@@ -1498,9 +1584,9 @@ function endPointer(e){
         else setProtect(tag,tag==='TP'?P.avg+s*TK.tpT*tk:P.avg-s*TK.slT*tk);   // a plain click uses the ticket's distance
       }
     }else if(drag.kind==='pan'&&!drag.moved&&!drag.touch){
-      selId=null;                                   // a click on empty chart deselects the order
+      selId=null;selectLvl(null);                   // a click on empty chart deselects
     }else if(drag.kind==='pan'&&!drag.moved&&drag.touch){
-      selId=null;
+      selId=null;selectLvl(null);
       const now=performance.now();
       if(now-lastTap<300){view.follow=true;view.yz=1;crossSticky=null}
       else crossSticky=crossSticky?null:{x:m.x,y:m.y};
@@ -1540,6 +1626,8 @@ function openMenu(cxp,cyp,price){
           :`<button data-a="-1,limit" class="s">Sell ${q} @ ${fx(price)} Limit${brTxt}</button><button data-a="1,stop" class="b">Buy ${q} @ ${fx(price)} Stop${brTxt}</button>`)+
     (P.q?`<button data-a="TP">Set take profit @ ${fx(price)}</button><button data-a="SL">Set stop loss @ ${fx(price)}</button>`:'')+
     `<button data-a="AL">🔔 Add alert @ ${fx(price)}</button>`+
+    `<button data-a="HL">― Horizontal line @ ${fx(price)}</button>`+
+    (curLvls().length?`<button data-a="HLX" class="mute">Remove all ${curLvls().length} line${curLvls().length>1?'s':''} on ${D.sym}</button>`:'')+
     `<button data-a="x" class="mute">Cancel</button>`;
   mn.style.display='block';
   const w=mn.offsetWidth,hgt=mn.offsetHeight;
@@ -1549,6 +1637,8 @@ function openMenu(cxp,cyp,price){
     if(a==='x')return;
     if(a==='TP'||a==='SL'){setProtect(a,price);return}
     if(a==='AL'){PAL.push({id:'al'+Date.now(),price});dirty.chart=true;toast('Alert set at '+fx(price)+'. Drag the line to move it.');return}
+    if(a==='HL'){addLvl(price);return}
+    if(a==='HLX'){LVLS[D.sym]=[];saveLvls();selectLvl(null);return}
     const [s,t]=a.split(',');submit(+s,t,price,q,br);
   };
 }
@@ -1771,6 +1861,68 @@ function setTF(tf){
 $$('.tfbar').forEach(bar=>bar.onclick=e=>{const b=e.target.closest('button');if(b)setTF(+b.dataset.tf)});
 $$('.indVwap').forEach(b=>b.onclick=()=>{ind.vwap=!ind.vwap;$$('.indVwap').forEach(x=>x.classList.toggle('on',ind.vwap));dirty.chart=true});
 $$('.indEma').forEach(b=>b.onclick=()=>{ind.ema=!ind.ema;$$('.indEma').forEach(x=>x.classList.toggle('on',ind.ema));dirty.chart=true});
+
+/* ---------- horizontal lines ---------- */
+// TradingView's palette: a grey ramp, ten hues, and lighter / darker rows of each.
+const PAL_ROWS=[
+  ['#ffffff','#d1d4dc','#b2b5be','#9598a1','#787b86','#5d606b','#434651','#2a2e39','#1e222d','#000000'],
+  ['#f23645','#ff9800','#ffeb3b','#4caf50','#089981','#00bcd4','#2962ff','#673ab7','#9c27b0','#e91e63'],
+  ['#fccbcd','#ffe0b2','#fff9c4','#c8e6c9','#ace5dc','#b2ebf2','#bbd9fb','#d1c4e9','#e1bee7','#f8bbd0'],
+  ['#faa1a4','#ffcc80','#fff59d','#a5d6a7','#70ccbd','#80deea','#90bff9','#b39ddb','#ce93d8','#f48fb1'],
+  ['#f77c80','#ffb74d','#fff176','#81c784','#42bda8','#4dd0e1','#5b9cf6','#9575cd','#ba68c8','#f06292'],
+  ['#b22833','#f57c00','#fbc02d','#388e3c','#056656','#0097a7','#1848cc','#512da8','#7b1fa2','#c2185b'],
+  ['#801922','#e65100','#f57f17','#1b5e20','#00332a','#006064','#0c3299','#311b92','#4a148c','#880e4f']];
+const baseHex=c=>c.slice(0,7),alphaOf=c=>c.length>7?parseInt(c.slice(7,9),16)/255:1;
+const withAlpha=(c,a)=>baseHex(c)+(a>=.995?'':Math.round(a*255).toString(16).padStart(2,'0'));
+function addLvl(price){
+  const L={id:'lv'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),price,color:lastLvlStyle.color,width:lastLvlStyle.width,style:lastLvlStyle.style,text:''};
+  curLvls().push(L);saveLvls();setPlaceLvl(false);selectLvl(L);
+}
+function setPlaceLvl(on){placeLvl=on;$$('.lvlBtn').forEach(b=>b.classList.toggle('on',on));cv.style.cursor=on?'copy':'crosshair';
+  if(on)toast(coarse()?'Tap the chart where the line goes':'Click the chart where the line goes')}
+function selectLvl(L){selLvl=L;if(!L)$('lvPal').hidden=true;renderLvlBar();dirty.chart=true}
+function renderLvlBar(){
+  const L=selLvl,bar=$('lvlBar');bar.hidden=!L;if(!L)return;
+  bar.querySelector('.sw').style.background=L.color;
+  bar.querySelectorAll('[data-w]').forEach(b=>b.classList.toggle('on',+b.dataset.w===L.width));
+  bar.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on',+b.dataset.s===L.style));
+  if(document.activeElement!==$('lvText'))$('lvText').value=L.text||'';
+}
+function styleLvl(patch){if(!selLvl)return;Object.assign(selLvl,patch);
+  lastLvlStyle={color:selLvl.color,width:selLvl.width,style:selLvl.style};store.set('ppfut.lvlStyle',lastLvlStyle);
+  saveLvls();renderLvlBar();dirty.chart=true}
+function deleteLvl(){if(!selLvl||!D)return;LVLS[D.sym]=curLvls().filter(x=>x!==selLvl);saveLvls();selectLvl(null)}
+function openPal(){
+  const p=$('lvPal'),L=selLvl;if(!L)return;
+  if(!p.hidden){p.hidden=true;return}
+  const cur=baseHex(L.color).toLowerCase(),a=alphaOf(L.color);
+  p.innerHTML='<div class="grid">'+PAL_ROWS.flat().map(c=>`<button data-c="${c}" style="background:${c}" class="${c===cur?'on':''}" title="${c}"></button>`).join('')+'</div>'+
+    `<div class="row"><span>Custom</span><input type="color" id="lvCustom" value="${cur}"><span>Opacity</span><input type="range" id="lvAlpha" min="10" max="100" value="${Math.round(a*100)}"></div>`;
+  p.hidden=false;
+  const wrap=$('chartWrap').getBoundingClientRect(),b=$('lvColor').getBoundingClientRect();
+  p.style.left=Math.max(4,Math.min(b.left-wrap.left,wrap.width-p.offsetWidth-4))+'px';p.style.top=(b.bottom-wrap.top+6)+'px';
+  $('lvCustom').oninput=e=>styleLvl({color:withAlpha(e.target.value,alphaOf(selLvl.color))});
+  $('lvAlpha').oninput=e=>styleLvl({color:withAlpha(selLvl.color,e.target.value/100)});
+}
+$('lvPal').addEventListener('click',e=>{const c=e.target.dataset&&e.target.dataset.c;if(!c||!selLvl)return;
+  styleLvl({color:withAlpha(c,alphaOf(selLvl.color))});
+  $('lvPal').querySelectorAll('.grid button').forEach(b=>b.classList.toggle('on',b.dataset.c===c));
+  $('lvCustom').value=c});
+$('lvColor').onclick=openPal;
+$('lvlBar').querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>styleLvl({width:+b.dataset.w}));
+$('lvlBar').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>styleLvl({style:+b.dataset.s}));
+$('lvText').addEventListener('input',()=>{if(selLvl){selLvl.text=$('lvText').value.trim();saveLvls();dirty.chart=true}});
+$('lvText').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Escape')e.target.blur()});
+$('lvDel').onclick=deleteLvl;
+$$('.lvlBtn').forEach(b=>b.onclick=()=>setPlaceLvl(!placeLvl));
+document.addEventListener('pointerdown',e=>{const p=$('lvPal');if(!p.hidden&&!p.contains(e.target)&&!$('lvColor').contains(e.target))p.hidden=true});
+document.addEventListener('keydown',e=>{
+  if(/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)||$('dlg').open)return;
+  if(e.altKey&&e.key.toLowerCase()==='h'&&D){e.preventDefault();
+    const g=geom(),y=mouse&&mouse.x<g.w?mouse.y:yOf(g,R.price);addLvl(snap(priceAt(g,y)));return}
+  if(selLvl&&(e.key==='Delete'||e.key==='Backspace')){e.preventDefault();deleteLvl();return}
+  if(e.key==='Escape'){if(placeLvl)setPlaceLvl(false);if(selLvl)selectLvl(null)}
+});
 function paintSound(){$$('.sndBtn').forEach(b=>{b.querySelector('use').setAttribute('href',SOUND?'#i-sound':'#i-mute');b.classList.toggle('on',SOUND);b.title=SOUND?'Spoken "Order filled" is on':'Fill sound is off'})}
 $$('.sndBtn').forEach(b=>b.onclick=()=>{SOUND=!SOUND;store.set('ppfut.sound',SOUND);paintSound();if(SOUND){lastSay=0;sayFilled()}});
 paintSound();
@@ -1873,7 +2025,7 @@ function frame(ts){
   renderTrades();
   requestAnimationFrame(frame);
   // test hook: lets the page be driven from the browser console
-  window.__fut={get state(){return{D,R,P,ORD,ACC,SET,TF,TK,PAL,HIST,LOCK,ALERT,DAY}},addAlert:p=>{PAL.push({id:'t'+Math.random(),price:p});dirty.chart=true},resetAccount,stepOnce,submit,flattenNow,nextCandle,loadSession,setProtect,removeProtect,openSheet,closeSheet,sayFilled,get SER(){return SER},get HIT(){return HIT}};
+  window.__fut={get lvls(){return curLvls()},get selLvl(){return selLvl},get state(){return{D,R,P,ORD,ACC,SET,TF,TK,PAL,HIST,LOCK,ALERT,DAY}},addAlert:p=>{PAL.push({id:'t'+Math.random(),price:p});dirty.chart=true},resetAccount,stepOnce,submit,flattenNow,nextCandle,loadSession,setProtect,removeProtect,openSheet,closeSheet,sayFilled,get SER(){return SER},get HIT(){return HIT}};
 })();
 })();
 </script>
