@@ -1,0 +1,130 @@
+{
+  "date": "2026-10-20",
+  "measuredAt": "2026-10-20T16:48:01.273Z",
+  "index": {
+    "VXN": 25.56,
+    "VIX": 17.67
+  },
+  "symbols": {
+    "AAPL": {
+      "index": "VXN",
+      "atm": 0.1917,
+      "ratio": 0.75,
+      "skew": -0.588,
+      "skewT": 1.49,
+      "prints": 10,
+      "spot": 340.705,
+      "expiry": "2026-10-21"
+    },
+    "AMD": {
+      "index": "VXN",
+      "atm": 0.4553,
+      "ratio": 1.781,
+      "skew": 1.658,
+      "skewT": 1.49,
+      "prints": 17,
+      "spot": 541.685,
+      "expiry": "2026-10-21"
+    },
+    "AMZN": {
+      "index": "VXN",
+      "atm": 0.2599,
+      "ratio": 1.017,
+      "skew": -2.575,
+      "skewT": 1.49,
+      "prints": 8,
+      "spot": 263.2923,
+      "expiry": "2026-10-21"
+    },
+    "GOOGL": {
+      "index": "VXN",
+      "atm": 0.2462,
+      "ratio": 0.963,
+      "skew": -0.389,
+      "skewT": 1.49,
+      "prints": 10,
+      "spot": 341.51,
+      "expiry": "2026-10-21"
+    },
+    "INTC": {
+      "index": "VXN",
+      "atm": 0.5606,
+      "ratio": 2.193,
+      "skew": 0.587,
+      "skewT": 3.49,
+      "prints": 7,
+      "spot": 93.1962,
+      "expiry": "2026-10-23"
+    },
+    "IWM": {
+      "index": "VIX",
+      "atm": 0.1021,
+      "ratio": 0.578,
+      "skew": -4.768,
+      "skewT": 0.49,
+      "prints": 5,
+      "spot": 275.7399,
+      "expiry": "2026-10-20"
+    },
+    "META": {
+      "index": "VXN",
+      "atm": 0.777,
+      "ratio": 3.04,
+      "skew": -0.282,
+      "skewT": 3.49,
+      "prints": 11,
+      "spot": 690.775,
+      "expiry": "2026-10-23"
+    },
+    "MSFT": {
+      "index": "VXN",
+      "atm": 0.1996,
+      "ratio": 0.781,
+      "skew": -0.371,
+      "skewT": 1.49,
+      "prints": 15,
+      "spot": 531.705,
+      "expiry": "2026-10-21"
+    },
+    "MU": {
+      "index": "VXN",
+      "atm": 0.4168,
+      "ratio": 1.631,
+      "skew": 1.921,
+      "skewT": 1.49,
+      "prints": 15,
+      "spot": 910.28,
+      "expiry": "2026-10-21"
+    },
+    "QQQ": {
+      "index": "VXN",
+      "atm": 0.1211,
+      "ratio": 0.474,
+      "skew": -1.783,
+      "skewT": 0.49,
+      "prints": 18,
+      "spot": 719.18,
+      "expiry": "2026-10-20"
+    },
+    "SPY": {
+      "index": "VIX",
+      "atm": 0.0893,
+      "ratio": 0.505,
+      "skew": -3.603,
+      "skewT": 0.49,
+      "prints": 17,
+      "spot": 769.405,
+      "expiry": "2026-10-20"
+    },
+    "TSLA": {
+      "index": "VXN",
+      "atm": 0.6913,
+      "ratio": 2.705,
+      "skew": -0.926,
+      "skewT": 3.49,
+      "prints": 12,
+      "spot": 374.47,
+      "expiry": "2026-10-23"
+    }
+  }
+}

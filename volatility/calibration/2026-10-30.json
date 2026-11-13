@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-30",
+  "measuredAt": "2026-10-30T16:48:24.698Z",
+  "index": {
+    "VXN": 28.18,
+    "VIX": 19.98
+  },
+  "symbols": {
+    "AAPL": {
+      "index": "VXN",
+      "atm": 0.1771,
+      "ratio": 0.628,
+      "skew": -2.209,
+      "skewT": 0.5,
+      "prints": 4,
+      "spot": 347.39,
+      "expiry": "2026-10-30"
+    },
+    "AMD": {
+      "index": "VXN",
+      "atm": 0.4165,
+      "ratio": 1.478,
+      "skew": -2.131,
+      "skewT": 0.5,
+      "prints": 15,
+      "spot": 504.03,
+      "expiry": "2026-10-30"
+    },
+    "CRWD": {
+      "index": "VXN",
+      "atm": 0.4185,
+      "ratio": 1.485,
+      "skew": 13.164,
+      "skewT": 0.51,
+      "prints": 6,
+      "spot": 245.695,
+      "expiry": "2026-10-30"
+    },
+    "IWM": {
+      "index": "VIX",
+      "atm": 0.1306,
+      "ratio": 0.654,
+      "skew": 3.921,
+      "skewT": 0.49,
+      "prints": 7,
+      "spot": 278.71,
+      "expiry": "2026-10-30"
+    },
+    "META": {
+      "index": "VXN",
+      "atm": 0.25,
+      "ratio": 0.887,
+      "skew": -1.571,
+      "skewT": 0.49,
+      "prints": 15,
+      "spot": 620.96,
+      "expiry": "2026-10-30"
+    },
+    "MSFT": {
+      "index": "VXN",
+      "atm": 0.2058,
+      "ratio": 0.73,
+      "skew": 1.573,
+      "skewT": 0.49,
+      "prints": 9,
+      "spot": 521.51,
+      "expiry": "2026-10-30"
+    },
+    "MU": {
+      "index": "VXN",
+      "atm": 0.4017,
+      "ratio": 1.426,
+      "skew": 3.48,
+      "skewT": 0.49,
+      "prints": 16,
+      "spot": 879.575,
+      "expiry": "2026-10-30"
+    },
+    "QQQ": {
+      "index": "VXN",
+      "atm": 0.1611,
+      "ratio": 0.572,
+      "skew": 0.975,
+      "skewT": 0.5,
+      "prints": 14,
+      "spot": 692.195,
+      "expiry": "2026-10-30"
+    },
+    "SNOW": {
+      "index": "VXN",
+      "atm": 0.4186,
+      "ratio": 1.485,
+      "skew": 2.386,
+      "skewT": 0.51,
+      "prints": 5,
+      "spot": 296.71,
+      "expiry": "2026-10-30"
+    },
+    "SPY": {
+      "index": "VIX",
+      "atm": 0.1161,
+      "ratio": 0.581,
+      "skew": -0.286,
+      "skewT": 0.51,
+      "prints": 24,
+      "spot": 757.85,
+      "expiry": "2026-10-30"
+    }
+  }
+}
