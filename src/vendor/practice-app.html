@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#080b11">
+<meta name="theme-color" content="#131722">
 <title>Open Range — options & shares practice</title>
 <style>
 /* =====================================================================
@@ -15,12 +15,13 @@
    page zoom, and there was no way back out.
    ===================================================================== */
 :root{
-  --bg:#080b11;--panel:#121826;--p2:#0d1220;--line:#1d2637;--line2:#2b3547;
-  --text:#e9edf5;--dim:#8994a6;--dim2:#67717f;
-  --up:#2dd4a7;--dn:#f4525f;--fib:#f5a524;--acc:#7b6cf6;--accs:rgba(123,108,246,.16);
-  --chart:#0a0e14;
-  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --sans:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  /* TradingView's dark theme: the same tokens as the futures page. */
+  --bg:#131722;--panel:#131722;--p2:#1e222d;--line:#2a2e39;--line2:#363a45;--hov:#2a2e39;
+  --text:#d1d4dc;--dim:#787b86;--dim2:#5d606b;
+  --up:#089981;--dn:#f23645;--fib:#ff9800;--acc:#2962ff;--accs:rgba(41,98,255,.14);
+  --chart:#131722;
+  --mono:-apple-system,BlinkMacSystemFont,"Trebuchet MS",Roboto,Ubuntu,sans-serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Trebuchet MS",Roboto,Ubuntu,sans-serif;
   --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
   --actH:58px;
   color-scheme:dark;
@@ -53,8 +54,8 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
   border-radius:9px;flex:0 0 auto}
 .px{font-size:19px;font-weight:600;letter-spacing:-.4px;white-space:nowrap}
 .chg{font-size:12px;padding:2px 7px;border-radius:5px;font-weight:600;white-space:nowrap}
-.chg.u{color:var(--up);background:rgba(45,212,167,.14)}
-.chg.d{color:var(--dn);background:rgba(244,82,95,.14)}
+.chg.u{color:var(--up);background:rgba(8,153,129,.14)}
+.chg.d{color:var(--dn);background:rgba(242,54,69,.14)}
 .ohlc{flex:1;min-width:0;font-size:12px;color:#a3adbb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:6px}
 .ohlc b{color:var(--text);font-weight:600}
 .clk{margin-left:auto;text-align:right;line-height:1.25;white-space:nowrap;flex:0 0 auto}
@@ -128,8 +129,8 @@ canvas{position:absolute;inset:0;display:block;touch-action:none}
 .posbar{display:flex;align-items:center;gap:10px;padding:5px 10px;border-radius:8px;font-size:12px;
   border:1px solid var(--line2);background:rgba(13,18,32,.94);max-width:min(340px,calc(100vw - 90px))}
 .posbar[hidden]{display:none}
-.posbar.up{border-color:rgba(45,212,167,.5)}
-.posbar.dn{border-color:rgba(244,82,95,.5)}
+.posbar.up{border-color:rgba(8,153,129,.5)}
+.posbar.dn{border-color:rgba(242,54,69,.5)}
 .posbar .pw{font-family:var(--mono);font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .posbar .pv{font-family:var(--mono);white-space:nowrap}
 .posbar.up .pv{color:var(--up)}
@@ -190,10 +191,10 @@ h3.sp{margin-top:18px}
 
 .seg{display:flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden;margin-bottom:12px}
 .seg button{flex:1;border:none;border-radius:0;background:transparent;min-height:40px;color:var(--dim)}
-.seg button.on{background:rgba(123,108,246,.2);color:var(--text);font-weight:700;box-shadow:inset 0 -2px 0 var(--acc)}
+.seg button.on{background:rgba(41,98,255,.2);color:var(--text);font-weight:700;box-shadow:inset 0 -2px 0 var(--acc)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
 .chips button{min-height:34px;font-size:11.5px;font-family:var(--mono);padding:0 10px;font-weight:500}
-.chips button.on{border-color:var(--acc);color:var(--text);background:rgba(123,108,246,.14)}
+.chips button.on{border-color:var(--acc);color:var(--text);background:rgba(41,98,255,.14)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .grid2 label{font-size:10.5px;color:var(--dim2);text-transform:uppercase;letter-spacing:.9px;font-weight:600}
 .grid2 label span{display:block;margin-bottom:5px}
@@ -210,7 +211,7 @@ h3.sp{margin-top:18px}
 .fibrow+.fibrow{margin-top:1px}
 .fibrow .k{color:var(--dim)}
 .fibrow.ext .k{color:var(--fib)}
-.fibrow.edge{background:rgba(123,108,246,.12)}
+.fibrow.edge{background:rgba(41,98,255,.12)}
 .fibrow.edge .k{color:var(--acc)}
 .fibrow.near{outline:1px solid var(--line2)}
 .fibrow small{color:var(--dim2);font-size:10.5px;margin-left:5px}
@@ -221,7 +222,7 @@ table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5
 th{text-align:left;color:var(--dim2);font-weight:650;padding:6px 4px;border-bottom:1px solid var(--line2);
   text-transform:uppercase;letter-spacing:.7px;font-size:9.5px}
 td{padding:7px 4px;border-bottom:1px solid var(--line)}
-tr.atm td{background:rgba(123,108,246,.1)}
+tr.atm td{background:rgba(41,98,255,.1)}
 tr.pick td{outline:1px solid var(--acc)}
 .chain td{cursor:pointer}
 .stats{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:13px;margin-bottom:12px}
@@ -253,8 +254,8 @@ h3 i{font-style:normal;text-transform:none;letter-spacing:0;color:var(--dim);fon
 .stepper select,.stepper input{min-height:42px;text-align:center;text-align-last:center;font-family:var(--mono);font-size:14px}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .oc{border:1px solid var(--line2);border-radius:10px;padding:10px 11px 9px;background:var(--p2);min-width:0}
-.oc.call{border-color:rgba(45,212,167,.38);background:linear-gradient(180deg,rgba(45,212,167,.08),rgba(45,212,167,0) 55%),var(--p2)}
-.oc.put{border-color:rgba(244,82,95,.38);background:linear-gradient(180deg,rgba(244,82,95,.08),rgba(244,82,95,0) 55%),var(--p2)}
+.oc.call{border-color:rgba(8,153,129,.38);background:linear-gradient(180deg,rgba(8,153,129,.08),rgba(8,153,129,0) 55%),var(--p2)}
+.oc.put{border-color:rgba(242,54,69,.38);background:linear-gradient(180deg,rgba(242,54,69,.08),rgba(242,54,69,0) 55%),var(--p2)}
 .oc .hd{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:11.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
 .oc.call .hd{color:var(--up)}
 .oc.put .hd{color:var(--dn)}
@@ -293,8 +294,8 @@ button.oc > .hd{display:flex}
 button.oc:disabled{opacity:.5;cursor:not-allowed}
 .oc .go{margin-top:9px;padding:8px 10px 9px;border-radius:8px;font-size:12px;font-weight:700;line-height:1.3}
 .oc .go b{display:block;margin-top:2px;font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text)}
-.oc.call .go{background:rgba(45,212,167,.17);color:var(--up)}
-.oc.put .go{background:rgba(244,82,95,.17);color:var(--dn)}
+.oc.call .go{background:rgba(8,153,129,.17);color:var(--up)}
+.oc.put .go{background:rgba(242,54,69,.17);color:var(--dn)}
 button.oc:disabled .go{background:rgba(137,148,166,.12);color:var(--dim)}
 button.oc:disabled .go b{display:none}
 /* ---- a report the model cannot price ---- */
@@ -347,7 +348,7 @@ button.oc:disabled .go b{display:none}
 svg.eq{display:block;width:100%;height:auto}
 .rchips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .rchips button{min-height:34px;font-size:12px}
-.rchips button.on{border-color:var(--acc);color:var(--text);background:rgba(123,108,246,.16)}
+.rchips button.on{border-color:var(--acc);color:var(--text);background:rgba(41,98,255,.16)}
 .sessrec{display:flex;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap}
 .sessrec:last-child{border-bottom:0}
 .sessrec .d{font-family:var(--mono);color:var(--dim);min-width:150px}
@@ -367,7 +368,7 @@ svg.eq{display:block;width:100%;height:auto}
 .lesson ol{margin:4px 0 6px 18px;padding:0}
 .lesson li{margin:4px 0}
 /* ---- the data note, where the build puts one ---- */
-.simx{margin:0 0 12px;border:1px solid rgba(45,212,167,.35);background:rgba(45,212,167,.06);border-radius:9px;font-size:12px;line-height:1.5;color:var(--dim)}
+.simx{margin:0 0 12px;border:1px solid rgba(8,153,129,.35);background:rgba(8,153,129,.06);border-radius:9px;font-size:12px;line-height:1.5;color:var(--dim)}
 .simx summary{cursor:pointer;padding:9px 11px;color:var(--up);font-weight:600;list-style:none}
 .simx summary::-webkit-details-marker{display:none}
 .simx summary::after{content:"›";float:right;color:var(--dim);transition:transform .15s}
@@ -566,6 +567,147 @@ svg.eq{display:block;width:100%;height:auto}
   #sideWide.on{background:var(--accs);border-color:var(--acc);color:var(--text)}
 }
 @media(prefers-reduced-motion:reduce){button:active:not(:disabled){transform:none} .side{transition:none}}
+
+/* =====================================================================
+   THEME. TradingView's dark look, laid over the layout above: flat
+   surfaces, hairline dividers, square-ish 4px corners, one blue accent,
+   coloured text instead of tinted pills. Layout rules above still decide
+   where things go; these only decide how they look, plus the phone
+   changes at the bottom.
+   ===================================================================== */
+html,body{-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+button{border-radius:4px;font-weight:500;background:transparent;border-color:var(--line2)}
+button:hover:not(:disabled){background:var(--hov)}
+button:active:not(:disabled){transform:none}
+input,select,textarea{border-radius:4px;background:transparent;font-family:var(--sans)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc)}
+select option{background:var(--p2);color:var(--text)}
+.dd{background-color:transparent}
+.dd:hover{border-color:#50535e}
+h3{color:var(--dim);font-weight:600;letter-spacing:.6px;font-size:11px}
+
+/* header */
+.top{background:var(--bg)}
+.tksel{border-color:transparent;font-size:17px;font-weight:600;letter-spacing:0;border-radius:4px}
+.tksel:hover{background-color:var(--hov);border-color:transparent}
+.px{font-weight:600;letter-spacing:0}
+.chg{font-weight:500;padding:0}
+.chg.u{background:none;color:#22ab94} .chg.d{background:none;color:#f7525f}
+.ohlc{color:var(--dim)}
+.clkx{color:var(--dim)}
+.tbtn{border-color:var(--line2)}
+.tbtn.prim{background:var(--acc);border-color:var(--acc);color:#fff}
+.tbtn.prim:hover:not(:disabled){background:#1e53e5}
+.acct{background:transparent;border-color:transparent;border-radius:4px;padding-left:0}
+.acct:hover{background:var(--hov);border-color:transparent}
+.acct .lnk{color:var(--acc)}
+.acctmini{background:var(--p2);border-color:transparent;border-radius:4px}
+
+/* toolbars */
+.toolbar,.tools{background:var(--bg)}
+.tf{border-radius:4px;color:var(--text);font-family:var(--sans);font-weight:500}
+.tf:hover{background:var(--hov)}
+.tf.on{background:transparent;border-color:transparent;color:var(--acc);font-weight:600}
+.badge{border-color:transparent;border-radius:4px;color:var(--text);font-weight:500}
+.badge:hover{background:var(--hov);border-color:transparent}
+.badge.on{background:transparent;border-color:transparent;color:var(--acc)}
+.ctsel{border-color:transparent;font-weight:500}
+.tool{border-color:transparent;border-radius:4px;color:var(--text)}
+.tool:hover{background:var(--hov);border-color:transparent}
+.tool.on{background:var(--accs);border-color:transparent;color:var(--acc)}
+.modes button{color:var(--dim)}
+.modes button.on{background:transparent;color:var(--acc);box-shadow:inset 0 -2px 0 var(--acc)}
+.strip .sa{color:var(--text)}
+
+/* chart overlays */
+.fitbtn{background:var(--p2);border-color:var(--line2);border-radius:4px;font-weight:500}
+.posbar{background:rgba(30,34,45,.96);border-radius:4px}
+.hint{background:var(--p2);border-color:var(--line2);border-radius:4px}
+
+/* transport */
+.actions{background:var(--bg)}
+.actions button,.actions select{border-color:var(--line2)}
+.bnext{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+.bnext:hover:not(:disabled){background:#1e53e5!important}
+
+/* panes */
+.side{background:var(--bg)}
+.tabs{gap:0;border-bottom:1px solid var(--line)}
+.tab{background:transparent;border:0;border-radius:0;color:var(--dim);font-weight:500;min-height:36px}
+.tab:hover:not(:disabled){background:transparent;color:var(--text)}
+.tab.on{background:transparent;color:var(--text);font-weight:600;box-shadow:inset 0 -2px 0 var(--acc)}
+.sbtn.sprim{background:var(--acc);border-color:var(--acc);color:#fff}
+#sideWide{border-radius:4px;background:transparent}
+.seg{border-radius:4px;border-color:var(--line2)}
+.seg button{border-radius:0}
+.seg button.on{background:var(--hov);box-shadow:none;font-weight:600}
+.chips button{border-radius:4px;font-family:var(--sans)}
+.chips button.on,.rchips button.on{background:var(--accs);border-color:var(--acc);color:var(--text)}
+.quote,.plan,.seed{background:var(--p2);border-color:var(--line);border-radius:4px}
+.oc{border-radius:4px}
+.oc.call{background:var(--p2);border-color:rgba(8,153,129,.45)}
+.oc.put{background:var(--p2);border-color:rgba(242,54,69,.45)}
+.oc .go{border-radius:4px}
+.oc.call .go{background:var(--up);color:#fff}
+.oc.put .go{background:var(--dn);color:#fff}
+.oc .go b{color:#fff}
+button.oc:disabled .go{background:var(--hov);color:var(--dim)}
+.stepper button{font-weight:400}
+.kv,.gr,td{border-color:var(--line)}
+th{border-color:var(--line2);color:var(--dim);letter-spacing:.4px}
+.tour-next{background:var(--acc);border-color:var(--acc)}
+.ovl{background:rgba(0,0,0,.6)}
+.ovl-card{background:var(--p2);border-color:var(--line2);border-radius:6px}
+.ovl-card textarea,.recta{background:transparent;border-radius:4px}
+.tiles{border-radius:6px}
+.tile,.rsec{background:var(--p2)}
+.rsec{border-radius:6px}
+.stars button{border-radius:4px}
+.unzoom{border-radius:4px}
+.simx{border-radius:4px}
+.sidebody::-webkit-scrollbar-thumb{background:#363a45}
+
+/* =====================================================================
+   PHONE, cleaned up. What was wrong: the timeframe toolbar floated over
+   the chart and covered the OHLC line and the top candles; the four
+   bottom buttons were icons with no names; the pane sheet opened at a
+   third of the screen, too short to use, so every trade meant a second
+   drag. Now: the toolbar is docked in its own row, the bottom bar says
+   what each button is, and the sheet opens at half height.
+   ===================================================================== */
+@media(max-width:899px){
+  .top{padding:calc(var(--sat) + 5px) 10px 5px}
+  .toolbar{position:relative;top:auto;left:auto;right:auto;height:40px;flex:0 0 auto;border-radius:0;border:0;
+    border-bottom:1px solid var(--line);box-shadow:none;background:var(--bg)}
+  .modes{border-right:1px solid var(--line)}
+  .modes button{width:42px}
+  .tf,.badge,.ctsel,.tool{min-height:30px}
+  .strip .sa.l{background:linear-gradient(90deg,var(--bg) 55%,transparent)}
+  .strip .sa.r{background:linear-gradient(270deg,var(--bg) 55%,transparent)}
+  .chips-tr{top:8px}
+  .hint{top:10px}
+  .side{height:52%;background:var(--p2);border-top-color:var(--line2);border-radius:10px 10px 0 0}
+  .side.tall{border-radius:0}
+  .grab span{background:#50535e}
+  .shead{border-bottom-color:var(--line)}
+  .actions{height:50px;padding:6px 10px}
+  .trow{grid-template-columns:48px 1fr 48px 68px;gap:8px}
+  .tabbar{background:var(--bg);padding:2px 4px var(--sab)}
+  .tabbar button{flex-direction:column;gap:2px;min-height:48px;border-radius:4px}
+  .tabbar button small{display:block;font-size:10.5px;font-weight:500;letter-spacing:.2px}
+  .tabbar button .i{width:20px;height:20px}
+  .tabbar button.on{background:transparent;color:var(--acc)}
+  .panegrid{background:var(--p2);border-radius:8px}
+  .panegrid button{background:transparent;border-color:var(--line2);border-radius:4px;color:var(--text);font-weight:500}
+  .panegrid button.on{background:var(--accs);border-color:var(--acc);color:var(--text)}
+}
+@media(min-width:900px){
+  .tools{background:var(--bg)}
+  .toolbar>.strip-rail,.toolbar>#rail{background:var(--bg)}
+  .tool.on{background:var(--accs)}
+  .shead{padding-top:6px}
+  .tabs{padding:0}
+}
 </style>
 </head>
 <body>
@@ -1859,8 +2001,8 @@ window.addEventListener('orientationchange',()=>setTimeout(syncTabbarHeight,220)
 // grey. This chart used 10px monospace in a mid grey (#5a6472), which was the
 // hardest thing on the page to read, and worst on a phone. The system face is
 // also always there offline, with no font load to wait for before drawing.
-const CFAM='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
-const AXIS='#b4bdca';
+const CFAM='-apple-system,BlinkMacSystemFont,"Trebuchet MS",Roboto,Ubuntu,sans-serif';
+const AXIS='#b2b5be';
 function fs(){return G.w<600?13:12;}
 function cfont(px,wt){return (wt||500)+' '+px+'px '+CFAM;}
 /** Round price steps (0.25, 0.5, 1, 2.5 ...) rather than five arbitrary splits. */
@@ -1941,13 +2083,13 @@ function flushLtags(){
 }
 function tag(t,x,y,c,bg){const F=fs();cx.save();cx.font=cfont(F-1,600);
   const w=cx.measureText(t).width+10,hh=F+6;
-  cx.fillStyle=bg||'rgba(8,11,16,.9)';cx.fillRect(x,y-hh/2,w,hh);
+  cx.fillStyle=bg||'rgba(19,23,34,.92)';cx.fillRect(x,y-hh/2,w,hh);
   cx.fillStyle=c;cx.textBaseline='middle';cx.fillText(t,x+5,y+.5);cx.restore();return w;}
 
 function draw(){
   if(!S.mins||!scale())return;
   const {w,h,padL,padR,padT,ph,volH,rsiH,cw,B,left,right,lo,hi}=G;
-  cx.clearRect(0,0,w,h);cx.fillStyle='#0a0e14';cx.fillRect(0,0,w,h);
+  cx.clearRect(0,0,w,h);cx.fillStyle='#131722';cx.fillRect(0,0,w,h);
   const F=fs();
   // Price grid on round steps, spaced so the labels never crowd each other.
   cx.save();cx.font=cfont(F,500);cx.textBaseline='middle';cx.fillStyle=AXIS;
@@ -1958,17 +2100,17 @@ function draw(){
    for(let v=Math.ceil(G.lo/step)*step;v<=G.hi+1e-9;v+=step){
      const p=Math.round(v/step)*step,y=G.y(p);
      if(y<padT+F/2||y>padT+ph-F/2)continue;
-     ln(padL,y,w-padR,y,'#141b24',1);
+     ln(padL,y,w-padR,y,'#1e222d',1);
      if(lastY!=null&&Math.abs(y-lastY)<F+4)continue;
      cx.fillText(p.toFixed(2),w-padR+7,y);}}
   cx.restore();
   // axis affordances
-  ln(w-padR+.5,padT,w-padR+.5,padT+ph,'#1c2430',1);
-  ln(padL,padT+ph+volH+(volH?5:0)+G.rsiH+(G.rsiH?5:0)+.5,w-padR,padT+ph+volH+(volH?5:0)+G.rsiH+(G.rsiH?5:0)+.5,'#1c2430',1);
+  ln(w-padR+.5,padT,w-padR+.5,padT+ph,'#2a2e39',1);
+  ln(padL,padT+ph+volH+(volH?5:0)+G.rsiH+(G.rsiH?5:0)+.5,w-padR,padT+ph+volH+(volH?5:0)+G.rsiH+(G.rsiH?5:0)+.5,'#2a2e39',1);
   // day breaks + time labels
   let prevDay=null;
   for(let i=left;i<=right;i++){const b=B[i];
-    if(prevDay!==null&&b.day!==prevDay)ln(G.x(i)-cw/2,padT,G.x(i)-cw/2,padT+ph,'#222d3a',1);
+    if(prevDay!==null&&b.day!==prevDay)ln(G.x(i)-cw/2,padT,G.x(i)-cw/2,padT+ph,'#2a2e39',1);
     prevDay=b.day;}
   // Time axis, TradingView style: labels are anchored to absolute bars so they
   // do not jitter while you pan, spaced by their measured width so they cannot
@@ -1990,7 +2132,7 @@ function draw(){
      if(l<padL||r>w-padR)continue;
      if(taken.some(q=>l<q[1]+10&&r>q[0]-10))continue;
      taken.push([l,r]);
-     cx.fillStyle=c.newDay?'#e9edf5':AXIS;cx.fillText(c.t,X,h-8);}}
+     cx.fillStyle=c.newDay?'#d1d4dc':AXIS;cx.fillText(c.t,X,h-8);}}
   cx.restore();
 
   // Everything that belongs to the price pane is clipped to it. A bar whose
@@ -2000,7 +2142,7 @@ function draw(){
   clipPane();
   // Extended hours are tinted, the way TradingView does it, so 4:00 in the
   // morning is not mistaken for 4:00 in the afternoon.
-  if(S.ind.ext){cx.save();cx.fillStyle='rgba(123,108,246,.07)';
+  if(S.ind.ext){cx.save();cx.fillStyle='rgba(120,123,134,.07)';
     for(let i=left;i<=right;i++)if(B[i].x)cx.fillRect(G.x(i)-cw/2,padT,cw,ph);
     cx.restore();}
   // Volume as translucent bars along the bottom of the pane, behind the
@@ -2009,7 +2151,7 @@ function draw(){
   if(S.ind.vol){const vh=ph*.2;let mx=0;for(let i=left;i<=right;i++)if(B[i].v>mx)mx=B[i].v;
     const bwv=Math.max(cw*.66,1.2);
     for(let i=left;i<=right;i++){const b=B[i],bh=mx?(b.v/mx)*vh:0;
-      cx.fillStyle=b.c>=b.o?'rgba(45,212,167,.22)':'rgba(244,82,95,.22)';
+      cx.fillStyle=b.c>=b.o?'rgba(8,153,129,.22)':'rgba(242,54,69,.22)';
       cx.fillRect(G.x(i)-bwv/2,padT+ph-bh,bwv,bh);}}
   const visB=B.slice(left,right+1),todayVis=visB.some(b=>b.day===HISTN);
   // These are measured against a single session; spread across a multi-day
@@ -2050,9 +2192,9 @@ function draw(){
     const s0=todayStart(),pd=S.mins.slice(s0-MPD,s0);
     let ph_=-Infinity,pl_=Infinity;for(const b of pd){if(b.h>ph_)ph_=b.h;if(b.l<pl_)pl_=b.l;}
     const pc_=pd[pd.length-1].c,pp=(ph_+pl_+pc_)/3,rg=ph_-pl_;
-    const P=[['R3',ph_+2*(pp-pl_),'#e0524a'],['R2',pp+rg,'#e0524a'],['R1',2*pp-pl_,'#e0524a'],
+    const P=[['R3',ph_+2*(pp-pl_),'#f23645'],['R2',pp+rg,'#f23645'],['R1',2*pp-pl_,'#f23645'],
       ['PP',pp,'#e0b73a'],
-      ['S1',2*pp-ph_,'#2dd4a7'],['S2',pp-rg,'#2dd4a7'],['S3',pl_-2*(ph_-pp),'#2dd4a7']];
+      ['S1',2*pp-ph_,'#089981'],['S2',pp-rg,'#089981'],['S3',pl_-2*(ph_-pp),'#089981']];
     P.forEach(([k,v,c])=>{
       const y=G.y(v);if(y<padT+4||y>padT+ph-4)return;
       ln(padL,y,w-padR,y,c,1,[6,3]);ltag(k+' '+v.toFixed(2),y-1,c);});
@@ -2111,7 +2253,7 @@ function draw(){
 
   const bw=Math.max(cw*.66,1.2),CT=S.ctype;
   if(CT==='line'||CT==='area'){
-    cx.save();cx.strokeStyle='#6d9cf5';cx.lineWidth=1.7;cx.beginPath();
+    cx.save();cx.strokeStyle='#2962ff';cx.lineWidth=1.7;cx.beginPath();
     for(let i=left;i<=right;i++){const X=G.x(i),Y=G.y(B[i].c);i===left?cx.moveTo(X,Y):cx.lineTo(X,Y);}
     cx.stroke();
     if(CT==='area'){
@@ -2136,7 +2278,7 @@ function draw(){
       }
     }
     for(let i=left;i<=right;i++){
-      const b=ha?ha[i]:B[i],X=G.x(i),u=b.c>=b.o,col=u?'#26a37a':'#e0524a';
+      const b=ha?ha[i]:B[i],X=G.x(i),u=b.c>=b.o,col=u?'#089981':'#f23645';
       const yt=G.y(Math.max(b.o,b.c)),yb=G.y(Math.min(b.o,b.c));
       if(CT==='bar'){
         ln(X,G.y(b.h),X,G.y(b.l),col,Math.max(1,cw*.14));
@@ -2164,7 +2306,7 @@ function draw(){
     const rt=padT+ph+volH+(volH?5:0)+5, ry=v=>rt+rsiH*(1-v/100);
     cx.save();cx.fillStyle='rgba(109,156,245,.05)';
     cx.fillRect(padL,ry(70),w-padL-padR,ry(30)-ry(70));cx.restore();
-    [30,70].forEach(v=>ln(padL,ry(v),w-padR,ry(v),'#222d3a',1,[3,3]));
+    [30,70].forEach(v=>ln(padL,ry(v),w-padR,ry(v),'#2a2e39',1,[3,3]));
     cx.save();cx.strokeStyle='#b48ead';cx.lineWidth=1.3;cx.beginPath();let on=false;
     for(let i=Math.max(0,left-1);i<=right;i++){
       if(rs[i]==null)continue;const X=G.x(i),Y=ry(rs[i]);
@@ -2179,19 +2321,19 @@ function draw(){
   S.orders.forEach(o=>{
     const Y=G.y(o.px);if(Y<padT||Y>padT+ph)return;
     ln(padL,Y,w-padR,Y,o.bull?'rgba(38,163,122,.75)':'rgba(224,82,74,.75)',1,[6,4]);
-    ltag(o.kind+' '+(o.bull?'buy':'sell')+' '+o.qty,Y-1,o.bull?'#26a37a':'#e0524a');
+    ltag(o.kind+' '+(o.bull?'buy':'sell')+' '+o.qty,Y-1,o.bull?'#089981':'#f23645');
   });
   if(S.pos){const p=S.pos;
-    if(p.stopU!=null){ln(padL,G.y(p.stopU),w-padR,G.y(p.stopU),'#e0524a',1,[3,3]);
-      ltag('stop '+p.stopU.toFixed(2),G.y(p.stopU)-1,'#e0524a');}
-    if(p.targetU!=null){ln(padL,G.y(p.targetU),w-padR,G.y(p.targetU),'#26a37a',1,[3,3]);
-      ltag('tgt '+p.targetU.toFixed(2),G.y(p.targetU)-1,'#26a37a');}
+    if(p.stopU!=null){ln(padL,G.y(p.stopU),w-padR,G.y(p.stopU),'#f23645',1,[3,3]);
+      ltag('stop '+p.stopU.toFixed(2),G.y(p.stopU)-1,'#f23645');}
+    if(p.targetU!=null){ln(padL,G.y(p.targetU),w-padR,G.y(p.targetU),'#089981',1,[3,3]);
+      ltag('tgt '+p.targetU.toFixed(2),G.y(p.targetU)-1,'#089981');}
     if(p.kind==='option'){ln(padL,G.y(p.strike),w-padR,G.y(p.strike),'rgba(180,143,173,.8)',1,[5,4]);
       ltag(p.strike+(p.optType==='call'?'C':'P'),G.y(p.strike)-1,'#b48ead');}
     mark(todayStart()+p.entryMin-1,p.uEntry,'#dfe6ef',true);}
-  S.trades.forEach(t=>{mark(todayStart()+t.entryMin-1,t.uEntry,t.total>=0?'#26a37a':'#e0524a',false);
+  S.trades.forEach(t=>{mark(todayStart()+t.entryMin-1,t.uEntry,t.total>=0?'#089981':'#f23645',false);
     t.exits.forEach(e=>{const bi=barIdxForMin(todayStart()+e.m-1);if(bi<left-1||bi>right+1)return;
-      const X=G.x(bi),Y=G.y(e.under);cx.strokeStyle=e.pnl>=0?'#26a37a':'#e0524a';cx.lineWidth=1.3;
+      const X=G.x(bi),Y=G.y(e.under);cx.strokeStyle=e.pnl>=0?'#089981':'#f23645';cx.lineWidth=1.3;
       cx.beginPath();cx.moveTo(X-3.5,Y-3.5);cx.lineTo(X+3.5,Y+3.5);cx.moveTo(X+3.5,Y-3.5);cx.lineTo(X-3.5,Y+3.5);cx.stroke();});});
   function mark(mi,p,col,fill){const bi=barIdxForMin(mi);if(bi<left-1||bi>right+1)return;
     const X=G.x(bi),Y=G.y(p);cx.beginPath();cx.arc(X,Y,4,0,6.284);
@@ -2215,23 +2357,25 @@ function draw(){
   if(S.hover&&S.hover.in){const{mx,my}=S.hover;
     ln(mx,padT,mx,padT+ph,'rgba(223,230,239,.24)',1,[3,3]);
     ln(padL,my,w-padR,my,'rgba(223,230,239,.24)',1,[3,3]);
-    tag(G.yp(my).toFixed(2),w-padR+1,my,'#06090f','#6d9cf5');}
+    tag(G.yp(my).toFixed(2),w-padR+1,my,'#ffffff','#2962ff');}
   const last=B[B.length-1];
   if(last&&B.length-1<=right){const y=G.y(last.c);
-    if(y>padT&&y<padT+ph)tag(last.c.toFixed(2),w-padR+1,y,'#06090f',last.c>=last.o?'#26a37a':'#e0524a');}
+    if(y>padT&&y<padT+ph)tag(last.c.toFixed(2),w-padR+1,y,'#ffffff',last.c>=last.o?'#089981':'#f23645');}
   // On a phone the bar readout lives in the chart's corner, TradingView style,
   // instead of a line in the sticky header; the hovered bar when there is one.
-  // Pushed down clear of the floating timeframe/draw/indicator toolbar, which
-  // sits on top of the chart's own top-left corner on a phone -- otherwise
-  // this drew directly underneath it and was never seen.
+  // The toolbar is docked in its own row now, so this sits in the corner.
+  // Labels dim, values coloured, no box behind it -- TradingView's legend.
   if(w<600){
     let b=last,when='';
     if(S.hover&&S.hover.in){const bi=Math.round(G.ix(S.hover.mx));if(bi>=0&&bi<B.length){b=B[bi];
       when=(tfMin()==='D'?dayLbl(b.day):(b.day===HISTN?'':dayLbl(b.day)+' ')+tlblAbs(b.t,!!b.x))+'  ';}}
-    if(b){cx.save();cx.font=cfont(F-1,600);cx.textBaseline='top';cx.fillStyle='rgba(11,16,23,.75)';
-      const t=when+'O '+b.o.toFixed(2)+'  H '+b.h.toFixed(2)+'  L '+b.l.toFixed(2)+'  C '+b.c.toFixed(2)+'  V '+(b.v/1000).toFixed(0)+'k';
-      const oy=padT+46,tw=cx.measureText(t).width;cx.fillRect(padL+2,oy,tw+10,F+6);
-      cx.fillStyle=b.c>=b.o?'#2dd4a7':'#f4525f';cx.fillText(t,padL+7,oy+3);cx.restore();}
+    if(b){cx.save();cx.font=cfont(F-1,500);cx.textBaseline='top';
+      const vc=b.c>=b.o?'#22ab94':'#f7525f',oy=padT+6;let x=padL+6;
+      const put=(s,c)=>{cx.fillStyle=c;cx.fillText(s,x,oy);x+=cx.measureText(s).width;};
+      if(when)put(when,AXIS);
+      [['O',b.o.toFixed(2)],['H',b.h.toFixed(2)],['L',b.l.toFixed(2)],['C',b.c.toFixed(2)],['V',(b.v/1000).toFixed(0)+'k']]
+        .forEach(([k,v])=>{put(k+' ','#787b86');put(v+'  ',vc);});
+      cx.restore();}
   }
   $('fit').classList.toggle('show',!!S.yMan||S.view.right!=null);
 }
@@ -2242,10 +2386,10 @@ function shape(d,prev,k){
   // The selected drawing, or the one under the pointer, shows its handles:
   // that is how you know it can be picked up.
   const sel=k===S.sel||k===S.hoverShape;
-  if(sel&&!prev){cx.save();cx.fillStyle='#e9edf5';cx.strokeStyle='#7b6cf6';cx.lineWidth=1.5;
+  if(sel&&!prev){cx.save();cx.fillStyle='#d1d4dc';cx.strokeStyle='#2962ff';cx.lineWidth=1.5;
     const pts=d.t==='hline'?[[G.padL+60,y1]]:[[x1,y1],[x2,y2]];
     pts.forEach(([X,Y])=>{cx.beginPath();cx.arc(X,Y,5,0,6.284);cx.fill();cx.stroke();});cx.restore();}
-  if(d.t==='trend')ln(x1,y1,x2,y2,'#6d9cf5',1.6);
+  if(d.t==='trend')ln(x1,y1,x2,y2,'#2962ff',1.6);
   else if(d.t==='hline'){ln(G.padL,y1,G.w-G.padR,y1,'#88c0d0',1.3);if(prev)tag(d.p1.toFixed(2),G.padL+2,y1-1,'#88c0d0');else ltag(d.p1.toFixed(2),y1-1,'#88c0d0');}
   else if(d.t==='rect'){cx.save();cx.fillStyle='rgba(109,156,245,.10)';cx.strokeStyle='rgba(109,156,245,.6)';
     const X=Math.min(x1,x2),Y=Math.min(y1,y2),W=Math.abs(x2-x1),H=Math.abs(y2-y1);
@@ -2259,17 +2403,25 @@ function shape(d,prev,k){
   else if(d.t==='measure'){const df=d.p2-d.p1,pc=df/d.p1*100;
     cx.save();cx.fillStyle=df>=0?'rgba(38,163,122,.13)':'rgba(224,82,74,.13)';
     cx.fillRect(Math.min(x1,x2),Math.min(y1,y2),Math.abs(x2-x1),Math.abs(y2-y1));cx.restore();
-    ln(x1,y1,x2,y2,df>=0?'#26a37a':'#e0524a',1.5);
+    ln(x1,y1,x2,y2,df>=0?'#089981':'#f23645',1.5);
     const nb=Math.abs(Math.round((d.m2-d.m1)/(tfMin()==='D'?MPD:tfMin())));
     tag((df>=0?'+':'')+df.toFixed(2)+'  '+pc.toFixed(2)+'%  '+nb+' bars',
-      Math.min(x1,x2)+3,Math.min(y1,y2)-4,df>=0?'#26a37a':'#e0524a');}
+      Math.min(x1,x2)+3,Math.min(y1,y2)-4,df>=0?'#089981':'#f23645');}
   cx.globalAlpha=a;
 }
 
 /* ============ TradingView-style axis interaction ============ */
 const pts=new Map();let drag=null,pinch=null,lastTapAxis=0,lastTapBody=0,lastTapPos=null;
 function pos(e){const r=cv.getBoundingClientRect();return{mx:e.clientX-r.left,my:e.clientY-r.top};}
-function inYAxis(mx){return mx>G.w-G.padR;}
+/* A finger is wider than the axis labels: on touch the price scale's grab zone
+   reaches a little into the chart. */
+let touchPtr=false;
+function inYAxis(mx){return mx>G.w-G.padR-(touchPtr?14:0);}
+/* One wheel/trackpad event, as a gentle zoom factor. Mouse wheels send ~100 per
+   notch and trackpads many small deltas; both are scaled, and capped, so a flick
+   can't throw the chart around. */
+function wheelFactor(e){const d=e.deltaY*(e.deltaMode===1?33:e.deltaMode===2?400:1);
+  return Math.exp(Math.max(-.2,Math.min(.2,d*.0016)));}
 function inXAxis(my){return my>G.padT+G.ph+G.volH+(G.rsiH||0)+2;}
 function lockY(){if(!S.yMan)S.yMan={lo:G.lo,hi:G.hi};}
 /**
@@ -2317,15 +2469,18 @@ function setTool(t,quiet){
 
 cv.addEventListener('pointerdown',e=>{
   cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,pos(e));
+  touchPtr=e.pointerType==='touch';
   const{mx,my}=pos(e);
   if(pts.size===2){const[a,b]=[...pts.values()];
     pinch={dx:Math.max(1,Math.abs(a.mx-b.mx)),dy:Math.max(1,Math.abs(a.my-b.my)),
       count:S.view.count,lo:G.lo,hi:G.hi};S.pend=null;return;}
   if(inYAxis(mx)){
+    // A double-tap snaps the scale back to auto -- but only two real taps count.
+    // A second drag started right after the first used to read as one, and the
+    // scale jumped back mid-gesture.
     const now=Date.now();
-    if(now-lastTapAxis<300){S.yMan=null;lastTapAxis=0;hint('Price scale fit to what is on screen.');draw();return;}
-    lastTapAxis=now;
-    lockY();drag={mode:'yaxis',my,lo:S.yMan.lo,hi:S.yMan.hi};return;
+    if(now-lastTapAxis<320){S.yMan=null;lastTapAxis=0;hint('Price scale fit to what is on screen.');draw();return;}
+    lockY();drag={mode:'yaxis',my,lo:S.yMan.lo,hi:S.yMan.hi,moved:false};return;
   }
   if(inXAxis(my)){drag={mode:'xaxis',mx,count:S.view.count};return;}
   if(S.tool==='cursor'){
@@ -2335,10 +2490,9 @@ cv.addEventListener('pointerdown',e=>{
       drag={mode:'shape',k:h.k,part:h.part,mx,my,m1:d.m1,p1:d.p1,m2:d.m2,p2:d.p2,m0:minAt(mx),y0:G.yp(my)};draw();return;}
     S.sel=null;
     const now2=Date.now();
-    if(now2-lastTapBody<300&&lastTapPos&&Math.hypot(mx-lastTapPos.mx,my-lastTapPos.my)<24){
+    if(now2-lastTapBody<320&&lastTapPos&&Math.hypot(mx-lastTapPos.mx,my-lastTapPos.my)<24){
       lastTapBody=0;S.yMan=null;hint('Price scale fit to what is on screen.');draw();return;}
-    lastTapBody=now2;lastTapPos={mx,my};
-    drag={mode:'pan',mx,my,right:G.right,lo:G.lo,hi:G.hi};S.hover={mx,my,in:1};draw();return;}
+    drag={mode:'pan',mx,my,right:G.right,lo:G.lo,hi:G.hi,moved:false};S.hover={mx,my,in:1};draw();return;}
   if(S.tool==='erase'){erase(mx,my);draw();return;}
   const m=minAt(mx),p=snap(my,mx);
   if(S.tool==='hline'){S.draw.push({t:'hline',m1:m,p1:p});S.sel=S.draw.length-1;setTool('cursor',true);hint('Level placed. Drag it to move it; Delete removes it.');draw();return;}
@@ -2364,6 +2518,7 @@ cv.addEventListener('pointermove',e=>{
     cv.style.cursor=inYAxis(mx)?'ns-resize':inXAxis(my)?'ew-resize':h?(h.part==='body'?'move':'grab'):S.tool==='cursor'?'crosshair':'default';
   }
   if(drag){
+    if(!drag.moved&&Math.hypot(mx-(drag.mx??mx),my-(drag.my??my))>5)drag.moved=true;
     if(drag.mode==='shape'){
       // Moved by the distance the pointer has travelled, in minutes and in
       // price, so the drawing keeps its shape; an end follows the pointer
@@ -2376,11 +2531,15 @@ cv.addEventListener('pointermove',e=>{
       else{d.m1=drag.m1+dm;d.p1=drag.p1+dp;if(drag.m2!=null){d.m2=drag.m2+dm;d.p2=drag.p2+dp;}}
     }
     else if(drag.mode==='yaxis'){
-      const f=Math.exp((my-drag.my)*.014);
+      // Scaled to the chart's height, not raw pixels: dragging the full height
+      // of the price scale stretches about 6x, so a short drag is a fine
+      // adjustment on a phone and a desktop alike. It was ~4x per 100px.
+      if(!drag.moved)return;
+      const f=Math.exp((my-drag.my)/Math.max(140,G.ph)*1.8);
       const mid=(drag.lo+drag.hi)/2,r=(drag.hi-drag.lo)*f;
       S.yMan={lo:mid-r/2,hi:mid+r/2};
     }else if(drag.mode==='xaxis'){
-      const f=Math.exp((drag.mx-mx)*.012);
+      const f=Math.exp((drag.mx-mx)/Math.max(200,G.w-G.padR)*2);
       S.view.count=Math.max(12,Math.min(400,Math.round(drag.count*f)));
     }else{
       const B=bars();
@@ -2394,6 +2553,11 @@ cv.addEventListener('pointermove',e=>{
   draw();if(S.hover.in)hoverInfo();
 });
 function endPtr(e){
+  // Only a tap that didn't move arms a double-tap.
+  if(drag&&!drag.moved&&!pinch){
+    if(drag.mode==='yaxis')lastTapAxis=Date.now();
+    else if(drag.mode==='pan'){lastTapBody=Date.now();lastTapPos={mx:drag.mx,my:drag.my};}
+  }
   pts.delete(e.pointerId);if(pts.size<2)pinch=null;drag=null;
   if(S.pend){const d=S.pend;S.pend=null;
     if(Math.abs(G.x(barIdxForMin(d.m2))-G.x(barIdxForMin(d.m1)))>5||Math.abs(G.y(d.p2)-G.y(d.p1))>5){
@@ -2408,9 +2572,10 @@ cv.addEventListener('pointercancel',endPtr);
 cv.addEventListener('pointerleave',()=>{S.hover=null;draw();headline();});
 cv.addEventListener('wheel',e=>{e.preventDefault();
   const{mx}=pos(e);
-  if(inYAxis(mx)){lockY();const mid=(G.lo+G.hi)/2,r=(G.hi-G.lo)*(e.deltaY>0?1.16:.86);
+  const f=wheelFactor(e);
+  if(inYAxis(mx)){lockY();const mid=(G.lo+G.hi)/2,r=(G.hi-G.lo)*f;
     S.yMan={lo:mid-r/2,hi:mid+r/2};}
-  else S.view.count=Math.max(12,Math.min(400,Math.round(S.view.count*(e.deltaY>0?1.12:.89))));
+  else{let c=Math.round(S.view.count*f);if(c===S.view.count&&f!==1)c+=f>1?1:-1;S.view.count=Math.max(12,Math.min(400,c));}
   draw();},{passive:false});
 $('fit').onclick=()=>{S.yMan=null;S.view.right=null;draw();};
 
@@ -3653,18 +3818,18 @@ function eqSvg(eq){
   const lo=Math.min(0,...eq),hi=Math.max(0,...eq),span=hi-lo||1;
   const x=i=>pl+i/(eq.length-1)*pw,y=v=>pt+ph*(1-(v-lo)/span);
   const pts=eq.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ');
-  const end=eq[eq.length-1],col=end>=0?'#2dd4a7':'#f4525f';
+  const end=eq[eq.length-1],col=end>=0?'#089981':'#f23645';
   let peak=-Infinity,pi=0,dd={a:0,b:0,d:0};
   eq.forEach((v,i)=>{if(v>peak){peak=v;pi=i;}if(peak-v>dd.d)dd={a:pi,b:i,d:peak-v};});
   return '<svg class="eq" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" role="img" aria-label="equity curve">'+
     '<defs><linearGradient id="eqg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="'+col+'" stop-opacity=".26"/><stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+
-    (dd.d>0?'<rect x="'+x(dd.a).toFixed(1)+'" y="'+pt+'" width="'+Math.max(1,x(dd.b)-x(dd.a)).toFixed(1)+'" height="'+ph+'" fill="#f4525f" opacity=".07"/>':'')+
-    '<line x1="'+pl+'" y1="'+y(0).toFixed(1)+'" x2="'+(pl+pw)+'" y2="'+y(0).toFixed(1)+'" stroke="#2b3547" stroke-dasharray="3 3"/>'+
+    (dd.d>0?'<rect x="'+x(dd.a).toFixed(1)+'" y="'+pt+'" width="'+Math.max(1,x(dd.b)-x(dd.a)).toFixed(1)+'" height="'+ph+'" fill="#f23645" opacity=".07"/>':'')+
+    '<line x1="'+pl+'" y1="'+y(0).toFixed(1)+'" x2="'+(pl+pw)+'" y2="'+y(0).toFixed(1)+'" stroke="#363a45" stroke-dasharray="3 3"/>'+
     '<polygon points="'+pl+','+y(0).toFixed(1)+' '+pts+' '+x(eq.length-1).toFixed(1)+','+y(0).toFixed(1)+'" fill="url(#eqg)"/>'+
     '<polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="1.8" stroke-linejoin="round"/>'+
     '<circle cx="'+x(eq.length-1).toFixed(1)+'" cy="'+y(end).toFixed(1)+'" r="3" fill="'+col+'"/>'+
-    '<text x="'+(pl+pw+7)+'" y="'+(y(hi)+4).toFixed(1)+'" fill="#8994a6" font-size="11" font-family="monospace">'+sgn(hi)+'</text>'+
-    '<text x="'+(pl+pw+7)+'" y="'+(y(lo)+4).toFixed(1)+'" fill="#8994a6" font-size="11" font-family="monospace">'+sgn(lo)+'</text></svg>';
+    '<text x="'+(pl+pw+7)+'" y="'+(y(hi)+4).toFixed(1)+'" fill="#787b86" font-size="11" font-family="monospace">'+sgn(hi)+'</text>'+
+    '<text x="'+(pl+pw+7)+'" y="'+(y(lo)+4).toFixed(1)+'" fill="#787b86" font-size="11" font-family="monospace">'+sgn(lo)+'</text></svg>';
 }
 function groupRows(ts,keyOf){
   const m=new Map();ts.forEach(t=>{const k=keyOf(t);if(k==null)return;if(!m.has(k))m.set(k,[]);m.get(k).push(t);});

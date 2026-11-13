@@ -1,4 +1,4 @@
-import { FONT_CSS } from "./fonts.ts";
+
 import {
   MISTAKES, byDay, computeStats, groupStats, isClosed, rMultiple, riskOf,
   type Journal, type Stats, type Trade,
@@ -48,16 +48,16 @@ function equityCurve(equity: number[], w = 900, h = 190): string {
 
   return `<svg class="eq" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="equity curve">
     <defs><linearGradient id="eqg" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="${end >= 0 ? "#2dd4a7" : "#f4525f"}" stop-opacity=".26"/>
-      <stop offset="1" stop-color="${end >= 0 ? "#2dd4a7" : "#f4525f"}" stop-opacity="0"/>
+      <stop offset="0" stop-color="${end >= 0 ? "#22ab94" : "#f7525f"}" stop-opacity=".26"/>
+      <stop offset="1" stop-color="${end >= 0 ? "#22ab94" : "#f7525f"}" stop-opacity="0"/>
     </linearGradient></defs>
-    ${dd.depth > 0 ? `<rect x="${x(dd.from).toFixed(1)}" y="${pad.t}" width="${Math.max(1, x(dd.to) - x(dd.from)).toFixed(1)}" height="${ph}" fill="#f4525f" opacity=".07"/>` : ""}
-    <line x1="${pad.l}" y1="${y(0).toFixed(1)}" x2="${pad.l + pw}" y2="${y(0).toFixed(1)}" stroke="#2b3547" stroke-width="1" stroke-dasharray="3 3"/>
+    ${dd.depth > 0 ? `<rect x="${x(dd.from).toFixed(1)}" y="${pad.t}" width="${Math.max(1, x(dd.to) - x(dd.from)).toFixed(1)}" height="${ph}" fill="#f7525f" opacity=".07"/>` : ""}
+    <line x1="${pad.l}" y1="${y(0).toFixed(1)}" x2="${pad.l + pw}" y2="${y(0).toFixed(1)}" stroke="#363a45" stroke-width="1" stroke-dasharray="3 3"/>
     <polygon points="${area}" fill="url(#eqg)"/>
     <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round"/>
     <circle cx="${x(equity.length - 1).toFixed(1)}" cy="${y(end).toFixed(1)}" r="3" fill="${col}"/>
-    <text x="${pad.l + pw + 7}" y="${(y(hi) + 4).toFixed(1)}" fill="#67717f" font-size="10.5" font-family="'IBM Plex Mono',monospace">${money(hi)}</text>
-    <text x="${pad.l + pw + 7}" y="${(y(lo) + 4).toFixed(1)}" fill="#67717f" font-size="10.5" font-family="'IBM Plex Mono',monospace">${money(lo)}</text>
+    <text x="${pad.l + pw + 7}" y="${(y(hi) + 4).toFixed(1)}" fill="#5d606b" font-size="10.5" font-family="Trebuchet MS,sans-serif">${money(hi)}</text>
+    <text x="${pad.l + pw + 7}" y="${(y(lo) + 4).toFixed(1)}" fill="#5d606b" font-size="10.5" font-family="Trebuchet MS,sans-serif">${money(lo)}</text>
   </svg>`;
 }
 
@@ -213,14 +213,14 @@ export function renderJournal(j: Journal, reportHref = "latest.html"): string {
 <meta name="color-scheme" content="dark">
 <title>Journal &middot; Market Prep</title>
 <style>
-${FONT_CSS}
+
 :root{
-  --bg:#080b11; --panel:#121826; --panel2:#0d1220; --line:#1d2637; --line2:#2b3547;
-  --text:#e9edf5; --dim:#8994a6; --dim2:#67717f;
-  --up:#2dd4a7; --down:#f4525f; --gold:#f5a524; --accent:#7b6cf6;
+  --bg:#131722; --panel:#1e222d; --panel2:#131722; --line:#2a2e39; --line2:#363a45;
+  --text:#d1d4dc; --dim:#787b86; --dim2:#5d606b;
+  --up:#22ab94; --down:#f7525f; --gold:#ff9800; --accent:#2962ff;
   color-scheme:dark;
-  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --sans:'Archivo',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:-apple-system,BlinkMacSystemFont,"Trebuchet MS",Roboto,Ubuntu,sans-serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Trebuchet MS",Roboto,Ubuntu,sans-serif;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--sans);padding-bottom:60px}
@@ -231,22 +231,22 @@ a{color:inherit;text-decoration:none}
 
 header.top{border-bottom:1px solid var(--line);padding:24px 0 0;position:relative;overflow:hidden}
 header.top::before{content:"";position:absolute;inset:-60% -20% auto -20%;height:220%;
-  background:radial-gradient(60% 55% at 18% 40%,rgba(123,108,246,.16),transparent 70%);pointer-events:none}
+  background:none;pointer-events:none}
 header.top>.wrap{position:relative}
 .brand{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap}
 .brand h1{margin:0;font-size:29px;line-height:1;letter-spacing:-1px;font-weight:700}
 .brand p{margin:6px 0 0;color:var(--dim);font-size:12.5px}
 .back{margin-left:auto;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);
-  border-radius:8px;padding:9px 14px;color:var(--dim);font-weight:650;font-size:13px}
-.back:hover{color:var(--text);border-color:var(--accent);background:rgba(123,108,246,.1)}
+  border-radius:4px;padding:9px 14px;color:var(--dim);font-weight:650;font-size:13px}
+.back:hover{color:var(--text);border-color:var(--accent);background:rgba(41,98,255,.1)}
 
 h2.sec{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim2);margin:30px 0 12px;font-weight:650}
 h2.sec i{font-style:normal;text-transform:none;letter-spacing:0;font-weight:400;opacity:.8}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:15px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:15px}
 .empty{color:var(--dim2);font-size:13px;margin:0}
 
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:1px;background:var(--line);
-  border:1px solid var(--line);border-radius:11px;overflow:hidden}
+  border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .tile{background:var(--panel);padding:13px 15px;display:flex;flex-direction:column;gap:3px}
 .tile span{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dim2)}
 .tile b{font-family:var(--mono);font-size:20px;font-weight:600;letter-spacing:-.5px}
@@ -255,12 +255,12 @@ h2.sec i{font-style:normal;text-transform:none;letter-spacing:0;font-weight:400;
 svg.eq{display:block;width:100%;height:auto}
 
 .calrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
-.cal{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px}
+.cal{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:13px}
 .calhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;font-size:13px}
 .calhead span{font-family:var(--mono);font-weight:650}
 .caldow,.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .caldow span{text-align:center;font-size:9.5px;color:var(--dim2);padding-bottom:3px}
-.calgrid i{aspect-ratio:1;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+.calgrid i{aspect-ratio:1;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   font-style:normal;gap:1px;background:var(--panel2)}
 .calgrid i.pad{background:transparent}
 .calgrid i.off{color:var(--dim2)}
@@ -276,13 +276,13 @@ td{padding:9px 10px 9px 0;border-bottom:1px solid var(--line);vertical-align:mid
 tr:last-child td{border-bottom:0}
 tr.prac td{opacity:.62}
 .side{font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;font-weight:700;padding:2px 7px;border-radius:4px}
-.side.long{color:var(--up);background:rgba(45,212,167,.14)}
-.side.short{color:var(--down);background:rgba(244,82,95,.14)}
+.side.long{color:var(--up);background:rgba(8,153,129,.14)}
+.side.short{color:var(--down);background:rgba(242,54,69,.14)}
 i.opt{display:block;font-style:normal;font-size:10px;color:var(--dim2);font-family:var(--mono)}
 .tags{display:flex;gap:4px;flex-wrap:wrap}
 .tag{font-size:9.5px;padding:2px 7px;border-radius:4px;white-space:nowrap}
-.tag.setup{background:rgba(123,108,246,.16);color:#9d92f8}
-.tag.miss{background:rgba(244,82,95,.14);color:var(--down)}
+.tag.setup{background:rgba(41,98,255,.16);color:#9d92f8}
+.tag.miss{background:rgba(242,54,69,.14);color:var(--down)}
 .tag.prac{background:var(--line);color:var(--dim2)}
 
 .habit{display:flex;align-items:baseline;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
@@ -299,17 +299,17 @@ i.opt{display:block;font-style:normal;font-size:10px;color:var(--dim2);font-fami
 .form label{display:flex;flex-direction:column;gap:5px;font-size:9.5px;text-transform:uppercase;
   letter-spacing:.9px;color:var(--dim2);font-weight:600}
 .form label.wide{grid-column:1/-1;text-transform:none;letter-spacing:0;font-size:11px}
-.form input,.form select,.form textarea{background:var(--panel2);border:1px solid var(--line2);border-radius:7px;
+.form input,.form select,.form textarea{background:var(--panel2);border:1px solid var(--line2);border-radius:4px;
   color:var(--text);padding:9px 10px;font:14px var(--mono);width:100%}
 .form textarea{font-family:var(--sans);resize:vertical}
 .form input:focus,.form select:focus,.form textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
 .mchips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:7px;
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:4px;
   padding:6px 10px;cursor:pointer;font-size:11.5px;text-transform:none;letter-spacing:0;color:var(--dim);font-weight:500}
 .chip input{width:auto;accent-color:var(--down);margin:0}
-.chip:has(input:checked){border-color:var(--down);background:rgba(244,82,95,.1);color:var(--down)}
+.chip:has(input:checked){border-color:var(--down);background:rgba(242,54,69,.1);color:var(--down)}
 .formfoot{grid-column:1/-1;display:flex;align-items:center;gap:12px}
-.formfoot button{background:var(--accent);border:0;border-radius:8px;color:#fff;font:650 13.5px var(--sans);
+.formfoot button{background:var(--accent);border:0;border-radius:4px;color:#fff;font:650 13.5px var(--sans);
   padding:11px 20px;cursor:pointer}
 .formfoot button:disabled{opacity:.5;cursor:default}
 #addMsg{font-size:12.5px}
@@ -317,6 +317,8 @@ i.opt{display:block;font-style:normal;font-size:10px;color:var(--dim2);font-fami
 .note{font-size:11.5px;color:var(--dim2);margin:12px 0 0;line-height:1.55}
 .note code{font-family:var(--mono);color:var(--dim)}
 footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:var(--dim2);font-size:11.5px;line-height:1.6}
+/* TradingView's dark look, same tokens as the practice and futures pages. */
+body{-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 </style>
 </head><body>
 
@@ -326,7 +328,7 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
       <h1>Journal</h1>
       <p>${real.length} real ${real.length === 1 ? "trade" : "trades"}${openTrades ? ` &middot; ${openTrades} still open` : ""}${practice.length ? ` &middot; ${practice.length} from practice` : ""}</p>
     </div>
-    <a class="back" href="${esc(reportHref)}">&larr; Back to the report</a>
+    <span style="display:flex;gap:8px;flex-wrap:wrap"><a class="back" href="futures.html">Futures practice</a><a class="back" href="${esc(reportHref)}">&larr; Back to the report</a></span>
   </div>
 </div></header>
 

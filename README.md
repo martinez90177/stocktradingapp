@@ -176,9 +176,13 @@ out, never in the file itself.
 
 `/futures.html` is a replay terminal for index futures, minis and micros (NQ $5.00 a tick, MNQ $0.50, ES $12.50, MES $1.25; P&L is booked FIFO in whole ticks): a TradingView-style
 chart (1m, 5m, 10m, 15m, 30m, 45m, 1h, 4h, daily; VWAP and EMAs) with a
-Tradovate-style ticket and price ladder, and an Apex 25K intraday-trailing
-account (profit target, trailing drawdown that locks at start +$100, contract
-cap, flat by 4:59 PM ET). Every rule is editable under **Rules**; the defaults
+Tradovate-style ticket and price ladder, and an Apex evaluation account you
+pick under **Rules**: 25K or 50K, intraday or end-of-day (EOD) trailing (profit
+target, trailing drawdown that locks at start +$100, contract cap, flat by
+4:59 PM ET). Intraday trails live equity, open profit included; EOD moves the
+floor only at the close. A daily loss limit is optional on every account: the
+trader sets their own, and it only warns (50 / 75 / 90% and on reaching it).
+Nobody is locked out, since practice needs repetition. Every rule is editable under **Rules**; the defaults
 follow published figures that disagree with each other, so match them to your
 own account.
 

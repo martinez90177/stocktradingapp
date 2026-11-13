@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir, readdir, copyFile } from "node:fs/promises";
 import { join } from "node:path";
 import { loadForEmbed } from "./replay.ts";
-import { FONT_CSS } from "./fonts.ts";
+
 import type { VolEmbed, Calibration, Events, Intraday, ChainFit } from "./volindex.ts";
 import type { RuleBook } from "./types.ts";
 
@@ -27,24 +27,24 @@ import type { ReplaySession, ExtBar } from "./replay.ts";
  */
 
 const SKIN = `
-${FONT_CSS}
+
 /* ---- masthead: one slim row above the terminal, desktop only ------- */
 .mp-head{display:flex;align-items:center;gap:14px;height:46px;padding:0 14px;border-bottom:1px solid var(--line);
-  background:var(--panel);flex:0 0 auto;position:relative;z-index:30}
+  background:var(--bg);flex:0 0 auto;position:relative;z-index:30}
 .mp-brand{display:flex;align-items:baseline;gap:10px;min-width:0}
-.mp-brand b{font-size:15px;letter-spacing:-.3px;white-space:nowrap}
+.mp-brand b{font-size:14px;font-weight:600;color:#f0f3fa;white-space:nowrap}
 .mp-brand span{color:var(--dim);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sim{position:relative;margin-left:auto;min-width:0}
 .sim summary{list-style:none;cursor:pointer;font-size:12px;font-weight:600;color:var(--fib);white-space:nowrap;padding:6px 11px;
-  border:1px solid rgba(245,165,36,.4);background:rgba(245,165,36,.08);border-radius:8px}
-.sim.real summary{color:var(--up);border-color:rgba(45,212,167,.38);background:rgba(45,212,167,.07)}
+  border:1px solid rgba(255,152,0,.4);background:transparent;border-radius:4px}
+.sim.real summary{color:#22ab94;border-color:var(--line2);background:transparent}
 .sim summary::-webkit-details-marker{display:none}
 .sim summary i{font-style:normal;color:var(--dim);font-weight:500;margin-left:6px}
-.sim>div{position:absolute;right:0;top:calc(100% + 8px);width:min(540px,calc(100vw - 28px));background:var(--panel);
-  border:1px solid var(--line2);border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.55;color:var(--dim);
+.sim>div{position:absolute;right:0;top:calc(100% + 8px);width:min(540px,calc(100vw - 28px));background:var(--p2);
+  border:1px solid var(--line2);border-radius:6px;padding:12px 14px;font-size:12.5px;line-height:1.55;color:var(--dim);
   box-shadow:0 18px 50px rgba(0,0,0,.6)}
 .sim>div b{display:block;color:var(--text);margin-bottom:4px} .sim>div strong{color:var(--text)}
-.mp-back{display:inline-flex;align-items:center;gap:6px;text-decoration:none;border:1px solid var(--line2);border-radius:8px;
+.mp-back{display:inline-flex;align-items:center;gap:6px;text-decoration:none;border:1px solid var(--line2);border-radius:4px;
   padding:0 12px;min-height:32px;color:var(--dim);font-weight:650;font-size:12.5px;white-space:nowrap}
 .mp-back:hover{color:var(--text);border-color:var(--acc);background:var(--accs)}
 /* On a phone the masthead is gone: the report link and the data note sit in
@@ -104,6 +104,7 @@ function bannerFor(reportHref: string, sessions: ReplaySession[], vol?: Practice
   return `<header class="mp-head">
   <div class="mp-brand"><b>Practice</b><span>Real days replayed bar by bar, on your account, under your rules</span></div>
   <details class="sim ${n.real ? "real" : ""}"><summary>${n.title}<i>${n.sub}</i></summary><div><b>${n.title}</b>${n.body}</div></details>
+  <a class="mp-back" href="futures.html">Futures</a>
   <a class="mp-back" href="${reportHref}">&larr; Report</a>
 </header>`;
 }
@@ -253,7 +254,7 @@ export async function renderPractice(
   const body = src
     .slice(src.indexOf(">", bodyOpen) + 1, bodyClose)
     .replace("<!--MP:HEAD-->", bannerFor(reportHref, pickable, vol))
-    .replace("<!--MP:BACK-->", `<a class="sbtn sq mp-back2" href="${reportHref}" title="Back to the report" aria-label="Back to the report">&lsaquo;</a>`)
+    .replace("<!--MP:BACK-->", `<a class="sbtn sq mp-back2" href="${reportHref}" title="Back to the report" aria-label="Back to the report">&lsaquo;</a><a class="sbtn mp-back2 mp-fut" href="futures.html" title="Futures practice">Futures</a>`)
     .replace("<!--MP:NOTE-->", noteFor(pickable, vol));
   // The app's own stylesheet is the stylesheet. It used to be replaced by a
   // copy kept here, and the two drifted: what the file looked like opened from
@@ -274,7 +275,7 @@ export async function renderPractice(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#080b11">
+<meta name="theme-color" content="#131722">
 <title>Practice &middot; Market Prep</title>
 <style>${style}${SKIN}</style>
 </head><body>
