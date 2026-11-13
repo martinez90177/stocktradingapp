@@ -7,7 +7,7 @@
  *
  *   node run.ts && node publish-site.mjs
  */
-import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rm, cp } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderPractice, writeSessionPacks, writeOptionPacks } from "./src/practice.ts";
@@ -59,6 +59,17 @@ console.log(opts.days
   ? `site/options/       ${opts.days} days across ${opts.symbols} tickers of real bid and ask`
   : `site/options/       none recorded yet (tools/record-options.mjs)`);
 
+// Futures practice (NQ / MNQ / ES / MES). The page is static; the recorded bars it replays are
+// copied beside it, so it works on GitHub Pages the same as locally.
+await writeFile(join(SITE, "futures.html"), await readFile(join(HERE, "src", "vendor", "futures-app.html"), "utf8"), "utf8");
+const futuresDir = join(HERE, "futures");
+const hasFutures = await readFile(join(futuresDir, "manifest.json"), "utf8").then(() => true, () => false);
+if (hasFutures) {
+  await cp(futuresDir, join(SITE, "futures"), { recursive: true });
+  console.log("site/futures/       recorded NQ / MNQ / ES / MES bars for the futures page");
+} else {
+  console.log("site/futures/       none recorded yet (tools/record-futures.mjs)");
+}
 await writeFile(
   join(SITE, "journal.html"),
   renderJournal(await loadJournal(join(HERE, "journal.json")), "index.html"),

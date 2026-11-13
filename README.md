@@ -172,6 +172,32 @@ The lookup needs a connection — it is fetching live data. The saved morning
 report stays fully offline; the lookup box exists only in what the server hands
 out, never in the file itself.
 
+## Futures practice (NQ / MNQ / ES / MES)
+
+`/futures.html` is a replay terminal for index futures, minis and micros (NQ $5.00 a tick, MNQ $0.50, ES $12.50, MES $1.25; P&L is booked FIFO in whole ticks): a TradingView-style
+chart (1m, 5m, 10m, 15m, 30m, 45m, 1h, 4h, daily; VWAP and EMAs) with a
+Tradovate-style ticket and price ladder, and an Apex 25K intraday-trailing
+account (profit target, trailing drawdown that locks at start +$100, contract
+cap, flat by 4:59 PM ET). Every rule is editable under **Rules**; the defaults
+follow published figures that disagree with each other, so match them to your
+own account.
+
+- **Data is real.** `tools/record-futures.mjs` pulls Yahoo's `NQ=F`, `MNQ=F`, `ES=F` and `MES=F`
+  one-minute bars (seven days is all Yahoo serves) and merges each Globex
+  session into `futures/<SYM>/<date>.json`, plus hourly and daily context
+  files for the 1h / 4h / D charts. `run-scheduled.cmd` runs it every morning,
+  so the library only grows. `futures/` is tracked on purpose: a day that ages
+  out of Yahoo cannot be fetched again.
+- **Fills are simulated from one-minute bars.** Each candle is stepped through
+  open, extremes, close. With a position on, the move against it is assumed to
+  come first, so a stop and target in the same candle resolve to the stop.
+  Gaps fill at the open. There is no order-book depth, so none is shown.
+- **Run it locally:** `node publish-site.mjs && node tools/serve-site.mjs`,
+  then open http://localhost:8100/futures.html (browsers block `file://`
+  fetches). The Yahoo continuous contract has roll gaps at contract changes.
+- The account (balance, drawdown floor, trades) lives in the browser's
+  `localStorage`; **New attempt** resets it.
+
 ## Practice
 
 A **Practice** link in the header opens a second page: a bar-by-bar replay
@@ -962,11 +988,11 @@ output (`reports/`, `site/`, `cache/`, `logs/`) is ignored, so only source is
 tracked.
 
 ```bash
-git -C "C:/Users/GamerX/OneDrive/Desktop/Stock App" remote add origin https://github.com/martinez90177/stocktradingapp.git
+git -C "D:/Apps/Stock App" remote add origin https://github.com/martinez90177/stocktradingapp.git
 ```
 
 ```bash
-git -C "C:/Users/GamerX/OneDrive/Desktop/Stock App" push -u origin main
+git -C "D:/Apps/Stock App" push -u origin main
 ```
 
 Create `stocktradingapp` on GitHub first. **Consider private**: `watchlist.json`
