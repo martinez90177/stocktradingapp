@@ -9,7 +9,7 @@ import { discoverMovers } from "./src/movers.ts";
 import { loadRules } from "./src/rules.ts";
 import { renderPractice, writeSessionPacks, writeOptionPacks } from "./src/practice.ts";
 import { harvest, loadForEmbed } from "./src/replay.ts";
-import { harvestVol, loadVolForEmbed, loadCalibrations, loadEvents, recordEvents, loadIntraday } from "./src/volindex.ts";
+import { harvestVol, loadVolForEmbed, loadCalibrations, loadEvents, recordEvents, loadIntraday, loadChainFit, libraryDates } from "./src/volindex.ts";
 import { execFileSync } from "node:child_process";
 import { loadJournal } from "./src/journal.ts";
 import { renderJournal } from "./src/journalpage.ts";
@@ -268,16 +268,26 @@ async function main() {
     } catch (e) {
       console.warn(`  ~ intraday variance skipped (${String((e as Error).message).split("\n")[0]})`);
     }
+    // How the recorded option chains were priced, so that days nobody recorded
+    // are priced like the days somebody did. No network.
+    try {
+      const out = execFileSync(process.execPath, [join(ROOT, "tools", "fit-chains.mjs")], { encoding: "utf8", timeout: 120000 });
+      const lines = out.trim().split("\n");
+      console.log(`  option pricing fit: ${lines[lines.length - 1].trim()}`);
+    } catch (e) {
+      console.warn(`  ~ option pricing fit skipped (${String((e as Error).message).split("\n")[0]})`);
+    }
   }
 
   try {
     const sessions = await loadForEmbed(SESSIONS, 22);   // 12 to trade, the rest behind them as history
     const VOL = join(ROOT, "volatility");
     const practice = await renderPractice(join(ROOT, "src", "vendor", "practice-app.html"), "latest.html", sessions, {
-      embed: await loadVolForEmbed(VOL, sessions.map((s) => s.date)),
+      embed: await loadVolForEmbed(VOL, await libraryDates(SESSIONS)),
       calibrations: await loadCalibrations(VOL),
       events: await loadEvents(VOL),
       intraday: await loadIntraday(VOL),
+      chainfit: await loadChainFit(VOL),
       rulebook: rules,
     });
     await writeFile(join(REPORTS, "practice.html"), practice, "utf8");

@@ -167,6 +167,43 @@ export async function loadIntraday(dir: string): Promise<Intraday | null> {
   }
 }
 
+/**
+ * How each ticker's options were priced, fitted from the recorded chains by
+ * tools/fit-chains.mjs. Where a ticker has an entry the practice page prices
+ * with it in place of the one-day calibrations, which swing too far from day to
+ * day to carry back to days nobody recorded.
+ */
+export interface ChainFit {
+  measuredAt: string;
+  symbols: Record<string, { index: string; r0: number; r1: number; skew: number; days: number; samples: number }>;
+}
+
+export async function loadChainFit(dir: string): Promise<ChainFit | null> {
+  try {
+    const j = JSON.parse(await readFile(join(dir, "chainfit.json"), "utf8")) as ChainFit;
+    return j && j.symbols && Object.keys(j.symbols).length ? j : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Every date with a recorded session, for any ticker. The index levels are
+ * embedded for all of them: a library day older than the embedded ones used to
+ * be priced at one fixed level whatever the market was doing that day.
+ */
+export async function libraryDates(sessionsDir: string): Promise<string[]> {
+  const dates = new Set<string>();
+  try {
+    for (const sym of await readdir(sessionsDir)) {
+      try {
+        for (const f of await readdir(join(sessionsDir, sym))) if (/^\d{4}-\d{2}-\d{2}\.json$/.test(f)) dates.add(f.slice(0, 10));
+      } catch { /* not a ticker folder */ }
+    }
+  } catch { /* no sessions yet */ }
+  return [...dates].sort();
+}
+
 /** Every calibration measured so far, newest last. */
 export async function loadCalibrations(dir: string): Promise<Calibration[]> {
   const sub = join(dir, "calibration");

@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir, readdir, copyFile } from "node:fs/promises"
 import { join } from "node:path";
 import { loadForEmbed } from "./replay.ts";
 import { FONT_CSS } from "./fonts.ts";
-import type { VolEmbed, Calibration, Events, Intraday } from "./volindex.ts";
+import type { VolEmbed, Calibration, Events, Intraday, ChainFit } from "./volindex.ts";
 import type { RuleBook } from "./types.ts";
 
 /**
@@ -10,7 +10,7 @@ import type { RuleBook } from "./types.ts";
  * the per-ticker calibrations. `rulebook` is Alex's Rules from rules.json,
  * shown in the Rules tab beside the numbers the simulator enforces.
  */
-export interface PracticeVol { embed: VolEmbed; calibrations: Calibration[]; events?: Events; intraday?: Intraday | null; rulebook?: RuleBook | null }
+export interface PracticeVol { embed: VolEmbed; calibrations: Calibration[]; events?: Events; intraday?: Intraday | null; chainfit?: ChainFit | null; rulebook?: RuleBook | null }
 import type { ReplaySession, ExtBar } from "./replay.ts";
 
 /**
@@ -279,7 +279,7 @@ export async function renderPractice(
 <style>${style}${SKIN}</style>
 </head><body>
 ${data}
-${vol ? `<script>window.MP_VOL=${JSON.stringify(vol.embed)};window.MP_VOLCAL=${JSON.stringify(vol.calibrations).replace(/</g, "\\u003c")};window.MP_EVENTS=${JSON.stringify(vol.events ?? {}).replace(/</g, "\\u003c")};window.MP_INTRADAY=${JSON.stringify(vol.intraday ?? null)};window.MP_RULEBOOK=${JSON.stringify(vol.rulebook ?? null).replace(/</g, "\\u003c")};</script>` : ""}
+${vol ? `<script>window.MP_VOL=${JSON.stringify(vol.embed)};window.MP_VOLCAL=${JSON.stringify(vol.calibrations).replace(/</g, "\\u003c")};window.MP_EVENTS=${JSON.stringify(vol.events ?? {}).replace(/</g, "\\u003c")};window.MP_INTRADAY=${JSON.stringify(vol.intraday ?? null)};window.MP_CHAINFIT=${JSON.stringify(vol.chainfit ?? null)};window.MP_RULEBOOK=${JSON.stringify(vol.rulebook ?? null).replace(/</g, "\\u003c")};</script>` : ""}
 ${body}
 </body></html>`;
 }

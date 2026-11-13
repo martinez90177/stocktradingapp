@@ -12,7 +12,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { renderPractice, writeSessionPacks, writeOptionPacks } from "./src/practice.ts";
 import { loadForEmbed } from "./src/replay.ts";
-import { loadVolForEmbed, loadCalibrations, loadEvents, loadIntraday } from "./src/volindex.ts";
+import { loadVolForEmbed, loadCalibrations, loadEvents, loadIntraday, loadChainFit, libraryDates } from "./src/volindex.ts";
 import { loadJournal } from "./src/journal.ts";
 import { loadRules } from "./src/rules.ts";
 import { renderJournal } from "./src/journalpage.ts";
@@ -41,10 +41,11 @@ await writeFile(
     "index.html",
     sessions,
     {
-      embed: await loadVolForEmbed(join(HERE, "volatility"), sessions.map((s) => s.date)),
+      embed: await loadVolForEmbed(join(HERE, "volatility"), await libraryDates(join(HERE, "sessions"))),
       calibrations: await loadCalibrations(join(HERE, "volatility")),
       events: await loadEvents(join(HERE, "volatility")),
       intraday: await loadIntraday(join(HERE, "volatility")),
+      chainfit: await loadChainFit(join(HERE, "volatility")),
       rulebook: await loadRules(join(HERE, "rules.json")).catch(() => null),
     },
   ),
@@ -70,6 +71,7 @@ if (hasFutures) {
 } else {
   console.log("site/futures/       none recorded yet (tools/record-futures.mjs)");
 }
+
 await writeFile(
   join(SITE, "journal.html"),
   renderJournal(await loadJournal(join(HERE, "journal.json")), "index.html"),
