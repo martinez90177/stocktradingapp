@@ -182,6 +182,51 @@ aside[data-dsec=order] .card[data-sec=ladder],aside[data-dsec=ladder] .card[data
 .prot input{text-align:right;height:28px;padding:0 6px}
 .prot button{padding:4px 8px;font-size:12px;border:1px solid var(--line2)}
 .prot button.x{border:0}
+/* ---- panel style switch ---- */
+.pmode{display:flex;background:var(--panel2);border-radius:6px;padding:3px;margin:0 0 12px}
+.pmode button{flex:1;padding:6px 4px;font-size:12px;color:var(--mute);border-radius:4px}
+.pmode button.on{background:#363a45;color:var(--strong)}
+#ticket[data-mode=tv] #quickPanel,#ticket[data-mode=quick] #tvPanel{display:none}
+/* ---- TradingView order panel ---- */
+.tvq{position:relative;display:grid;grid-template-columns:1fr 1fr;border-radius:6px;overflow:hidden;background:var(--panel2)}
+.tvq .q{flex-direction:column;align-items:flex-start;gap:2px;padding:9px 12px 10px;border-radius:0;color:var(--text)}
+.tvq .q.buy{align-items:flex-end}
+.tvq .q span{font-size:13px;font-weight:600}
+.tvq .q b{font-size:16px;font-weight:500;letter-spacing:.2px}
+.tvq .q.sell.on{background:rgba(242,54,69,.22);color:#f7525f}
+.tvq .q.buy.on{background:rgba(41,98,255,.28);color:#5b8cff}
+.tvq .q:not(.on):hover{background:var(--hover)}
+.tvq .spr{position:absolute;left:50%;top:9px;transform:translateX(-50%);background:#131722;color:var(--text);font-size:11px;padding:1px 7px;border-radius:3px;pointer-events:auto;cursor:help}
+.tvt{gap:0;justify-content:space-between;margin:12px 0 2px}
+.tvt button{flex:1;font-size:13px;padding:8px 0}
+.tf{margin-top:12px}
+.tf>label{display:block;color:var(--mute);font-size:13px;margin-bottom:6px}
+.tin{display:flex;align-items:center;height:38px;border:1px solid var(--line2);border-radius:6px;padding:0 4px 0 10px;gap:2px}
+.tin:focus-within{border-color:var(--accent)}
+.tin input{flex:1;min-width:0;border:0;height:34px;padding:0;background:transparent;font-size:14px}
+.tin .swap{padding:0;width:26px;height:26px;color:var(--mute);font-size:14px}
+.tin .aux{color:var(--mute);font-size:12px;white-space:nowrap;padding:0 6px;text-align:right;min-width:62px;justify-content:flex-end}
+.tin button.aux:hover{color:var(--text)}
+.tf select{width:100%;height:38px;border-radius:6px}
+.tvrow{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);border-radius:6px;padding:10px 12px;margin-top:12px;font-size:13px;color:var(--mute)}
+.tvrow b{color:var(--text);font-weight:500}
+.tvsec{margin:18px 0 0;padding-top:12px;border-top:1px solid var(--line);font-weight:600;color:var(--strong)}
+.ex{margin-top:12px}
+.exh{display:flex;justify-content:space-between;align-items:center;color:var(--mute);font-size:13px;margin-bottom:6px}
+.ex.off .tin{opacity:.4}
+.tsw{position:relative;width:34px;height:18px;cursor:pointer;flex:none}
+.tsw input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+.tsw i{position:absolute;inset:0;border-radius:9px;background:#434651;transition:background .15s;pointer-events:none}
+.tsw i::after{content:"";position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#d1d4dc;transition:transform .15s}
+.tsw input:checked+i{background:var(--accent)}
+.tsw input:checked+i::after{transform:translateX(16px);background:#fff}
+.tvGo{display:flex;flex-direction:column;width:100%;margin-top:16px;padding:9px 8px 10px;border-radius:6px;color:#fff;gap:1px}
+.tvGo b{font-size:15px;font-weight:600}
+.tvGo small{font-size:12px;opacity:.9;letter-spacing:.2px}
+.tvGo.buy{background:var(--tvBuy)}.tvGo.buy:hover{background:var(--tvBuyH)}
+.tvGo.sell{background:var(--tvSell)}.tvGo.sell:hover{background:var(--tvSellH)}
+.tvGo:disabled{background:#2a2e39;color:var(--mute)}
+@media (pointer:coarse){.tin{height:42px}.tin .swap{width:32px;height:32px}.tvq .q{padding:11px 12px}}
 .tvsub{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:6px;margin-top:12px}
 .tvsub button{padding:7px 4px;font-size:12px;border:1px solid var(--line2)}
 .hint{font-size:12px;color:var(--mute);margin:12px 0 0;line-height:1.5}
@@ -443,6 +488,35 @@ dialog .btns button.on:hover{background:var(--accentH)}
 
     <div class="card" data-sec="order" id="ticket">
       <div class="ohead"><div><b id="oSym">MNQ</b><span class="nm" id="oName"></span></div><span id="tickInfo"></span></div>
+      <div class="pmode" id="pmode" title="Order panel style"><button data-m="tv">TradingView</button><button data-m="quick">Quick buttons</button></div>
+
+      <!-- TradingView's order panel: pick a side, set it up, then one big button sends it. -->
+      <div id="tvPanel">
+        <div class="tvq">
+          <button class="q sell" data-side="-1"><span>Sell</span><b id="tvBid"></b></button>
+          <span class="spr" id="tvSpr" title="Spread. The replay has trade prints, not quotes: you fill at the last price plus your slippage setting, and that is what these two prices show."></span>
+          <button class="q buy" data-side="1"><span>Buy</span><b id="tvAsk"></b></button>
+        </div>
+        <div class="utabs tvt" id="tvType"><button data-t="market">Market</button><button data-t="limit">Limit</button><button data-t="stop">Stop</button><button data-t="stoplimit">Stop Limit</button></div>
+        <div class="tf" id="tvPriceF"><label id="tvPriceL">Price</label>
+          <div class="tin"><input id="tvPrice" inputmode="decimal" autocomplete="off"><button class="swap" id="tvPriceSw" title="Type a price, or ticks away from the bid / ask">⇄</button><span class="aux" id="tvPriceAux"></span></div></div>
+        <div class="tf" id="tvLmtF"><label>Limit price</label>
+          <div class="tin"><input id="tvLmt" inputmode="decimal" autocomplete="off"><span class="aux" id="tvLmtAux"></span></div></div>
+        <div class="tf"><label>Units</label>
+          <div class="tin"><input id="tvQty" inputmode="decimal" autocomplete="off"><button class="swap" id="tvQtySw" title="Type contracts, or the dollars you are willing to risk to the stop">⇄</button><span class="aux" id="tvQtyAux"></span></div></div>
+        <div class="tvrow"><span>Tick value</span><b id="tvTickV"></b></div>
+        <div class="tvsec">Exits</div>
+        <div class="ex" id="tvTP"><div class="exh"><span>Take profit price</span><label class="tsw"><input type="checkbox" id="tvTpOn"><i></i></label></div>
+          <div class="tin"><input id="tvTpIn" inputmode="decimal" autocomplete="off"><button class="swap" data-ex="tp" title="Type the price, or the distance">⇄</button><button class="aux unit" data-ex="tp" id="tvTpAux" title="Ticks or dollars"></button></div></div>
+        <div class="ex" id="tvSL"><div class="exh"><span>Stop loss price</span><label class="tsw"><input type="checkbox" id="tvSlOn"><i></i></label></div>
+          <div class="tin"><input id="tvSlIn" inputmode="decimal" autocomplete="off"><button class="swap" data-ex="sl" title="Type the price, or the distance">⇄</button><button class="aux unit" data-ex="sl" id="tvSlAux" title="Ticks or dollars"></button></div></div>
+        <div class="tvrow" id="tvRR"><span>Risk / Reward</span><b id="tvRRv"></b></div>
+        <div class="tvsec">Extra settings</div>
+        <div class="tf"><label>Time in force</label><select id="tvTif"><option value="day">Day</option><option value="gtc">Good till cancelled</option></select></div>
+        <button class="tvGo" id="tvGo"><b id="tvGoT">Buy</b><small id="tvGoS"></small></button>
+      </div>
+
+      <div id="quickPanel">
       <div class="tvbtns">
         <button class="tvb sell" data-side="-1"><small class="pxSell"></small><span class="lblSell">Sell Mkt</span></button>
         <button class="tvb buy" data-side="1"><small class="pxBuy"></small><span class="lblBuy">Buy Mkt</span></button>
@@ -469,6 +543,7 @@ dialog .btns button.on:hover{background:var(--accentH)}
         </div>
       </div>
       <div id="riskLine"></div>
+      </div>
 
       <div class="posbox" id="posBox"></div>
       <div class="tvsub">
@@ -688,7 +763,11 @@ const FLAG={filled:false};
 const I=()=>INSTR[D?D.sym:'MNQ'];
 let SOUND=store.get('ppfut.sound',true);
 /* ticket: TP / SL are held in ticks, like TradingView's order panel; price and $ follow */
-const TK={type:'market',qty:1,tpOn:true,slOn:true,tpT:80,slT:40,price:null};
+const TK={type:'market',qty:1,tpOn:true,slOn:true,tpT:80,slT:40,price:null,
+  // TradingView panel: the chosen side, a stop-limit's limit price, time in force, and how each field is typed
+  side:1,lmt:null,tif:'day',pxSwap:false,qtySwap:false,exSwap:{tp:false,sl:false},exUnit:{tp:'ticks',sl:'ticks'},
+  mode:store.get('ppfut.pmode','tv')};
+let pvHidden=false,pvHover=null;    // the TradingView preview on the chart: dismissed with its ✕; which exit is hovered
 const tkSaved=store.get('ppfut.ticket',{});
 
 /* ---------- toast / banner / sound ---------- */
@@ -915,6 +994,7 @@ function reorderPath(){
 }
 /** Move the price from a to b, filling anything that triggers on the way, nearest first. */
 function segment(a,b,gap){
+  if(LOCK.session){R.price=b;return}      // nothing fills after the 4:59 PM flat
   const slip=SET.slip*I().tick;
   let guard=0;
   while(guard++<60&&a!==b){
@@ -924,6 +1004,9 @@ function segment(a,b,gap){
       if(o.type==='limit'){
         if(o.side>0){if(a<=L)fp=a;else if(b<=L)fp=gap?b:L}
         else{if(a>=L)fp=a;else if(b>=L)fp=gap?b:L}
+      }else if(o.type==='stoplimit'){            // the stop only arms it: it becomes a limit order at o.lmt
+        if(o.side>0){if(a>=L)fp=a;else if(b>=L)fp=gap?b:L}
+        else{if(a<=L)fp=a;else if(b<=L)fp=gap?b:L}
       }else{
         if(o.side>0){if(a>=L)fp=a+slip;else if(b>=L)fp=(gap?b:L)+slip}
         else{if(a<=L)fp=a-slip;else if(b<=L)fp=(gap?b:L)-slip}
@@ -933,6 +1016,14 @@ function segment(a,b,gap){
       if(d<bestD){bestD=d;best=o;bestP=fp}
     }
     if(!best)break;
+    if(best.type==='stoplimit'){
+      // Triggered: from here on it is a plain limit order, filled now only if the limit is already marketable.
+      best.type='limit';best.price=best.lmt;best.trig=true;
+      if(best.side>0?bestP<=best.lmt:bestP>=best.lmt)executeFill(best,bestP);
+      dirty.orders=dirty.chart=dirty.ladder=true;
+      if((b>a&&bestP>=b)||(b<a&&bestP<=b))break;
+      a=bestP;continue;
+    }
     executeFill(best,bestP);
     if((b>a&&bestP>=b)||(b<a&&bestP<=b))break;
     a=bestP;
@@ -1021,6 +1112,7 @@ function rules(barT){
   }
   if(SET.flat&&!LOCK.session&&sd>=16*3600+59*60&&sd<18*3600){
     flattenNow('4:59 PM ET');LOCK.session=true;closeDay();
+    ORD=ORD.filter(o=>o.tif==='gtc');dirty.orders=dirty.chart=dirty.ladder=true;   // Day orders end at the close; GTC stay on the book
     banner('4:59 PM ET: flat for the day, like Apex requires.','info');
   }
   checkAlerts();
@@ -1124,7 +1216,7 @@ function ticketBr(){
   const br={tp:TK.tpOn?Math.max(1,Math.round(TK.tpT)||0):0,sl:TK.slOn?Math.max(1,Math.round(TK.slT)||0):0};
   return br.tp||br.sl?br:null;
 }
-function submit(side,type,price,qty,br){
+function submit(side,type,price,qty,br,lmt,tif){
   const why=blockReason();if(why){toast(why);return false}
   qty=Math.max(1,Math.floor(qty));
   const p=R.price,tk=I().tick,after=Math.abs(P.q+side*qty);
@@ -1132,16 +1224,50 @@ function submit(side,type,price,qty,br){
   if(after>cap&&after>Math.abs(P.q)){toast(`Over the limit: ${cap} ${D.sym} max (${SET.maxMini} minis, 10 micros = 1 mini)`);return false}
   if(type==='market'){executeFill({side,qty,br,type:'market'},p+side*SET.slip*tk);return true}
   price=snap(price);
+  if(type==='stoplimit'){
+    const e=priceRule('stop',side,price);if(e){toast(e.replace('stop','stop limit'));return false}
+    if(!(lmt>0)){toast('Enter the limit price');return false}
+    ORD.push({id:OID++,type,side,qty,price,lmt:snap(lmt),ro:false,br:br?{...br}:null,tag:'',tif:tif||'day'});
+    dirty.orders=dirty.chart=dirty.ladder=true;return true;
+  }
   if(type==='limit'&&((side>0&&price>=p)||(side<0&&price<=p))){executeFill({side,qty,br,type:'limit'},p);return true}  // marketable limit fills now
   if(type==='stop'){const e=priceRule('stop',side,price);if(e){toast(e);return false}}
-  ORD.push({id:OID++,type,side,qty,price,ro:false,br:br?{...br}:null,tag:''});
+  ORD.push({id:OID++,type,side,qty,price,ro:false,br:br?{...br}:null,tag:'',tif:tif||'day'});
   dirty.orders=dirty.chart=dirty.ladder=true;
   return true;
 }
 function ticketOrder(side){
   const type=TK.type;
   if(type!=='market'&&!(TK.price>0)){toast('Enter a price for the '+type+' order');return}
-  submit(side,type,TK.price,TK.qty,ticketBr());
+  submit(side,type,TK.price,TK.qty,ticketBr(),TK.lmt,TK.tif);
+}
+/* ---------- TradingView panel ---------- */
+// The replay has trade prints, not quotes: "bid" and "ask" are where a market order actually fills.
+const quote=()=>{const t=I().tick*SET.slip;return{bid:R.price-t,ask:R.price+t}};
+const tvEntry=()=>TK.type==='market'?(TK.side>0?quote().ask:quote().bid):(TK.price||0);
+const tvRef=()=>TK.type==='stoplimit'?(TK.lmt||TK.price||0):tvEntry();   // where TP / SL are measured from
+const tvTP=()=>snap(tvRef()+TK.side*TK.tpT*I().tick);
+const tvSL=()=>snap(tvRef()-TK.side*TK.slT*I().tick);
+function orderPanelVisible(){const s=$('side');return isPhone()?(s.classList.contains('open')&&s.dataset.sec==='order'):s.dataset.dsec==='order'}
+function tvPlace(){
+  if(!D)return;
+  if(TK.type!=='market'&&!(TK.price>0)){toast('Enter a price for the '+(TK.type==='stoplimit'?'stop limit':TK.type)+' order');return}
+  const ok=submit(TK.side,TK.type,TK.price,TK.qty,ticketBr(),TK.lmt,TK.tif);
+  if(ok){pvHidden=true;pvHover=null;dirty.chart=true}   // the order's own lines take over; touching the panel brings the preview back
+  if(ok&&TK.type!=='market')
+    toast((TK.side>0?'Buy ':'Sell ')+TK.qty+' '+D.sym+' '+({limit:'limit',stop:'stop',stoplimit:'stop limit'})[TK.type]+' @ '+fx(TK.price)+' working');
+}
+/** A preview line dragged on the chart. Dragging the entry turns a market order into a limit or a stop,
+ *  whichever that side of the price needs, as TradingView does. */
+function pvDragTo(leg,p){
+  const s=TK.side,tk=I().tick;
+  if(leg==='entry'){
+    if(TK.type==='stoplimit'){const d=p-(TK.price||p);TK.price=p;if(TK.lmt)TK.lmt=snap(TK.lmt+d)}
+    else{const q=quote();TK.type=s>0?(p<q.ask?'limit':'stop'):(p>q.bid?'limit':'stop');TK.price=p}
+  }else if(leg==='lmt')TK.lmt=p;
+  else if(leg==='tp'){const t=Math.round((p-tvRef())*s/tk);if(t>=1){TK.tpT=t;TK.tpOn=true}}
+  else if(leg==='sl'){const t=Math.round((tvRef()-p)*s/tk);if(t>=1){TK.slT=t;TK.slOn=true}}
+  dirty.ui=dirty.chart=true;
 }
 function cancelOrder(id){ORD=ORD.filter(x=>x.id!==id);dirty.orders=dirty.chart=dirty.ladder=true}
 function cancelAll(){ORD=[];dirty.orders=dirty.chart=dirty.ladder=true}
@@ -1340,7 +1466,34 @@ function draw(){
   }
 
   // ticket preview (TradingView shows where TP / SL would land)
-  if(previewOn&&!P.q){
+  // TradingView panel: the order you are building, drawn on the chart and draggable
+  const tvPv=TK.mode==='tv'&&!pvHidden&&orderPanelVisible()&&tvEntry()>0;
+  if(tvPv){
+    const s=TK.side,col=s>0?'#2962ff':'#f23645',q=TK.qty,tv=tickVal(),TPC='#089981',SLC='#ff9800';
+    const ent=tvEntry(),ref=tvRef(),tpP=TK.tpOn?tvTP():null,slP=TK.slOn?tvSL():null,xC=g.w-30;
+    const hv=pvHover||(drag&&(drag.kind==='pv'||drag.kind==='pvNew')?drag.leg:null);
+    // the shaded profit / loss zone, while that exit is hovered or dragged
+    const zone=(p,c)=>{const y=yOf(g,p),y0=yOf(g,ref);cx.fillStyle=c;cx.fillRect(0,Math.min(y,y0),xC,Math.abs(y-y0))};
+    if(tpP!=null&&hv==='tp')zone(tpP,'rgba(8,153,129,.22)');
+    if(slP!=null&&hv==='sl')zone(slP,'rgba(255,152,0,.2)');
+    // the dotted connector down the right, with a handle on each line
+    const pts=[[ent,col]];if(tpP!=null)pts.push([tpP,TPC]);if(slP!=null)pts.push([slP,SLC]);
+    const ys=pts.map(p=>yOf(g,p[0]));
+    cx.setLineDash([2,3]);cx.strokeStyle='#787b86';cx.beginPath();cx.moveTo(xC+.5,Math.min(...ys));cx.lineTo(xC+.5,Math.max(...ys));cx.stroke();cx.setLineDash([]);
+    JOBS.push({pri:6,fn:()=>{for(const [p,c] of pts){cx.beginPath();cx.arc(xC+.5,yOf(g,p),3.5,0,7);cx.fillStyle='#131722';cx.fill();cx.strokeStyle=c;cx.lineWidth=1.5;cx.stroke();cx.lineWidth=1}}});
+    const typ={market:'Market',limit:'Limit',stop:'Stop',stoplimit:'Stop Limit'}[TK.type];
+    const eSegs=[{t:s>0?'Buy':'Sell',bg:col,fg:'#fff',k:'pvGo'}];
+    if(!TK.tpOn)eSegs.push({t:'TP',k:'pvNewTP',fg:TPC,leg:'tp'});
+    if(!TK.slOn)eSegs.push({t:'SL',k:'pvNewSL',fg:SLC,leg:'sl'});
+    eSegs.push({t:String(q)},{t:typ},{t:'✕',k:'pvX'});
+    orderLine(g,ent,col,eSegs,{k:'pv',leg:'entry',rpad:42},true,true,5);
+    if(TK.type==='stoplimit'&&TK.lmt>0)orderLine(g,TK.lmt,col,[{t:'Limit'},{t:fx(TK.lmt)}],{k:'pv',leg:'lmt',rpad:42},true,true,5);
+    const amt=v=>Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' USD';
+    const dt=leg=>drag&&drag.leg===leg&&drag.moved?'  '+(leg==='tp'?TK.tpT:TK.slT)+'t':'';
+    if(tpP!=null)orderLine(g,tpP,TPC,[{t:String(q)},{t:'+'+amt(TK.tpT*tv*q)+dt('tp'),fg:'#22ab94'},{t:'✕',k:'pvXtp',leg:'tp'}],{k:'pv',leg:'tp',rpad:42},true,true,5);
+    if(slP!=null)orderLine(g,slP,SLC,[{t:String(q)},{t:'−'+amt(TK.slT*tv*q)+dt('sl'),fg:'#ffb74d'},{t:'✕',k:'pvXsl',leg:'sl'}],{k:'pv',leg:'sl',rpad:42},true,true,5);
+  }
+  if(previewOn&&!P.q&&!tvPv&&TK.mode!=='tv'){
     const ref=TK.type==='market'?R.price:(TK.price||R.price),tk=I().tick,q=TK.qty;
     const pv=(pr,txt,col)=>{const y=yOf(g,pr);if(y<0||y>g.h)return;cx.setLineDash([2,4]);cx.strokeStyle=col;cx.beginPath();cx.moveTo(0,Math.round(y)+.5);cx.lineTo(g.w,Math.round(y)+.5);cx.stroke();cx.setLineDash([]);cx.fillStyle=col;cx.textAlign='left';cx.textBaseline='bottom';cx.fillText(txt,g.w-150,y-2)};
     if(TK.tpOn){pv(snap(ref+TK.tpT*tk),'TP long  +'+usd(TK.tpT*tickVal()*q),'#08998199');pv(snap(ref-TK.tpT*tk),'TP short +'+usd(TK.tpT*tickVal()*q),'#08998166')}
@@ -1362,7 +1515,7 @@ function draw(){
       if(o.br.tp)orderLine(g,o.price+s*o.br.tp*tk,'#089981',[{t:'TP',bg:'#089981',fg:'#131722'},{t:'+'+usd(o.br.tp*tickVal()*o.qty)+(drag&&drag.kind==='brleg'&&drag.leg==='tp'?'  '+o.br.tp+'t':''),fg:'#22ab94'},{t:'✕',k:'xbr',o,leg:'tp'}],{k:'brline',o,leg:'tp'},true);
       if(o.br.sl)orderLine(g,o.price-s*o.br.sl*tk,'#f23645',[{t:'SL',bg:'#f23645',fg:'#131722'},{t:'−'+usd(o.br.sl*tickVal()*o.qty)+(drag&&drag.kind==='brleg'&&drag.leg==='sl'?'  '+o.br.sl+'t':''),fg:'#f7525f'},{t:'✕',k:'xbr',o,leg:'sl'}],{k:'brline',o,leg:'sl'},true);
     }
-    const name=(o.side>0?(small?'BUY ':'Buy '):(small?'SELL ':'Sell '))+(o.type==='limit'?(small?'LMT':'Limit'):(small?'STP':'Stop'));
+    const name=(o.side>0?(small?'BUY ':'Buy '):(small?'SELL ':'Sell '))+(o.type==='limit'?(small?'LMT':'Limit'):o.type==='stoplimit'?(small?'STP LMT':'Stop Limit'):(small?'STP':'Stop'));
     orderLine(g,o.price,col,[{t:name+' '+o.qty,bg:col,fg:'#fff'},{t:'✕',k:'x',o}],{k:'line',o},false,true);
   }};
   // position + its TP / SL
@@ -1452,7 +1605,7 @@ function orderLine(g,price,col,segs,lineHit,dim,right,pri=1){
   // Working orders sit at the right, by the price scale (as on Tradovate); the position and
   // its TP / SL at the left. Two columns keep nearby prices from covering each other.
   if(right){
-    const xr=g.w-total-6,c=[xr,...near.map(l=>l.x1-4-total)].sort((a,b)=>b-a);
+    const xr=g.w-total-(lineHit&&lineHit.rpad||6),c=[xr,...near.map(l=>l.x1-4-total)].sort((a,b)=>b-a);
     x=c.find(xx=>xx>=x0&&free(xx))??xr;
   }else{
     const c=[x0,...near.map(l=>l.x2+4)].sort((a,b)=>a-b);
@@ -1511,9 +1664,14 @@ cv.addEventListener('pointerdown',e=>{
     if(h.k==='close'){flattenNow('Position closed');return}
     if(h.k==='xal'){PAL=PAL.filter(a=>a!==h.o);dirty.chart=true;return}
     if(h.k==='plus'){openMenu(e.clientX,e.clientY,h.price);return}
+    if(h.k==='pvGo'){tvPlace();return}
+    if(h.k==='pvX'){pvHidden=true;dirty.chart=true;return}
+    if(h.k==='pvXtp'||h.k==='pvXsl'){TK[h.k==='pvXtp'?'tpOn':'slOn']=false;pvHover=null;saveTicket();syncTicketInputs();dirty.chart=true;return}
+    if(h.k==='pvNewTP'||h.k==='pvNewSL'){drag={kind:'pvNew',leg:h.k==='pvNewTP'?'tp':'sl',x0:m.x,y0:m.y,moved:false};return}
     if(h.k==='newTP'||h.k==='newSL'){drag={kind:'newBr',tag:h.k==='newTP'?'TP':'SL',x0:m.x,y0:m.y,moved:false,price:null};return}
     const ref=h.ref;
     if(ref&&ref.k==='alert'){drag={kind:'alert',o:ref.o,y0:m.y,moved:false};cv.style.cursor='ns-resize';return}
+    if(ref&&ref.k==='pv'){drag={kind:'pv',leg:ref.leg,y0:m.y,moved:false};cv.style.cursor='ns-resize';return}
     if(ref&&ref.k==='lvl'){selectLvl(ref.o);drag={kind:'lvl',o:ref.o,y0:m.y,moved:false};cv.style.cursor='ns-resize';return}
     if(ref&&ref.k==='line'){if(!ref.o.ro)selId=ref.o.id;drag={kind:'order',o:ref.o,orig:ref.o.price,y0:m.y,moved:false};cv.style.cursor='ns-resize';return}
     if(ref&&ref.k==='brline'){drag={kind:'brleg',o:ref.o,leg:ref.leg,orig:ref.o.br[ref.leg],y0:m.y,moved:false};cv.style.cursor='ns-resize';return}
@@ -1544,6 +1702,7 @@ cv.addEventListener('pointermove',e=>{
     }else if(drag.kind==='axis'){view.yz=Math.max(.15,Math.min(8,drag.yz0*Math.exp((m.y-drag.y0)/Math.max(140,g.h)*1.8)))}  // full-height drag ≈ 6x
     else if(drag.kind==='order'){drag.o.price=snap(priceAt(g,m.y));dirty.orders=dirty.ladder=true}
     else if(drag.kind==='alert'){drag.o.price=snap(priceAt(g,m.y))}
+    else if(drag.kind==='pv'||drag.kind==='pvNew'){if(drag.moved)pvDragTo(drag.leg,snap(priceAt(g,m.y)))}
     else if(drag.kind==='lvl'){if(drag.moved){drag.o.price=snap(priceAt(g,m.y));mouse={x:m.x,y:yOf(g,drag.o.price)}}}
     else if(drag.kind==='brleg'){
       const pr=snap(priceAt(g,m.y)),s=drag.o.side,d=(pr-drag.o.price)*s,tk=I().tick;
@@ -1556,6 +1715,8 @@ cv.addEventListener('pointermove',e=>{
     const ho=h&&(h.o||(h.ref&&h.ref.o));
     const hid=ho&&!ho.ro?ho.id:null;
     if(hid!==hoverId){hoverId=hid}
+    const pl=h&&(h.leg||(h.ref&&h.ref.k==='pv'&&h.ref.leg));
+    pvHover=pl==='tp'||pl==='sl'?pl:null;
     cv.style.cursor=h&&h.w&&h.k!=='label'?'pointer':(h&&(h.k==='lineY'||h.k==='label'))||(g&&m.x>g.w)?'ns-resize':'crosshair';
   }
   dirty.chart=true;
@@ -1573,6 +1734,9 @@ function endPointer(e){
         if(err){o.price=drag.orig;toast(err)}
       }
       cv.style.cursor='crosshair';
+    }else if(drag.kind==='pv'||drag.kind==='pvNew'){
+      if(drag.kind==='pvNew'&&!drag.moved)TK[drag.leg==='tp'?'tpOn':'slOn']=true;   // a click on the TP / SL pill adds it at the usual distance
+      saveTicket();syncTicketInputs();cv.style.cursor='crosshair';
     }else if(drag.kind==='lvl'){
       saveLvls();cv.style.cursor='crosshair';
     }else if(drag.kind==='brleg'){
@@ -1596,7 +1760,7 @@ function endPointer(e){
   drag=null;dirty.chart=dirty.ui=true;
 }
 cv.addEventListener('pointerup',endPointer);cv.addEventListener('pointercancel',endPointer);
-cv.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'){mouse=null;dirty.chart=true}});
+cv.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'){mouse=null;pvHover=null;dirty.chart=true}});
 cv.addEventListener('wheel',e=>{
   e.preventDefault();if(!SER.length)return;
   const m=pos(e),g=geom(),idx=g.right-(g.w-m.x)/view.barW;
@@ -1698,6 +1862,87 @@ $$('.tvb').forEach(b=>{
 $('ticket').addEventListener('focusin',()=>{previewOn=true;dirty.chart=true});
 $('ticket').addEventListener('focusout',()=>{previewOn=false;dirty.chart=true});
 
+/* ---------- TradingView order panel: fields ---------- */
+const money2=v=>Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+function setPanelMode(m){TK.mode=m;store.set('ppfut.pmode',m);$('ticket').dataset.mode=m;
+  $$('#pmode button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));previewOn=false;dirty.chart=dirty.ui=true}
+$('pmode').onclick=e=>{const b=e.target.closest('button');if(b)setPanelMode(b.dataset.m)};
+setPanelMode(TK.mode);
+const tvSet=(id,v)=>{const el=$(id);if(el!==document.activeElement)el.value=v};
+/** How far a price is from the side's quote, in TradingView's words: "Ask", "Bid + 5". */
+function quoteRel(p){const s=TK.side,q=quote(),base=s>0?q.ask:q.bid,t=Math.round((p-base)/I().tick);
+  return(s>0?'Ask':'Bid')+(t?(t>0?' + ':' − ')+Math.abs(t):'')}
+function renderTV(){
+  if(!D||TK.mode!=='tv')return;
+  const s=TK.side,q=quote(),tk=I().tick,tv=tickVal(),n=TK.qty,mk=TK.type==='market';
+  $('tvBid').textContent=fx(q.bid);$('tvAsk').textContent=fx(q.ask);$('tvSpr').textContent=(q.ask-q.bid).toFixed(2);
+  $$('.tvq .q').forEach(b=>b.classList.toggle('on',+b.dataset.side===s));
+  $$('#tvType button').forEach(b=>b.classList.toggle('on',b.dataset.t===TK.type));
+  $('tvPriceF').style.display=mk?'none':'';$('tvLmtF').style.display=TK.type==='stoplimit'?'':'none';
+  $('tvPriceL').textContent=TK.type==='stoplimit'?'Stop price':'Price';
+  if(!mk&&TK.price){
+    if(TK.pxSwap){tvSet('tvPrice',String(Math.round((TK.price-(s>0?q.ask:q.bid))/tk)));$('tvPriceAux').textContent=fx(TK.price)}
+    else{tvSet('tvPrice',fx(TK.price));$('tvPriceAux').textContent=quoteRel(TK.price)}
+  }
+  if(TK.type==='stoplimit'&&TK.lmt){tvSet('tvLmt',fx(TK.lmt));$('tvLmtAux').textContent=quoteRel(TK.lmt)}
+  const risk=TK.slOn?TK.slT*tv*n:0;
+  if(TK.qtySwap){tvSet('tvQty',risk?money2(risk).replace(/,/g,''):'');$('tvQtyAux').textContent=n+(n===1?' contract':' contracts')}
+  else{tvSet('tvQty',String(n));$('tvQtyAux').textContent=(TK.slOn?money2(risk):'∅')+' USD risk'}
+  $('tvTickV').textContent=money2(tv*n)+' USD';
+  for(const leg of['tp','sl']){
+    const on=leg==='tp'?TK.tpOn:TK.slOn,t=leg==='tp'?TK.tpT:TK.slT,p=leg==='tp'?tvTP():tvSL(),u=TK.exUnit[leg];
+    const alt=u==='usd'?money2(t*tv*n):String(t),altL=u==='usd'?' USD':' ticks';
+    $(leg==='tp'?'tvTP':'tvSL').classList.toggle('off',!on);$(leg==='tp'?'tvTpOn':'tvSlOn').checked=on;
+    if(TK.exSwap[leg]){tvSet(leg==='tp'?'tvTpIn':'tvSlIn',alt.replace(/,/g,''));$(leg==='tp'?'tvTpAux':'tvSlAux').textContent=fx(p)+' ⌄'}
+    else{tvSet(leg==='tp'?'tvTpIn':'tvSlIn',fx(p));$(leg==='tp'?'tvTpAux':'tvSlAux').textContent=alt+altL+' ⌄'}
+  }
+  $('tvRR').style.display=TK.tpOn&&TK.slOn?'':'none';$('tvRRv').textContent=(TK.tpT/TK.slT).toFixed(2);
+  tvSet('tvTif',TK.tif);
+  const go=$('tvGo'),T={market:'MARKET',limit:'LIMIT',stop:'STOP',stoplimit:'STOP LIMIT'}[TK.type];
+  go.className='tvGo '+(s>0?'buy':'sell');$('tvGoT').textContent=s>0?'Buy':'Sell';
+  $('tvGoS').textContent=n+' '+D.sym+(mk?' MARKET':' @ '+(TK.price?Number(TK.price).toLocaleString('en-US',{minimumFractionDigits:2}):'—')+' '+T);
+  go.disabled=!!blockReason();
+}
+const tvTouch=()=>{pvHidden=false;dirty.ui=dirty.chart=true};
+$$('.tvq .q').forEach(b=>b.onclick=()=>{TK.side=+b.dataset.side;tvTouch()});
+$('tvType').onclick=e=>{const b=e.target.closest('button');if(!b||!D)return;
+  const was=TK.type;TK.type=b.dataset.t;
+  if(TK.type!=='market'&&(was==='market'||!TK.price))TK.price=snap(R.price);
+  if(TK.type==='stoplimit'&&!TK.lmt)TK.lmt=TK.price;
+  [...$('otype').children].forEach(x=>x.classList.toggle('on',x.dataset.t===TK.type));   // keep the quick panel in step
+  $('priceRow').style.display=TK.type==='market'?'none':'';if(TK.price)$('oprice').value=fx(TK.price);
+  tvTouch()};
+$('tvPrice').addEventListener('input',()=>{const v=parseFloat($('tvPrice').value);if(isNaN(v)||!D)return;
+  const q=quote(),base=TK.side>0?q.ask:q.bid;TK.price=TK.pxSwap?snap(base+Math.round(v)*I().tick):v;$('oprice').value=fx(TK.price);tvTouch()});
+$('tvPrice').addEventListener('change',()=>{if(TK.price)TK.price=snap(TK.price);setTimeout(renderTV)});
+$('tvLmt').addEventListener('input',()=>{const v=parseFloat($('tvLmt').value);if(v>0){TK.lmt=v;tvTouch()}});
+$('tvLmt').addEventListener('change',()=>{if(TK.lmt)TK.lmt=snap(TK.lmt);setTimeout(renderTV)});
+$('tvPriceSw').onclick=()=>{TK.pxSwap=!TK.pxSwap;$('tvPrice').value='';renderTV()};
+$('tvQty').addEventListener('input',()=>{const v=parseFloat($('tvQty').value);if(!(v>0)||!D)return;
+  if(TK.qtySwap){if(!TK.slOn){toast('Turn the stop loss on to size by risk');return}
+    setQty(Math.max(1,Math.floor(v/(TK.slT*tickVal()))))}else setQty(v);tvTouch()});
+$('tvQty').addEventListener('change',()=>setTimeout(renderTV));
+$('tvQtySw').onclick=()=>{TK.qtySwap=!TK.qtySwap;$('tvQty').value='';renderTV()};
+for(const leg of['tp','sl']){
+  const inp=$(leg==='tp'?'tvTpIn':'tvSlIn'),on=$(leg==='tp'?'tvTpOn':'tvSlOn'),key=leg==='tp'?'tpOn':'slOn',tk=leg==='tp'?'tpT':'slT';
+  on.onchange=()=>{TK[key]=on.checked;saveTicket();syncTicketInputs();tvTouch()};
+  inp.addEventListener('input',()=>{const v=parseFloat(inp.value);if(!(v>0)||!D)return;
+    let t;
+    if(!TK.exSwap[leg])t=Math.round((leg==='tp'?(v-tvRef()):(tvRef()-v))*TK.side/I().tick);
+    else t=TK.exUnit[leg]==='usd'?Math.round(v/(tickVal()*TK.qty)):Math.round(v);
+    if(t>=1){TK[tk]=t;TK[key]=true;saveTicket();syncTicketInputs();tvTouch()}});
+  inp.addEventListener('change',()=>setTimeout(renderTV));
+  inp.addEventListener('focus',()=>{pvHover=leg;dirty.chart=true});
+  inp.addEventListener('blur',()=>{pvHover=null;dirty.chart=true});
+  $$(`.tin .swap[data-ex="${leg}"]`).forEach(b=>b.onclick=()=>{TK.exSwap[leg]=!TK.exSwap[leg];inp.value='';renderTV()});
+  $(leg==='tp'?'tvTpAux':'tvSlAux').onclick=()=>{TK.exUnit[leg]=TK.exUnit[leg]==='ticks'?'usd':'ticks';inp.value='';renderTV()};
+  $(leg==='tp'?'tvTP':'tvSL').addEventListener('pointerenter',()=>{pvHover=leg;dirty.chart=true});
+  $(leg==='tp'?'tvTP':'tvSL').addEventListener('pointerleave',()=>{if(document.activeElement!==inp){pvHover=null;dirty.chart=true}});
+}
+$('tvTif').onchange=()=>{TK.tif=$('tvTif').value};
+$('tvGo').onclick=tvPlace;
+$('tvPanel').addEventListener('focusin',()=>{pvHidden=false;dirty.chart=true});
+
 /* ====================================================================
  * UI panels
  * ==================================================================== */
@@ -1765,6 +2010,7 @@ function renderUI(){
   $('riskLine').textContent=(TK.slOn?`Risk ${usd(TK.slT*tv*q)}`:'No stop')+(TK.tpOn?` · reward ${usd(TK.tpT*tv*q)}`:'')+(TK.slOn&&TK.tpOn?` · ${(TK.tpT/TK.slT).toFixed(2)}R`:'')+` · ${(TK.slT*tk).toFixed(2)} / ${(TK.tpT*tk).toFixed(2)} pts`;
   $('tickInfo').innerHTML=`Tick 0.25 = ${usd(tv)}<br>Point = ${usd(I().pv)}`;
   $('mBr').innerHTML=`TP ${TK.tpOn?TK.tpT+'t':'off'}<br>SL ${TK.slOn?TK.slT+'t':'off'}`;
+  renderTV();
   const bt=D.bars[Math.min(R.bi,D.bars.length-1)][0]+Math.min(R.si,3)*15;
   $('clock').textContent=(R.bi>=D.bars.length?'End · ':'')+(isPhone()?'':longDate(tradingDate(bt)).replace(/, \d{4}$/,'')+' · ')+hhmm(bt)+' ET';
   const off=!!blockReason();
@@ -1789,7 +2035,7 @@ $('mPos').addEventListener('click',e=>{
   if(b.dataset.sheet)openSheet(b.dataset.sheet);
 });
 function renderOrders(){
-  $('ordBox').innerHTML=ORD.length?'<table>'+ORD.map(o=>`<tr><td class="${o.side>0?'up':'dn'}">${o.side>0?'BUY':'SELL'} ${o.qty}</td><td>${o.tag||(o.type==='limit'?'LMT':'STP')}${o.br?` <span class="mute">${o.br.tp?'+TP':''}${o.br.sl?'+SL':''}</span>`:''}</td><td>${fx(o.price)}</td><td><button class="x" data-c="${o.id}">✕</button></td></tr>`).join('')+'</table>':'None';
+  $('ordBox').innerHTML=ORD.length?'<table>'+ORD.map(o=>`<tr><td class="${o.side>0?'up':'dn'}">${o.side>0?'BUY':'SELL'} ${o.qty}</td><td>${o.tag||(o.type==='limit'?'LMT':o.type==='stoplimit'?'STP LMT '+fx(o.lmt):'STP')}${o.br?` <span class="mute">${o.br.tp?'+TP':''}${o.br.sl?'+SL':''}</span>`:''}</td><td>${fx(o.price)}</td><td><button class="x" data-c="${o.id}">✕</button></td></tr>`).join('')+'</table>':'None';
 }
 $('ordBox').onclick=e=>{const c=e.target.dataset.c;if(c)cancelOrder(+c)};
 function renderTrades(){
