@@ -2558,6 +2558,10 @@ cv.addEventListener('pointermove',e=>{
       const dxb=Math.round((drag.mx-mx)/G.cw);
       S.view.right=Math.max(G.count-1,Math.min(B.length-1,drag.right+dxb));
       if(S.view.right>=B.length-1)S.view.right=null;
+      // Up and down moves the prices too, as on TradingView. A clear vertical
+      // pull (not the drift of a sideways swipe) switches off the auto-fit;
+      // a double-tap or Reset view turns it back on.
+      if(!S.yMan&&Math.abs(my-drag.my)>8)S.yMan={lo:drag.lo,hi:drag.hi};
       if(S.yMan){const dp=(my-drag.my)/G.ph*(drag.hi-drag.lo);
         S.yMan={lo:drag.lo+dp,hi:drag.hi+dp};}
     }

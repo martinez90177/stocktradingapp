@@ -79,6 +79,13 @@ main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 332px;min-height:0}
 #banner.bad{background:#3d1a1f;color:#ffccd0;border:1px solid #6b2229}
 #banner.good{background:#0d3029;color:#a7f0de;border:1px solid #155e4f}
 #banner.info{background:#1a2440;color:#c4d3ff;border:1px solid #2c3f73}
+#sessEnd{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;width:min(340px,calc(100% - 32px));background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:16px 16px 14px;box-shadow:0 12px 40px #000a;text-align:left}
+#sessEnd[hidden]{display:none}
+#sessEnd h4{margin:0 0 6px;font-size:15px;color:var(--strong)}
+#sessEnd p{margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.45}
+#sessEnd .se-btns{display:flex;flex-direction:column;gap:8px}
+#sessEnd .se-btns button{width:100%;padding:10px 12px;font-weight:600;border:1px solid var(--line)}
+#sessEnd .se-btns button.pri{background:#2962ff;border-color:#2962ff;color:#fff}
 /* the horizontal-line toolbar: TradingView's floating drawing toolbar */
 .lvlBtn.on{color:var(--accent);background:var(--hover)}
 #lvlBar{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:8;display:flex;align-items:center;gap:2px;padding:3px;
@@ -369,7 +376,8 @@ dialog .btns button.on:hover{background:var(--accentH)}
     <select id="selDate" title="Session to replay"></select>
     <button id="btnRandom" title="Pick a random recorded day"><svg class="i"><use href="#i-shuffle"/></svg><span class="rl">Surprise me: random day</span></button>
     <select id="selStart" title="Where in the day the replay starts (New York time)">
-      <option value="18:00">6:00 PM (Globex open)</option>
+      <option value="18:00" data-ev="Globex open">6:00 PM (Globex open)</option>
+      <option value="19:00" data-ev="Tokyo open">7:00 PM (Tokyo open)</option>
       <option value="03:00">3:00 AM (London)</option>
       <option value="08:30">8:30 AM (pre-market)</option>
       <option value="09:30" selected>9:30 AM (NY open)</option>
@@ -398,7 +406,8 @@ dialog .btns button.on:hover{background:var(--accentH)}
       <canvas id="cv"></canvas>
       <div id="legend"></div>
       <div id="banner"></div>
-      <div id="zoomBtns"><button id="zOut" title="Zoom out">−</button><button id="zIn" title="Zoom in">+</button><button id="zLive" title="Jump to the latest candle (or double-click / double-tap the chart)"><svg class="i"><use href="#i-latest"/></svg></button></div>
+      <div id="sessEnd" hidden><h4 id="seT"></h4><p id="seB"></p><div class="se-btns"><button class="pri" id="seGo"></button><button id="seStay">Stay on this day</button></div></div>
+      <div id="zoomBtns"><button id="zOut" title="Zoom out">−</button><button id="zIn" title="Zoom in">+</button><button id="zLive" title="Jump to the latest candle and auto-fit the price scale (or double-click / double-tap the chart)"><svg class="i"><use href="#i-latest"/></svg></button></div>
       <div id="loading">Loading real futures bars…</div>
       <div id="lvlBar" hidden>
         <button id="lvColor" title="Line colour"><span class="sw"></span></button>
@@ -566,7 +575,7 @@ dialog .btns button.on:hover{background:var(--accentH)}
   <p class="kd-note">A real trading day, replayed. Nothing is live and no money is involved.</p>
   <ol>
     <li><b>Pick a contract and a day.</b> <span id="introPick"></span> MNQ is the small one: each tick is $0.50. NQ is ten times that.</li>
-    <li><b>Press <span class="k blue">&#9654; Play</span>.</b> The recorded day replays from your start time. <b>Next bar</b> beside it moves one candle at a time instead.</li>
+    <li><b>Press <span class="k blue">&#9654; Play</span>.</b> The recorded day replays from your start time. <b>Next bar</b> beside it moves one candle at a time instead. Futures trade nearly around the clock: at the 5 PM close you can carry on into the 6 PM evening session.</li>
     <li><b>Tap <span class="k red">Sell</span> or <span class="k blue">Buy</span>.</b> A take-profit and a stop-loss are attached for you; drag their lines on the chart to move them.</li>
     <li><b>Stay inside the account rules.</b> It's scored like a funded-account evaluation: reach the profit target without losing more than the trailing drawdown.</li>
   </ol>
@@ -685,6 +694,7 @@ const shortDate=t=>new Date(etLocal(t)*1000).toLocaleDateString('en-US',{timeZon
 const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const tvStamp=(t,withTime)=>{const d=new Date(etLocal(t)*1000);
   return WD[d.getUTCDay()]+' '+d.getUTCDate()+' '+MO[d.getUTCMonth()]+" '"+String(d.getUTCFullYear()).slice(2)+(withTime?'  '+hhmm(t):'')};
+const calDate=t=>new Date(etLocal(t)*1000).toLocaleDateString('en-US',{timeZone:'UTC',weekday:'short',month:'short',day:'numeric'});
 const longDate=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'short',month:'short',day:'numeric',year:'numeric'});
 
 /* ---------- candles ---------- */
@@ -812,8 +822,10 @@ async function ensureCtx(sym){
   dirty.series=dirty.chart=true;
   return CTX[sym];
 }
-async function loadSession(sym,date,startKey){
-  if(D&&(P.q!==0||ORD.length))flattenNow('Session changed');
+async function loadSession(sym,date,startKey,carry){
+  hideSessEnd();
+  carry=!!(carry&&D&&D.sym===sym);
+  if(D&&!carry&&(P.q!==0||ORD.length))flattenNow('Session changed');
   if(D)closeDay();                     // leaving a day closes it (moves an EOD floor)
   $('loading').style.display='flex';$('loading').textContent='Loading '+sym+' '+date+'…';
   const dates=MAN.symbols[sym].dates.map(d=>d.date),ix=dates.indexOf(date);
@@ -834,9 +846,11 @@ async function loadSession(sym,date,startKey){
   D={sym,date,bars,startIdx,pc:firstOfDay>0?bars[firstOfDay-1][4]:null};   // pc: the prior session's close, for the change
   histCache={};
   R={bi:startIdx,si:0,path:null,price:startIdx>0?bars[startIdx-1][4]:bars[startIdx][1]};
-  P={q:0,avg:0,lots:[]};ORD=[];RT=null;LOCK={day:false,session:false};
+  if(carry){ORD=ORD.filter(o=>o.tif==='gtc')}   // into the evening session: the position and GTC orders come along, Day orders ended at the close
+  else{P={q:0,avg:0,lots:[]};ORD=[];RT=null}
+  LOCK={day:false,session:false};
   DAY={startBal:ACC.balance};
-  view.follow=true;view.yz=1;crossSticky=null;
+  view.follow=true;view.yz=1;view.ym=null;crossSticky=null;
   if(symChanged)loadTicketFor(sym);
   playing=false;updatePlayBtn();
   $('loading').style.display='none';
@@ -1020,6 +1034,7 @@ function stepOnce(){
   if(R.si>=R.path.length){R.bi++;R.si=0}
   rules(barT);
   if(R.bi>=D.bars.length&&!P.q)closeDay();
+  if(R.bi>=D.bars.length&&!playing)setTimeout(showSessEnd,0);
   dirty.series=dirty.chart=dirty.ui=dirty.ladder=true;
   return true;
 }
@@ -1079,7 +1094,7 @@ function rules(barT){
   if(SET.flat&&!LOCK.session&&sd>=16*3600+59*60&&sd<18*3600){
     flattenNow('4:59 PM ET');LOCK.session=true;closeDay();
     ORD=ORD.filter(o=>o.tif==='gtc');dirty.orders=dirty.chart=dirty.ladder=true;   // Day orders end at the close; GTC stay on the book
-    banner('4:59 PM ET: flat for the day, like Apex requires.','info');
+    banner('4:59 PM ET: flat for the day, like Apex requires. The evening session opens at 6:00 PM.','info');
   }
   checkAlerts();
 }
@@ -1264,15 +1279,46 @@ const stepsPerSec=()=>parseFloat($('selSpeed').value)*4/60;
 function updatePlayBtn(){$('bPlay').innerHTML=playing?'<svg class="i"><use href="#i-pause"/></svg><span>Pause</span>':'<svg class="i"><use href="#i-play"/></svg><span>Play</span>';$('bPlay').classList.toggle('on',playing)}
 function togglePlay(){
   if(!D)return;
-  if(!playing&&R.bi>=D.bars.length){toast('End of recorded data');return}
+  if(!playing&&R.bi>=D.bars.length){if(!continueNext(true))showSessEnd();return}   // Play at the close goes on into the evening session
   playing=!playing;updatePlayBtn();
 }
 function nextCandle(){
-  if(!D||R.bi>=D.bars.length)return;
+  if(!D)return;
+  if(R.bi>=D.bars.length){showSessEnd();return}
   const cb=R.si>0?R.bi:Math.max(0,R.bi-1),k0=bucketKey(D.bars[cb][0],TF);
   let n=0;
   do{if(!stepOnce())break}while(!(R.si===0&&R.bi<D.bars.length&&bucketKey(D.bars[R.bi][0],TF)!==k0)&&++n<20000&&ACC.status!=='breached');
 }
+
+/* ---------- the close, and on into the evening session ----------
+ * A trading date is one Globex session: 6:00 PM ET the evening before to 5:00 PM.
+ * The evening session after a close is therefore the next recorded date, opened at 6 PM. */
+function nextSession(){
+  if(!D)return null;
+  const ds=MAN.symbols[D.sym].dates.map(d=>d.date),ix=ds.indexOf(D.date);
+  return ix>=0&&ix<ds.length-1?ds[ix+1]:null;
+}
+const eveOf=d=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()-1);return WD[x.getUTCDay()]};   // the evening a session opens
+function continueNext(play){
+  const nd=nextSession();if(!nd)return false;
+  $('selDate').value=nd;$('selStart').value='18:00';labelStarts();paintSess();
+  loadSession(D.sym,nd,'18:00',true).then(()=>{if(play===true){playing=true;updatePlayBtn()}});return true;
+}
+function showSessEnd(){
+  if(!D||R.bi<D.bars.length||ACC.status==='breached')return;
+  const nd=nextSession(),last=D.bars[D.bars.length-1][0],closed=secOfDay(last)>=16*3600+50*60;
+  $('seT').textContent=closed?'Session closed · 5:00 PM ET':'End of the recorded bars';
+  if(nd){
+    $('seB').textContent=(closed?'Futures reopen at 6:00 PM ET. ':'')+'The next session opens '+eveOf(nd)+' 6:00 PM ET and runs to 5:00 PM '+longDate(nd).replace(/, \d{4}$/,'')+'. Your account'+(P.q?', open position':'')+' and GTC orders carry over.';
+    $('seGo').textContent='Continue: '+eveOf(nd)+' 6:00 PM session';$('seGo').hidden=false;
+  }else{
+    $('seB').textContent='This is the newest session on file'+(closed?'':', still being recorded')+'. The evening session appears here once it has been recorded.';
+    $('seGo').hidden=true;
+  }
+  banner('');                          // the 4:59 notice would sit on top of this card, which says the same
+  $('sessEnd').hidden=false;
+}
+function hideSessEnd(){$('sessEnd').hidden=true}
 
 /* ====================================================================
  * Series for the chart
@@ -1317,7 +1363,7 @@ function buildSeries(){
 const cv=$('cv'),cx=cv.getContext('2d');
 let CW=0,CH=0,DPR=1,PADR=72;
 const PADB=24;
-const view={barW:9,x1:0,follow:true,yz:1};
+const view={barW:9,x1:0,follow:true,yz:1,ym:null};   // ym: a price range the trader has dragged to; null = auto-fit
 let mouse=null,crossSticky=null,HIT=[],LBL=[],JOBS=[],drag=null,previewOn=false;
 let selId=null,hoverId=null;      // the working order whose attached TP / SL are on show
 const dirty={series:true,chart:true,ui:true,orders:true,trades:true,ladder:true};
@@ -1343,8 +1389,14 @@ function geom(){
   for(let i=i0;i<=i1;i++){if(SER[i][2]>hi)hi=SER[i][2];if(SER[i][3]<lo)lo=SER[i][3]}
   if(!isFinite(hi)){hi=R.price+1;lo=R.price-1}
   if(hi===lo){hi+=1;lo-=1}
+  if(view.ym)return{w,h,right,i0,i1,pHi:view.ym.hi,pLo:view.ym.lo};
   const span=(hi-lo)*1.12*view.yz,mid=(hi+lo)/2;
   return{w,h,right,i0,i1,pHi:mid+span/2,pLo:mid-span/2};
+}
+/* Stretch the price scale: the auto-fit's zoom, or the dragged range about its middle. */
+function yStretch(base,f){
+  if(!view.ym){view.yz=Math.max(.15,Math.min(8,base.yz*f));return}
+  const mid=(base.hi+base.lo)/2,r=Math.max(1e-6,(base.hi-base.lo)*f);view.ym={lo:mid-r/2,hi:mid+r/2};
 }
 const xOf=(g,i)=>g.w-(g.right-i)*view.barW;
 const yOf=(g,p)=>(g.pHi-p)/(g.pHi-g.pLo)*g.h;
@@ -1642,8 +1694,8 @@ cv.addEventListener('pointerdown',e=>{
     if(ref&&ref.k==='line'){if(!ref.o.ro)selId=ref.o.id;drag={kind:'order',o:ref.o,orig:ref.o.price,y0:m.y,moved:false};cv.style.cursor='ns-resize';return}
     if(ref&&ref.k==='brline'){drag={kind:'brleg',o:ref.o,leg:ref.leg,orig:ref.o.br[ref.leg],y0:m.y,moved:false};cv.style.cursor='ns-resize';return}
   }
-  if(m.x>g.w){drag={kind:'axis',y0:m.y,yz0:view.yz};return}
-  drag={kind:'pan',x0:m.x,y0:m.y,right0:g.right,moved:false,t0:performance.now(),touch:e.pointerType!=='mouse'};
+  if(m.x>g.w){drag={kind:'axis',y0:m.y,base:{yz:view.yz,lo:g.pLo,hi:g.pHi}};return}
+  drag={kind:'pan',x0:m.x,y0:m.y,right0:g.right,lo0:g.pLo,hi0:g.pHi,moved:false,t0:performance.now(),touch:e.pointerType!=='mouse'};
   if(e.pointerType!=='mouse'){
     clearTimeout(lpTimer);
     lpTimer=setTimeout(()=>{if(drag&&drag.kind==='pan'&&!drag.moved){const g2=geom();drag=null;crossSticky={x:m.x,y:m.y};openMenu(e.clientX,e.clientY,snap(priceAt(g2,m.y)));dirty.chart=true}},520);
@@ -1664,8 +1716,13 @@ cv.addEventListener('pointermove',e=>{
     const g=geom();
     if(Math.abs(m.y-(drag.y0??m.y))>4||Math.abs(m.x-(drag.x0??m.x))>4)drag.moved=true;
     if(drag.kind==='pan'){
-      if(drag.moved){clearTimeout(lpTimer);view.follow=false;view.x1=drag.right0-(m.x-drag.x0)/view.barW;if(drag.touch)crossSticky=null}
-    }else if(drag.kind==='axis'){view.yz=Math.max(.15,Math.min(8,drag.yz0*Math.exp((m.y-drag.y0)/Math.max(140,g.h)*1.8)))}  // full-height drag ≈ 6x
+      if(drag.moved){clearTimeout(lpTimer);view.follow=false;view.x1=drag.right0-(m.x-drag.x0)/view.barW;if(drag.touch)crossSticky=null;
+        // Up and down moves the prices too, as on TradingView. A clear vertical pull
+        // (not the drift of a sideways swipe) switches off the auto-fit; a
+        // double-click / double-tap or the latest-candle button turns it back on.
+        if(!view.ym&&Math.abs(m.y-drag.y0)>8)view.ym={lo:drag.lo0,hi:drag.hi0};
+        if(view.ym){const dp=(m.y-drag.y0)/g.h*(drag.hi0-drag.lo0);view.ym={lo:drag.lo0+dp,hi:drag.hi0+dp}}}
+    }else if(drag.kind==='axis'){yStretch(drag.base,Math.exp((m.y-drag.y0)/Math.max(140,g.h)*1.8))}  // full-height drag ≈ 6x
     else if(drag.kind==='order'){drag.o.price=snap(priceAt(g,m.y));dirty.orders=dirty.ladder=true}
     else if(drag.kind==='alert'){drag.o.price=snap(priceAt(g,m.y))}
     else if(drag.kind==='pv'||drag.kind==='pvNew'){if(drag.moved)pvDragTo(drag.leg,snap(priceAt(g,m.y)))}
@@ -1718,7 +1775,7 @@ function endPointer(e){
     }else if(drag.kind==='pan'&&!drag.moved&&drag.touch){
       selId=null;selectLvl(null);
       const now=performance.now();
-      if(now-lastTap<300){view.follow=true;view.yz=1;crossSticky=null}
+      if(now-lastTap<300){view.follow=true;view.yz=1;view.ym=null;crossSticky=null}
       else crossSticky=crossSticky?null:{x:m.x,y:m.y};
       lastTap=now;
     }
@@ -1732,12 +1789,12 @@ cv.addEventListener('wheel',e=>{
   const m=pos(e),g=geom(),idx=g.right-(g.w-m.x)/view.barW;
   // Normalised and capped so a mouse notch and a trackpad flick both zoom gently.
   const d=e.deltaY*(e.deltaMode===1?33:e.deltaMode===2?400:1),f=Math.exp(Math.max(-.2,Math.min(.2,d*.0016)));
-  if(m.x>g.w){view.yz=Math.max(.15,Math.min(8,view.yz*f));dirty.chart=true;return}   // on the price scale: stretch prices
+  if(m.x>g.w){yStretch({yz:view.yz,lo:g.pLo,hi:g.pHi},f);dirty.chart=true;return}   // on the price scale: stretch prices
   view.barW=Math.max(2,Math.min(60,view.barW/f));
   if(!view.follow)view.x1=idx+(g.w-m.x)/view.barW;
   dirty.chart=true;
 },{passive:false});
-cv.addEventListener('dblclick',()=>{view.follow=true;view.yz=1;dirty.chart=true});
+cv.addEventListener('dblclick',()=>{view.follow=true;view.yz=1;view.ym=null;dirty.chart=true});
 cv.addEventListener('contextmenu',e=>{
   e.preventDefault();if(!D||!SER.length)return;
   const m=pos(e),g=geom();if(m.x>g.w)return;
@@ -1745,7 +1802,7 @@ cv.addEventListener('contextmenu',e=>{
 });
 $('zIn').onclick=()=>{view.barW=Math.min(60,view.barW*1.25);dirty.chart=true};
 $('zOut').onclick=()=>{view.barW=Math.max(2,view.barW/1.25);dirty.chart=true};
-$('zLive').onclick=()=>{view.follow=true;view.yz=1;crossSticky=null;dirty.chart=true};
+$('zLive').onclick=()=>{view.follow=true;view.yz=1;view.ym=null;crossSticky=null;dirty.chart=true};
 
 /* ---------- order menu (right-click, long-press, or the "+" on the price scale) ---------- */
 function openMenu(cxp,cyp,price){
@@ -1980,7 +2037,7 @@ function renderUI(){
   $('mBr').innerHTML=`<span>TP ${TK.tpOn?TK.tpT+'t':'off'}</span><span>SL ${TK.slOn?TK.slT+'t':'off'}</span>`;
   renderTV();
   const bt=D.bars[Math.min(R.bi,D.bars.length-1)][0]+Math.min(R.si,3)*15;
-  $('clock').innerHTML='<b>'+(R.bi>=D.bars.length?'End · ':'')+hhmm(bt)+' ET</b><small>'+longDate(tradingDate(bt)).replace(/, \d{4}$/,'')+'</small>';
+  $('clock').innerHTML='<b>'+(R.bi>=D.bars.length?'End · ':'')+hhmm(bt)+' ET</b><small>'+calDate(bt)+'</small>';   // the calendar day: 6 PM Thursday reads Thu, though it is Friday's session
   $('hPx').textContent=fx(R.price);
   if(D.pc){const ch=R.price-D.pc,e=$('hChg');e.className='kh-chg '+(ch>=0?'up':'dn');
     e.textContent=(ch>=0?'+':'−')+Math.abs(ch).toFixed(2)+(isPhone()?'':' ('+(ch>=0?'+':'−')+Math.abs(ch/D.pc*100).toFixed(2)+'%)')}
@@ -2073,7 +2130,7 @@ const tfHtml=TFS.map(t=>`<button data-tf="${t[0]}" class="${t[0]===TF?'on':''}">
 $('tfbarM').innerHTML=tfHtml;
 function setTF(tf){
   TF=tf;$$('.tfbar button').forEach(x=>x.classList.toggle('on',+x.dataset.tf===tf));
-  view.follow=true;view.yz=1;crossSticky=null;if(D)ensureCtx(D.sym);dirty.series=dirty.chart=true;
+  view.follow=true;view.yz=1;view.ym=null;crossSticky=null;if(D)ensureCtx(D.sym);dirty.series=dirty.chart=true;
 }
 $$('.tfbar').forEach(bar=>bar.onclick=e=>{const b=e.target.closest('button');if(b)setTF(+b.dataset.tf)});
 $$('.indVwap').forEach(b=>b.onclick=()=>{ind.vwap=!ind.vwap;$$('.indVwap').forEach(x=>x.classList.toggle('on',ind.vwap));dirty.chart=true});
@@ -2146,7 +2203,12 @@ paintSound();
 $('bPlay').onclick=togglePlay;
 $('bStep').onclick=()=>{playing=false;updatePlayBtn();stepOnce()};
 $('bNext').onclick=()=>{playing=false;updatePlayBtn();nextCandle()};
-const reload=()=>{paintSess();return loadSession($('selSym').value,$('selDate').value,$('selStart').value)};
+/** The evening start times belong to the evening before the chosen date: say which. */
+function labelStarts(){
+  const d=$('selDate').value;if(!d)return;const ev=eveOf(d);
+  for(const o of $('selStart').options)if(o.dataset.ev)o.textContent=o.textContent.replace(/^(\d+:\d+ PM)( \w{3})? \(.*$/,'$1 '+ev+' ('+o.dataset.ev+', night before)');
+}
+const reload=()=>{labelStarts();paintSess();return loadSession($('selSym').value,$('selDate').value,$('selStart').value)};
 /* ---------- phone layout: contract / day / start move into a labelled sheet ---------- */
 function paintSess(){
   const sym=$('selSym').value;
@@ -2176,6 +2238,8 @@ $('introGo').onclick=()=>$('introDlg').close();
 $('introRules').onclick=()=>{$('introDlg').close();if(isPhone())openSheet('account');else $('acct').scrollIntoView({behavior:'smooth',block:'start'})};
 for(const d of[$('introDlg'),$('sessDlg')])d.addEventListener('click',e=>{if(e.target===d)d.close()});
 $('bRestart').onclick=reload;
+$('seGo').onclick=continueNext;
+$('seStay').onclick=hideSessEnd;
 $('selSym').onchange=()=>{fillDates();reload()};
 $('selDate').onchange=$('selStart').onchange=reload;
 $('btnRandom').onclick=()=>{const opts=[...$('selDate').options];$('selDate').value=opts[Math.floor(Math.random()*opts.length)].value;reload()};
@@ -2244,7 +2308,7 @@ function frame(ts){
     let n=Math.min(40,Math.floor(accum));accum-=Math.floor(accum);
     FLAG.filled=false;
     while(n-->0){
-      if(!stepOnce()){playing=false;updatePlayBtn();toast('End of recorded data for this session');break}
+      if(!stepOnce()){playing=false;updatePlayBtn();showSessEnd();break}
       if(!playing)break;
       if(FLAG.filled&&$('pauseFill').checked){playing=false;updatePlayBtn();break}
     }
