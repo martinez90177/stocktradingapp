@@ -53,25 +53,21 @@ a{color:var(--mute);text-decoration:none} a:hover{color:var(--text)}
 
 #app{display:flex;flex-direction:column;height:100vh;height:100dvh}
 
-/* ---------- top toolbar ---------- */
-header{display:flex;gap:2px;align-items:center;height:44px;padding:0 8px;border-bottom:1px solid var(--line);background:var(--panel);white-space:nowrap;overflow:hidden}
-header>*{flex:none}
-@media (max-width:1280px){header .brand span.bt{display:none}header .nav a{display:none!important}}
-header .brand{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--strong);padding:0 6px 0 2px;letter-spacing:.1px}
-header .brand i{width:22px;height:22px;border-radius:5px;background:var(--accent);display:grid;place-content:center;color:#fff;font:700 11px var(--font);font-style:normal}
-header .grp{display:flex;gap:2px;align-items:center}
-header select{border-color:transparent;height:32px}
-header select:hover{background-color:var(--hover);border-color:transparent}
-#selSym{font-weight:600;color:var(--strong)}
-header .nav{margin-left:auto;display:flex;gap:2px;align-items:center}
-header .nav a{padding:7px 9px;border-radius:4px;font-size:13px}
-header .nav a:hover{background:var(--hover)}
+/* ---------- header (the kit's .kh) and the toolbar row under it ---------- */
+.kh .grp{display:flex;gap:2px;align-items:center}
+.kh select{border-color:transparent;height:34px;font-size:13px}
+.kh select:hover{background-color:var(--hover);border-color:transparent}
+#selSym{font-weight:600;color:var(--strong);font-size:15px}
+#slotDay .rl{display:none}
+#tfRow{display:flex;gap:1px;align-items:center;height:38px;padding:0 6px;border-bottom:1px solid var(--line);background:var(--panel);
+  overflow-x:auto;scrollbar-width:none;white-space:nowrap}
+#tfRow::-webkit-scrollbar{display:none}
+#tfRow>*{flex:none}
 .tfbar{display:flex;gap:1px}
-.tfbar button{padding:6px 7px;color:var(--text);font-size:13px;min-width:30px}
+.tfbar button{padding:6px 9px;color:var(--text);font-size:13px;min-width:30px}
 .tfbar button.on{color:var(--accent);background:transparent}
 .tfbar button.on:hover{background:var(--hover)}
 .indVwap,.indEma{font-size:13px}
-
 main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 332px;min-height:0}
 #chartCol{display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid var(--line)}
 #chartWrap{position:relative;flex:1;min-height:200px}
@@ -115,14 +111,6 @@ main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 332px;min-height:0}
 #menu button{display:flex;justify-content:flex-start;width:100%;text-align:left;border-radius:0;padding:8px 14px}
 #menu .hd{padding:6px 14px 6px;color:var(--mute);font-size:12px;border-bottom:1px solid var(--line);margin-bottom:4px}
 #menu .b{color:#5b8cff}#menu .s{color:var(--dnT)}
-
-/* ---------- replay bar ---------- */
-#playbar{display:flex;gap:2px;align-items:center;height:40px;padding:0 8px;border-top:1px solid var(--line);background:var(--panel)}
-#playbar select{height:30px;border-color:transparent}
-#playbar select:hover{background-color:var(--hover)}
-#playbar .clock{margin-left:auto;white-space:nowrap;color:var(--text);font-size:13px}
-#playbar label{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:12px;padding:0 6px;cursor:pointer}
-#bPlay{min-width:84px;justify-content:flex-start}
 
 /* ---------- right panel ---------- */
 aside{display:flex;flex-direction:column;min-height:0;overflow:auto;background:var(--panel);scrollbar-width:thin;scrollbar-color:#363a45 transparent}
@@ -299,6 +287,9 @@ dialog .btns button.on:hover{background:var(--accentH)}
 #mdl .btns{justify-content:center;flex-wrap:wrap}
 #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mute);text-align:center;padding:20px;line-height:1.5;background:var(--bg);z-index:4}
 #sheetBg{display:none}
+#slotDay .rl{display:none}
+
+#slotPauseM label{display:flex;gap:8px;align-items:center;padding:8px 2px;color:var(--text)}
 
 /* ===================== PHONE / NARROW ===================== */
 @media (max-width:900px){
@@ -306,41 +297,16 @@ dialog .btns button.on:hover{background:var(--accentH)}
   .mobile{display:flex}
   html,body{font-size:14px}
   input,select{font-size:16px}            /* stops iOS zooming into a focused field */
-  header{overflow-x:auto;scrollbar-width:none;height:46px;padding:0 6px}
-  header::-webkit-scrollbar{display:none}
-  header>*{flex:none}
-  header .nav{display:none}
-  #tfRow{display:flex;overflow-x:auto;scrollbar-width:none;gap:1px;padding:0 6px;height:38px;border-bottom:1px solid var(--line);background:var(--panel);align-items:center}
-  #tfRow::-webkit-scrollbar{display:none}
-  #tfRow>*{flex:none}
+  .mAcctBtns{gap:6px;margin-top:14px;flex-wrap:wrap}
+  .mAcctBtns button{flex:1 1 auto;padding:9px 10px}
+  #slotPauseM{flex:1 1 100%}
+  #slotPauseM label{display:flex;gap:8px;align-items:center;padding:8px 2px;color:var(--text)}
   .tfbar button{padding:7px 9px}
-  #mStrip{gap:14px;align-items:center;padding:6px 12px;font-size:12px;border-bottom:1px solid var(--line);background:var(--panel);white-space:nowrap;overflow-x:auto;scrollbar-width:none;color:var(--mute)}
-  #mStrip::-webkit-scrollbar{display:none}
-  #mStrip b{font-weight:500;color:var(--strong)}
-  #mStrip .chip{margin-left:auto}
   main{display:flex;flex-direction:column}
   #chartCol{flex:1;border-right:0}
   #legend{font-size:12px;left:8px;top:6px}
   #zoomBtns{right:60px;bottom:30px}
   #zoomBtns button{padding:6px 11px}
-  #playbar{overflow-x:auto;scrollbar-width:none;height:42px;padding:0 4px}
-  #playbar::-webkit-scrollbar{display:none}
-  #playbar>*{flex:none}
-  #playbar .clock{font-size:12px;padding-right:6px}
-  #bPlay{min-width:0}
-  #mPos{display:none;align-items:center;gap:10px;padding:7px 12px;border-top:1px solid var(--line);background:var(--panel2);font-size:13px;white-space:nowrap;overflow-x:auto}
-  #mPos.show{display:flex}
-  #mPos button{padding:4px 9px;border:1px solid var(--line2);font-size:12px}
-  #mPos .exit{margin-left:auto;background:var(--tvSell);border-color:var(--tvSell);color:#fff;font-weight:600}
-  #mTrade{gap:6px;padding:8px;border-top:1px solid var(--line);background:var(--panel);align-items:stretch}
-  #mTrade .stepper{flex:0 0 112px;height:auto}
-  #mTrade .stepper button{height:auto;font-size:18px;padding:0 11px}
-  #mTrade .stepper input{height:auto}
-  #mTrade .tvb{flex:1;padding:6px 4px}
-  #mTrade .brq{flex:0 0 auto;padding:4px 8px;font-size:11px;line-height:1.35;text-align:left;color:var(--mute);border:1px solid var(--line2);flex-direction:column;align-items:flex-start;gap:0}
-  #mNav{border-top:1px solid var(--line);background:var(--panel);padding-bottom:var(--safeB)}
-  #mNav button{flex:1;border-radius:0;color:var(--mute);padding:10px 2px 9px;font-size:12px}
-  #mNav button.on{color:var(--strong);box-shadow:inset 0 2px 0 var(--accent);background:transparent}
   /* the side panel becomes a bottom sheet */
   aside{position:fixed;left:0;right:0;bottom:0;max-height:78dvh;z-index:40;border-top:1px solid var(--line);border-radius:10px 10px 0 0;background:var(--raise);
         transform:translateY(105%);transition:transform .22s ease;box-shadow:0 -10px 40px #000a;padding-bottom:var(--safeB)}
@@ -360,20 +326,13 @@ dialog .btns button.on:hover{background:var(--accentH)}
   #ladder{max-height:none}
   .tvb{padding:9px 6px 8px}
   dialog .grid{grid-template-columns:1fr}
-  #toast{left:12px;right:12px;max-width:none;bottom:calc(150px + var(--safeB))}
+  #toast{left:12px;right:12px;max-width:none;bottom:calc(190px + var(--safeB))}
 }
 @media (max-width:900px){#chartWrap{min-height:120px}}
 /* phone on its side: give the chart every pixel the controls can spare */
 @media (max-width:900px) and (orientation:landscape) and (max-height:520px){
-  #mStrip,#tfRow{display:none!important}
-  header #tfbar{display:flex!important}
-  header{height:38px}
-  #playbar{height:34px}
-  #mTrade{padding:4px 8px}
-  #mTrade .tvb{padding:3px 4px}
-  #mTrade .tvb span{display:none}
-  #mNav button{padding:5px 2px 4px;font-size:11px}
-  #mPos{padding:4px 12px}
+  #mStrip{display:none!important}
+  .kh{min-height:40px}
   #legend{display:none}
   aside{max-height:88dvh}
 }
@@ -395,57 +354,44 @@ dialog .btns button.on:hover{background:var(--accentH)}
   <symbol id="i-gear" viewBox="0 0 18 18"><path d="M3 5h7M13 5h2M3 13h2M8 13h7M3 9h3M9 9h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="11.5" cy="5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="6.5" cy="13" r="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="7.5" cy="9" r="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
   <symbol id="i-hline" viewBox="0 0 18 18"><path d="M1.5 9h15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="9" cy="9" r="2.2" fill="var(--bg)" stroke="currentColor" stroke-width="1.4"/></symbol>
   <symbol id="i-trash" viewBox="0 0 18 18"><path d="M3.5 5h11M7 5V3.5h4V5M5 5l.8 9.5h6.4L13 5M7.6 7.5v4.5M10.4 7.5v4.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-help" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M7 7.1a2 2 0 1 1 2.6 1.9c-.4.2-.6.5-.6.9v.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="9" cy="12.6" r=".9" fill="currentColor"/></symbol>
+  <symbol id="i-caret" viewBox="0 0 18 18"><path d="M5 7l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-latest" viewBox="0 0 18 18"><path d="M4 4.5 8.5 9 4 13.5M9 4.5 13.5 9 9 13.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 <div id="app">
-<header>
-  <span class="brand desk"><i>FP</i><span class="bt">Futures Practice</span></span>
-  <span class="vsep desk"></span>
-  <div class="grp">
+<!--SITE:NAV-->
+<div class="kh" id="hdr">
+  <button class="kh-inst" id="mSess" title="Choose the contract, day and start time"></button>
+  <div class="grp kh-desk" id="slotSym">
     <select id="selSym" title="Contract"><option>MNQ</option></select>
   </div>
-  <span class="vsep desk"></span>
-  <div class="tfbar desk" id="tfbar"></div>
-  <span class="vsep desk"></span>
-  <div class="grp desk">
-    <button class="indVwap on" title="Session VWAP">VWAP</button>
-    <button class="indEma" title="EMA 9 and 21">EMA</button>
-    <button class="lvlBtn" title="Horizontal line (Alt+H): click the chart to place it"><svg class="i"><use href="#i-hline"/></svg></button>
-  </div>
-  <span class="vsep desk"></span>
-  <div class="grp">
+  <div class="grp kh-desk" id="slotDay">
     <select id="selDate" title="Session to replay"></select>
-    <button id="btnRandom" title="Pick a random recorded day"><svg class="i"><use href="#i-shuffle"/></svg></button>
+    <button id="btnRandom" title="Pick a random recorded day"><svg class="i"><use href="#i-shuffle"/></svg><span class="rl">Surprise me: random day</span></button>
     <select id="selStart" title="Where in the day the replay starts (New York time)">
-      <option value="18:00">6:00 PM open</option>
-      <option value="03:00">3:00 AM London</option>
-      <option value="08:30">8:30 AM</option>
-      <option value="09:30" selected>9:30 AM NY open</option>
-      <option value="13:00">1:00 PM</option>
+      <option value="18:00">6:00 PM (Globex open)</option>
+      <option value="03:00">3:00 AM (London)</option>
+      <option value="08:30">8:30 AM (pre-market)</option>
+      <option value="09:30" selected>9:30 AM (NY open)</option>
+      <option value="13:00">1:00 PM (afternoon)</option>
     </select>
   </div>
-  <div class="nav">
-    <button class="sndBtn" title="Spoken &quot;Order filled&quot; on every fill"><svg class="i"><use href="#i-sound"/></svg></button>
-    <button class="setBtn" title="Account rules and costs"><svg class="i"><use href="#i-gear"/></svg><span class="desk">Rules</span></button>
-    <span class="vsep desk"></span>
-    <a href="index.html" class="desk">Report</a><a href="practice.html" class="desk">Stock practice</a><a href="journal.html" class="desk">Journal</a>
-  </div>
-  <div class="grp mobile">
-    <button class="sndBtn" title="Spoken &quot;Order filled&quot; on every fill"><svg class="i"><use href="#i-sound"/></svg></button>
-    <button class="setBtn" title="Account rules and costs"><svg class="i"><use href="#i-gear"/></svg></button>
-  </div>
-</header>
-<div id="tfRow" class="mobile">
+  <span class="kh-px" id="hPx"></span><span class="kh-chg" id="hChg"></span>
+  <div class="kh-clk" id="clock"></div>
+  <button class="kh-ib wide helpBtn" title="How this page works"><svg class="i"><use href="#i-help"/></svg><span>How it works</span></button>
+  <button class="kh-ib sndBtn kh-desk" title="Spoken &quot;Order filled&quot; on every fill"><svg class="i"><use href="#i-sound"/></svg></button>
+  <button class="kh-ib wide setBtn" title="Account rules and costs"><svg class="i"><use href="#i-gear"/></svg><span>Rules</span></button>
+</div>
+<div class="ka" id="mStrip">
+  <span>Balance <b id="msBal"></b></span><span>Open P&amp;L <b id="msOpen"></b></span><span>Drawdown left <b id="msCush"></b></span><span id="msDayW">Day left <b id="msDay"></b></span><span id="msTgtW">Target <b id="msTgt"></b></span><span id="msChip" class="ka-chip ka-end">ACTIVE</span>
+</div>
+<div id="tfRow">
   <button class="lvlBtn ind" title="Horizontal line: tap the chart to place it" aria-label="Horizontal line"><svg class="i"><use href="#i-hline"/></svg></button>
   <span class="vsep"></span>
   <div class="tfbar" id="tfbarM"></div>
   <span class="vsep"></span>
   <button class="indVwap ind on">VWAP</button><button class="indEma ind">EMA</button>
 </div>
-<div id="mStrip" class="mobile">
-  <span>Balance <b id="msBal"></b></span><span>Open <b id="msOpen"></b></span><span>DD left <b id="msCush"></b></span><span id="msDayW">Day left <b id="msDay"></b></span><span id="msChip" class="chip active">ACTIVE</span>
-</div>
-
 <main>
   <div id="chartCol">
     <div id="chartWrap">
@@ -466,19 +412,18 @@ dialog .btns button.on:hover{background:var(--accentH)}
       </div>
       <div id="lvPal" hidden></div>
     </div>
-    <div id="playbar">
-      <button id="bRestart" title="Restart this session from the start time"><svg class="i"><use href="#i-restart"/></svg></button>
-      <button id="bPlay" title="Play / pause (space)"></button>
-      <button id="bStep" title="One price step (→)"><svg class="i"><use href="#i-step"/></svg></button>
-      <button id="bNext" title="Run until the current candle closes (Shift+→)"><svg class="i"><use href="#i-next"/></svg><span class="desk">Next bar</span></button>
-      <span class="vsep"></span>
-      <select id="selSpeed" title="Replay speed: minutes of market time per real minute">
+    <div id="playbar" class="rb">
+      <button id="bRestart" class="rb-ic" title="Restart this session from the start time"><svg class="i"><use href="#i-restart"/></svg></button>
+      <button id="bPlay" class="rb-play" title="Play / pause (space)"></button>
+      <button id="bNext" class="rb-next" title="Run until the current candle closes (Shift+→)"><svg class="i"><use href="#i-next"/></svg><span>Next bar</span></button>
+      <button id="bStep" class="rb-ic rb-desk" title="One price step (→)"><svg class="i"><use href="#i-step"/></svg></button>
+      <select id="selSpeed" class="rb-speed" title="Replay speed: minutes of market time per real minute">
         <option value="1">1×</option><option value="5">5×</option><option value="15" selected>15×</option>
         <option value="30">30×</option><option value="60">60×</option><option value="150">150×</option>
         <option value="300">300×</option><option value="900">900×</option>
       </select>
-      <label><input type="checkbox" id="pauseFill"> Pause on fill</label>
-      <span class="clock" id="clock"></span>
+      <span class="rb-sep rb-desk"></span>
+      <span id="slotPause" class="rb-desk"><label id="lblPause" class="rb-opt"><input type="checkbox" id="pauseFill"> Pause on fill</label></span>
     </div>
   </div>
 
@@ -576,7 +521,7 @@ dialog .btns button.on:hover{background:var(--accentH)}
         <div class="rule"><div class="rh"><span>Flat by 4:59 PM ET</span><span id="rFlat"></span></div></div>
       </div>
       <div id="attemptLine"></div>
-      <div class="mobile" style="gap:6px;margin-top:12px;flex-wrap:wrap"><button class="setBtn btn-o"><svg class="i"><use href="#i-gear"/></svg>Rules</button><a href="index.html" style="padding:7px">Report</a><a href="practice.html" style="padding:7px">Stock practice</a><a href="journal.html" style="padding:7px">Journal</a></div>
+      <div class="mobile mAcctBtns"><button class="setBtn btn-o"><svg class="i"><use href="#i-gear"/></svg>Edit rules</button><button class="sndBtn btn-o"><svg class="i"><use href="#i-sound"/></svg>Fill sound</button><button class="helpBtn btn-o"><svg class="i"><use href="#i-help"/></svg>How it works</button><span id="slotPauseM"></span></div>
     </div>
 
     <div class="card" data-sec="orders"><h4>Working orders</h4><div id="ordBox" class="mute">None</div></div>
@@ -592,20 +537,41 @@ dialog .btns button.on:hover{background:var(--accentH)}
   </aside>
 </main>
 
-<div id="mPos" class="mobile"></div>
-<div id="mTrade" class="mobile">
-  <div class="stepper"><button class="qMinus">−</button><input class="qtyIn" type="number" min="1" step="1" value="1" inputmode="numeric"><button class="qPlus">+</button></div>
-  <button class="tvb sell" data-side="-1"><small class="pxSell"></small><span class="lblSell">Sell Mkt</span></button>
-  <button class="tvb buy" data-side="1"><small class="pxBuy"></small><span class="lblBuy">Buy Mkt</span></button>
-  <button class="brq" id="mBr" title="TP / SL settings"></button>
+<div id="mPos" class="qp"></div>
+<div id="mTrade" class="qb">
+  <div class="qb-q"><button class="qMinus" aria-label="One fewer contract">−</button><input class="qtyIn" type="number" min="1" step="1" value="1" inputmode="numeric" aria-label="Contracts"><button class="qPlus" aria-label="One more contract">+</button></div>
+  <button class="qb-go sell tvb" data-side="-1"><small class="pxSell"></small><span class="lblSell">Sell Mkt</span></button>
+  <button class="qb-go buy tvb" data-side="1"><small class="pxBuy"></small><span class="lblBuy">Buy Mkt</span></button>
+  <button class="qb-x" id="mBr" title="Take-profit and stop-loss settings"></button>
 </div>
-<nav id="mNav" class="mobile">
-  <button data-sec="order">Order</button><button data-sec="ladder">DOM</button><button data-sec="orders">Orders</button><button data-sec="trades">Trades</button><button data-sec="account">Account</button>
+<nav id="mNav" class="mobile bt">
+  <button data-sec="order"><svg class="i" viewBox="0 0 18 18"><rect x="3" y="2.5" width="12" height="13" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6 6.5h6M6 9.5h6M6 12.5h3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Trade</button><button data-sec="ladder"><svg class="i" viewBox="0 0 18 18"><path d="M3 4h12M3 7.3h12M3 10.6h12M3 14h12M9 2.5v13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>DOM</button><button data-sec="orders"><svg class="i" viewBox="0 0 18 18"><circle cx="9" cy="9" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M9 5.5V9l2.5 1.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Orders</button><button data-sec="trades"><svg class="i" viewBox="0 0 18 18"><path d="M3 4.5h12M3 9h12M3 13.5h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>History</button><button data-sec="account"><svg class="i" viewBox="0 0 18 18"><circle cx="9" cy="6.5" r="3" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M3.5 15.5c.8-2.8 3-4.2 5.5-4.2s4.7 1.4 5.5 4.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Account</button>
 </nav>
 </div>
 <div id="sheetBg"></div>
 <div id="menu"></div>
 <div id="toast"></div>
+
+<dialog id="sessDlg" class="kd">
+  <h3>What to replay</h3>
+  <p class="kd-note">Pick a contract and a real recorded day. The replay starts at the time you choose and plays forward candle by candle.</p>
+  <label class="kd-f">Contract<span class="kd-col" id="slotSymM"></span></label>
+  <p class="kd-note" id="sessSymNote" style="margin:6px 0 0"></p>
+  <div class="kd-f">Day and start time<span class="kd-col" id="slotDayM"></span></div>
+  <div class="kd-btns"><button class="pri" id="sessDone">Done</button></div>
+</dialog>
+
+<dialog id="introDlg" class="kd">
+  <h3>How futures practice works</h3>
+  <p class="kd-note">A real trading day, replayed. Nothing is live and no money is involved.</p>
+  <ol>
+    <li><b>Pick a contract and a day.</b> <span id="introPick"></span> MNQ is the small one: each tick is $0.50. NQ is ten times that.</li>
+    <li><b>Press <span class="k blue">&#9654; Play</span>.</b> The recorded day replays from your start time. <b>Next bar</b> beside it moves one candle at a time instead.</li>
+    <li><b>Tap <span class="k red">Sell</span> or <span class="k blue">Buy</span>.</b> A take-profit and a stop-loss are attached for you; drag their lines on the chart to move them.</li>
+    <li><b>Stay inside the account rules.</b> It's scored like a funded-account evaluation: reach the profit target without losing more than the trailing drawdown.</li>
+  </ol>
+  <div class="kd-btns"><button id="introRules">See the rules</button><button class="pri" id="introGo">Start practicing</button></div>
+</dialog>
 
 <dialog id="mdl"><div class="ic" id="mdlIc"></div><h3 id="mdlT"></h3><div class="note" id="mdlB"></div><div class="btns" id="mdlBtns"></div></dialog>
 
@@ -865,7 +831,7 @@ async function loadSession(sym,date,startKey){
   }
   if(startIdx<0)startIdx=firstOfDay;
   const symChanged=!D||D.sym!==sym;
-  D={sym,date,bars,startIdx};
+  D={sym,date,bars,startIdx,pc:firstOfDay>0?bars[firstOfDay-1][4]:null};   // pc: the prior session's close, for the change
   histCache={};
   R={bi:startIdx,si:0,path:null,price:startIdx>0?bars[startIdx-1][4]:bars[startIdx][1]};
   P={q:0,avg:0,lots:[]};ORD=[];RT=null;LOCK={day:false,session:false};
@@ -1295,7 +1261,7 @@ function removeProtect(tag){ORD=ORD.filter(o=>!(o.ro&&o.tag===tag));dirty.orders
  * ==================================================================== */
 let playing=false,lastTs=0,accum=0;
 const stepsPerSec=()=>parseFloat($('selSpeed').value)*4/60;
-function updatePlayBtn(){$('bPlay').innerHTML=playing?'<svg class="i"><use href="#i-pause"/></svg><span>Pause</span>':'<svg class="i"><use href="#i-play"/></svg><span>Play</span>'}
+function updatePlayBtn(){$('bPlay').innerHTML=playing?'<svg class="i"><use href="#i-pause"/></svg><span>Pause</span>':'<svg class="i"><use href="#i-play"/></svg><span>Play</span>';$('bPlay').classList.toggle('on',playing)}
 function togglePlay(){
   if(!D)return;
   if(!playing&&R.bi>=D.bars.length){toast('End of recorded data');return}
@@ -1981,7 +1947,9 @@ function renderUI(){
   $('msDayW').style.display=SET.daily>0?'':'none';
   if(dayLeft!=null){$('msDay').textContent=DAY.hit?'reached':usd(dayLeft);$('msDay').style.color=colFor(dayLeft/SET.daily)}
   const st=ACC.status==='breached'?'breached':ACC.passed?'passed':'active';
-  for(const c of[$('stChip'),$('msChip')]){c.className='chip '+st;c.textContent=st==='breached'?'FAILED':st==='passed'?'TARGET HIT':'ACTIVE'}
+  for(const c of[$('stChip'),$('msChip')])c.textContent=st==='breached'?'FAILED':st==='passed'?'TARGET HIT':'ACTIVE';
+  $('stChip').className='chip '+st;$('msChip').className='ka-chip ka-end'+(st==='breached'?' bad':st==='passed'?' good':'');
+  $('msTgt').textContent=usd(ACC.balance-SET.start,true)+' / '+usd(tgt);
   // phone strip
   $('msBal').textContent=usd(ACC.balance);
   $('msOpen').textContent=usd(op,true);$('msOpen').className=op>0?'up':op<0?'dn':'';
@@ -2009,10 +1977,13 @@ function renderUI(){
   const tv=tickVal(),q=TK.qty;
   $('riskLine').textContent=(TK.slOn?`Risk ${usd(TK.slT*tv*q)}`:'No stop')+(TK.tpOn?` · reward ${usd(TK.tpT*tv*q)}`:'')+(TK.slOn&&TK.tpOn?` · ${(TK.tpT/TK.slT).toFixed(2)}R`:'')+` · ${(TK.slT*tk).toFixed(2)} / ${(TK.tpT*tk).toFixed(2)} pts`;
   $('tickInfo').innerHTML=`Tick 0.25 = ${usd(tv)}<br>Point = ${usd(I().pv)}`;
-  $('mBr').innerHTML=`TP ${TK.tpOn?TK.tpT+'t':'off'}<br>SL ${TK.slOn?TK.slT+'t':'off'}`;
+  $('mBr').innerHTML=`<span>TP ${TK.tpOn?TK.tpT+'t':'off'}</span><span>SL ${TK.slOn?TK.slT+'t':'off'}</span>`;
   renderTV();
   const bt=D.bars[Math.min(R.bi,D.bars.length-1)][0]+Math.min(R.si,3)*15;
-  $('clock').textContent=(R.bi>=D.bars.length?'End · ':'')+(isPhone()?'':longDate(tradingDate(bt)).replace(/, \d{4}$/,'')+' · ')+hhmm(bt)+' ET';
+  $('clock').innerHTML='<b>'+(R.bi>=D.bars.length?'End · ':'')+hhmm(bt)+' ET</b><small>'+longDate(tradingDate(bt)).replace(/, \d{4}$/,'')+'</small>';
+  $('hPx').textContent=fx(R.price);
+  if(D.pc){const ch=R.price-D.pc,e=$('hChg');e.className='kh-chg '+(ch>=0?'up':'dn');
+    e.textContent=(ch>=0?'+':'−')+Math.abs(ch).toFixed(2)+(isPhone()?'':' ('+(ch>=0?'+':'−')+Math.abs(ch/D.pc*100).toFixed(2)+'%)')}
   const off=!!blockReason();
   $$('.tvb').forEach(b=>b.disabled=off);$('bRev').disabled=off||!P.q;
   // phone position strip
@@ -2020,7 +1991,7 @@ function renderUI(){
   if(P.q){
     mp.classList.add('show');
     mp.innerHTML=`<b class="${P.q>0?'up':'dn'}">${P.q>0?'LONG':'SHORT'} ${Math.abs(P.q)}</b><span>@ ${fx(P.avg)}</span><b class="${op>=0?'up':'dn'}">${usd(op,true)}</b>`+
-      `<button data-sheet="order" class="${tp?'up':''}">TP ${tp?fx(tp.price):'+'}</button><button data-sheet="order" class="${sl?'dn':''}">SL ${sl?fx(sl.price):'+'}</button><button class="exit" data-exit="1">Exit</button>`;
+      `<button data-sheet="order" class="${tp?'up':''}">TP ${tp?fx(tp.price):'+'}</button><button data-sheet="order" class="${sl?'dn':''}">SL ${sl?fx(sl.price):'+'}</button><button class="qp-x" data-exit="1">Close</button>`;
   }else mp.classList.remove('show');
 }
 $('posBox').addEventListener('click',e=>{
@@ -2077,7 +2048,7 @@ $('ladder').addEventListener('pointerdown',e=>{
 $('lCenter').onclick=()=>{ladder.center=null;dirty.ladder=true};
 
 /* ---------- side panel: tabs on desktop, bottom sheet on phones ---------- */
-const SHEET_TITLES={order:'Order',ladder:'Price ladder',orders:'Working orders',trades:'Trades',account:'Account'};
+const SHEET_TITLES={order:'Order ticket',ladder:'DOM · price ladder',orders:'Working orders',trades:'Trade history',account:'Account & rules'};
 function openSheet(sec){
   const s=$('side');s.dataset.sec=sec;s.classList.add('open');$('sheetBg').classList.add('show');
   $('sheetTitle').textContent=SHEET_TITLES[sec]||'';
@@ -2099,7 +2070,7 @@ $('tabL').onclick=()=>{$('tabL').classList.add('on');$('tabT').classList.remove(
 
 /* ---------- controls ---------- */
 const tfHtml=TFS.map(t=>`<button data-tf="${t[0]}" class="${t[0]===TF?'on':''}">${t[1]}</button>`).join('');
-$('tfbar').innerHTML=tfHtml;$('tfbarM').innerHTML=tfHtml;
+$('tfbarM').innerHTML=tfHtml;
 function setTF(tf){
   TF=tf;$$('.tfbar button').forEach(x=>x.classList.toggle('on',+x.dataset.tf===tf));
   view.follow=true;view.yz=1;crossSticky=null;if(D)ensureCtx(D.sym);dirty.series=dirty.chart=true;
@@ -2163,7 +2134,7 @@ $('lvDel').onclick=deleteLvl;
 $$('.lvlBtn').forEach(b=>b.onclick=()=>setPlaceLvl(!placeLvl));
 document.addEventListener('pointerdown',e=>{const p=$('lvPal');if(!p.hidden&&!p.contains(e.target)&&!$('lvColor').contains(e.target))p.hidden=true});
 document.addEventListener('keydown',e=>{
-  if(/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)||$('dlg').open)return;
+  if(/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)||document.querySelector('dialog[open]'))return;
   if(e.altKey&&e.key.toLowerCase()==='h'&&D){e.preventDefault();
     const g=geom(),y=mouse&&mouse.x<g.w?mouse.y:yOf(g,R.price);addLvl(snap(priceAt(g,y)));return}
   if(selLvl&&(e.key==='Delete'||e.key==='Backspace')){e.preventDefault();deleteLvl();return}
@@ -2175,7 +2146,35 @@ paintSound();
 $('bPlay').onclick=togglePlay;
 $('bStep').onclick=()=>{playing=false;updatePlayBtn();stepOnce()};
 $('bNext').onclick=()=>{playing=false;updatePlayBtn();nextCandle()};
-const reload=()=>loadSession($('selSym').value,$('selDate').value,$('selStart').value);
+const reload=()=>{paintSess();return loadSession($('selSym').value,$('selDate').value,$('selStart').value)};
+/* ---------- phone layout: contract / day / start move into a labelled sheet ---------- */
+function paintSess(){
+  const sym=$('selSym').value;
+  $('mSess').innerHTML=`${sym||''}<svg class="i"><use href="#i-caret"/></svg>`;
+  const ins=INSTR[sym];
+  $('sessSymNote').textContent=ins?`${ins.name}: $${ins.tv.toFixed(2)} per tick, $${ins.pv} per point.`+(ins.mini?' Ten times the micro.':' The small one: start here.'):'';
+}
+function placeControls(){
+  const ph=isPhone();
+  const mv=(ids,to)=>{const t=$(to);for(const id of ids){const e=$(id);if(e&&e.parentNode!==t)t.appendChild(e)}};
+  if(ph){mv(['selSym'],'slotSymM');mv(['selDate','selStart','btnRandom'],'slotDayM');mv(['lblPause'],'slotPauseM')}
+  else{if($('sessDlg').open)$('sessDlg').close();mv(['selSym'],'slotSym');mv(['selDate','btnRandom','selStart'],'slotDay');mv(['lblPause'],'slotPause')}
+}
+matchMedia('(max-width:900px)').addEventListener('change',placeControls);
+placeControls();
+$('mSess').onclick=()=>$('sessDlg').showModal();
+$('sessDone').onclick=()=>$('sessDlg').close();
+/* ---------- quick-start guide: once on the first visit, then behind "How it works" ---------- */
+function showIntro(){
+  if($('side').classList.contains('open'))closeSheet();
+  $('introPick').textContent=isPhone()?'Tap the contract name at the top left to change it.':'Use the contract and date menus at the top left.';
+  $('introDlg').showModal();
+}
+$$('.helpBtn').forEach(b=>b.onclick=showIntro);
+$('introDlg').addEventListener('close',()=>store.set('ppfut.intro',1));
+$('introGo').onclick=()=>$('introDlg').close();
+$('introRules').onclick=()=>{$('introDlg').close();if(isPhone())openSheet('account');else $('acct').scrollIntoView({behavior:'smooth',block:'start'})};
+for(const d of[$('introDlg'),$('sessDlg')])d.addEventListener('click',e=>{if(e.target===d)d.close()});
 $('bRestart').onclick=reload;
 $('selSym').onchange=()=>{fillDates();reload()};
 $('selDate').onchange=$('selStart').onchange=reload;
@@ -2222,7 +2221,7 @@ $('dSave').onclick=()=>{
   }else{dirtyAll();toast('Rules saved')}
 };
 document.addEventListener('keydown',e=>{
-  if(/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)||e.ctrlKey||e.metaKey||e.altKey||$('dlg').open)return;
+  if(/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)||e.ctrlKey||e.metaKey||e.altKey||document.querySelector('dialog[open]'))return;
   const k=e.key.toLowerCase();
   if(k===' '){e.preventDefault();togglePlay()}
   else if(k==='arrowright'){e.preventDefault();playing=false;updatePlayBtn();e.shiftKey?nextCandle():stepOnce()}
@@ -2269,6 +2268,7 @@ function frame(ts){
   if(!$('selDate').options.length){$('loading').textContent='No practice-ready days recorded yet. Run node tools/record-futures.mjs.';return}
   await reload();
   renderTrades();
+  if(!store.get('ppfut.intro',0))showIntro();
   requestAnimationFrame(frame);
   // test hook: lets the page be driven from the browser console
   window.__fut={get lvls(){return curLvls()},get selLvl(){return selLvl},get state(){return{D,R,P,ORD,ACC,SET,TF,TK,PAL,HIST,LOCK,ALERT,DAY}},addAlert:p=>{PAL.push({id:'t'+Math.random(),price:p});dirty.chart=true},resetAccount,stepOnce,submit,flattenNow,nextCandle,loadSession,setProtect,removeProtect,openSheet,closeSheet,sayFilled,get SER(){return SER},get HIT(){return HIT}};

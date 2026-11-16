@@ -1,4 +1,5 @@
 
+import { siteNav } from "./sitenav.ts";
 import {
   MISTAKES, byDay, computeStats, groupStats, isClosed, rMultiple, riskOf,
   type Journal, type Stats, type Trade,
@@ -321,14 +322,13 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
 body{-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 </style>
 </head><body>
-
+${siteNav("journal", { prep: reportHref })}
 <header class="top"><div class="wrap">
   <div class="brand">
     <div>
       <h1>Journal</h1>
       <p>${real.length} real ${real.length === 1 ? "trade" : "trades"}${openTrades ? ` &middot; ${openTrades} still open` : ""}${practice.length ? ` &middot; ${practice.length} from practice` : ""}</p>
     </div>
-    <span style="display:flex;gap:8px;flex-wrap:wrap"><a class="back" href="futures.html">Futures practice</a><a class="back" href="${esc(reportHref)}">&larr; Back to the report</a></span>
   </div>
 </div></header>
 

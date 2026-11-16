@@ -16,6 +16,8 @@ import { loadVolForEmbed, loadCalibrations, loadEvents, loadIntraday, loadChainF
 import { loadJournal } from "./src/journal.ts";
 import { loadRules } from "./src/rules.ts";
 import { renderJournal } from "./src/journalpage.ts";
+import { injectSiteNav } from "./src/sitenav.ts";
+import { injectTradeKit } from "./src/tradekit.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPORTS = join(HERE, "reports");
@@ -32,7 +34,15 @@ await mkdir(SITE, { recursive: true });
 
 // The report lands at index.html, so the practice page links back to that name
 // rather than to latest.html.
-await writeFile(join(SITE, "index.html"), report, "utf8");
+// A report built before the shared nav bar existed gets it here; a newer one
+// already carries it and is left as it is.
+// Its old row of page links goes too: the bar replaces them.
+const withNav = injectSiteNav(
+  report.replace(/<a class="practicebtn[^"]*" href="(?:journal|practice|futures)\.html">[^<]*<\/a>\s*/g, ""),
+  "prep",
+  { prep: "#top" },
+);
+await writeFile(join(SITE, "index.html"), withNav, "utf8");
 const sessions = await loadForEmbed(join(HERE, "sessions"), 22);   // 12 to trade, the rest behind them as history
 await writeFile(
   join(SITE, "practice.html"),
@@ -62,7 +72,7 @@ console.log(opts.days
 
 // Futures practice (NQ / MNQ / ES / MES). The page is static; the recorded bars it replays are
 // copied beside it, so it works on GitHub Pages the same as locally.
-await writeFile(join(SITE, "futures.html"), await readFile(join(HERE, "src", "vendor", "futures-app.html"), "utf8"), "utf8");
+await writeFile(join(SITE, "futures.html"), injectSiteNav(injectTradeKit(await readFile(join(HERE, "src", "vendor", "futures-app.html"), "utf8")), "futures"), "utf8");
 const futuresDir = join(HERE, "futures");
 const hasFutures = await readFile(join(futuresDir, "manifest.json"), "utf8").then(() => true, () => false);
 if (hasFutures) {

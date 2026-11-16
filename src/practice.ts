@@ -1,3 +1,5 @@
+import { siteNav } from "./sitenav.ts";
+import { TRADE_KIT_CSS } from "./tradekit.ts";
 import { readFile, writeFile, mkdir, readdir, copyFile } from "node:fs/promises";
 import { join } from "node:path";
 import { loadForEmbed } from "./replay.ts";
@@ -28,12 +30,7 @@ import type { ReplaySession, ExtBar } from "./replay.ts";
 
 const SKIN = `
 
-/* ---- masthead: one slim row above the terminal, desktop only ------- */
-.mp-head{display:flex;align-items:center;gap:14px;height:46px;padding:0 14px;border-bottom:1px solid var(--line);
-  background:var(--bg);flex:0 0 auto;position:relative;z-index:30}
-.mp-brand{display:flex;align-items:baseline;gap:10px;min-width:0}
-.mp-brand b{font-size:14px;font-weight:600;color:#f0f3fa;white-space:nowrap}
-.mp-brand span{color:var(--dim);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ---- the data-note chip, on the right of the shared nav bar ---- */
 .sim{position:relative;margin-left:auto;min-width:0}
 .sim summary{list-style:none;cursor:pointer;font-size:12px;font-weight:600;color:var(--fib);white-space:nowrap;padding:6px 11px;
   border:1px solid rgba(255,152,0,.4);background:transparent;border-radius:4px}
@@ -44,18 +41,13 @@ const SKIN = `
   border:1px solid var(--line2);border-radius:6px;padding:12px 14px;font-size:12.5px;line-height:1.55;color:var(--dim);
   box-shadow:0 18px 50px rgba(0,0,0,.6)}
 .sim>div b{display:block;color:var(--text);margin-bottom:4px} .sim>div strong{color:var(--text)}
-.mp-back{display:inline-flex;align-items:center;gap:6px;text-decoration:none;border:1px solid var(--line2);border-radius:4px;
-  padding:0 12px;min-height:32px;color:var(--dim);font-weight:650;font-size:12.5px;white-space:nowrap}
-.mp-back:hover{color:var(--text);border-color:var(--acc);background:var(--accs)}
-/* On a phone the masthead is gone: the report link and the data note sit in
+/* On a phone the nav bar hides the chip: the data note sits at the top of
    the Session pane instead. */
 .simx{display:none}
 @media(max-width:899px){
-  .mp-head{display:none}
   .side[data-tab=setup] .simx{display:block}
 }
-@media(min-width:900px){a.sbtn.mp-back2{display:none}}
-@media(max-width:1180px){.mp-brand span{display:none}}
+
 `;
 
 /**
@@ -95,18 +87,14 @@ function dataNote(sessions: ReplaySession[], vol?: PracticeVol): { title: string
 }
 
 /**
- * The masthead: one row on a desktop, with the data note behind a chip, so
- * the terminal opens straight onto the chart. A phone gets no masthead at
- * all; the same note and the report link go into the Session pane.
+ * The masthead is the site's shared nav bar, so this page is reached and left
+ * the same way as every other. On a desktop the data note rides on its right
+ * as a chip; a phone hides that slot, and the note sits in the Session pane.
  */
 function bannerFor(reportHref: string, sessions: ReplaySession[], vol?: PracticeVol): string {
   const n = dataNote(sessions, vol);
-  return `<header class="mp-head">
-  <div class="mp-brand"><b>Practice</b><span>Real days replayed bar by bar, on your account, under your rules</span></div>
-  <details class="sim ${n.real ? "real" : ""}"><summary>${n.title}<i>${n.sub}</i></summary><div><b>${n.title}</b>${n.body}</div></details>
-  <a class="mp-back" href="futures.html">Futures</a>
-  <a class="mp-back" href="${reportHref}">&larr; Report</a>
-</header>`;
+  const chip = `<details class="sim ${n.real ? "real" : ""}"><summary>${n.title}<i>${n.sub}</i></summary><div><b>${n.title}</b>${n.body}</div></details>`;
+  return siteNav("stocks", { prep: reportHref }, chip);
 }
 
 /** The phone's copy of the note, at the top of the Session pane. */
@@ -254,7 +242,7 @@ export async function renderPractice(
   const body = src
     .slice(src.indexOf(">", bodyOpen) + 1, bodyClose)
     .replace("<!--MP:HEAD-->", bannerFor(reportHref, pickable, vol))
-    .replace("<!--MP:BACK-->", `<a class="sbtn sq mp-back2" href="${reportHref}" title="Back to the report" aria-label="Back to the report">&lsaquo;</a><a class="sbtn mp-back2 mp-fut" href="futures.html" title="Futures practice">Futures</a>`)
+    .replace("<!--MP:BACK-->", "")
     .replace("<!--MP:NOTE-->", noteFor(pickable, vol));
   // The app's own stylesheet is the stylesheet. It used to be replaced by a
   // copy kept here, and the two drifted: what the file looked like opened from
@@ -277,7 +265,7 @@ export async function renderPractice(
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#131722">
 <title>Practice &middot; Market Prep</title>
-<style>${style}${SKIN}</style>
+<style>${style}${TRADE_KIT_CSS}${SKIN}</style>
 </head><body>
 ${data}
 ${vol ? `<script>window.MP_VOL=${JSON.stringify(vol.embed)};window.MP_VOLCAL=${JSON.stringify(vol.calibrations).replace(/</g, "\\u003c")};window.MP_EVENTS=${JSON.stringify(vol.events ?? {}).replace(/</g, "\\u003c")};window.MP_INTRADAY=${JSON.stringify(vol.intraday ?? null)};window.MP_CHAINFIT=${JSON.stringify(vol.chainfit ?? null)};window.MP_RULEBOOK=${JSON.stringify(vol.rulebook ?? null).replace(/</g, "\\u003c")};</script>` : ""}

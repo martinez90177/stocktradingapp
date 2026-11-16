@@ -143,13 +143,14 @@ canvas{position:absolute;inset:0;display:block;touch-action:none}
 .hint.show{opacity:1;transform:translate(-50%,0)}
 .hint[hidden]{display:none}
 
-/* ---- the transport row -------------------------------------------- */
-.actions{flex:0 0 auto;height:var(--actH);padding:8px 10px;border-top:1px solid var(--line);background:var(--bg);position:relative;z-index:12}
-.trow{display:grid;grid-template-columns:46px 1fr 46px 70px;gap:7px;height:100%}
-.actions button{min-height:0;height:100%;font-weight:650;font-size:14px;padding:0 4px;white-space:nowrap}
-.actions select{min-height:0;height:100%;padding:0 22px 0 8px;font-size:13px;text-align:center;width:auto}
-.actions #back,.actions #auto{font-size:15px;padding:0}
-.bnext{background:var(--acc);border-color:var(--acc);color:#fff}
+/* ---- header pickers (the row itself is the shared kit's .kh) ---- */
+.kh .kh-grp{display:flex;align-items:center;gap:2px}
+.kh .ssel{flex:0 0 auto;min-height:34px;height:34px;width:auto;border-color:transparent;font-family:var(--sans);font-size:13px}
+.kh .ssel:hover{background-color:var(--hov)}
+.kh .tksel{min-height:34px;height:34px}
+.kh .rl{display:none}
+dialog.kd .rl{display:inline}
+.kh .ohlc{flex:1 1 auto;padding-left:4px}
 
 /* ---- the panes ---------------------------------------------------- */
 .side{display:flex;flex-direction:column;min-height:0;background:var(--panel)}
@@ -481,7 +482,6 @@ svg.eq{display:block;width:100%;height:auto}
      buys the room for that. Short of that, both rows are simply tightened:
      less padding, and the tab bar drops its text labels for icon + aria-label,
      which is most of what was making it 53px tall in the first place. */
-  .actions{height:46px;padding:5px 10px}
   .tabbar{display:grid;grid-template-columns:repeat(4,1fr);flex:0 0 auto;padding:3px 6px var(--sab);border-top:1px solid var(--line);background:var(--panel)}
   .tabbar button{min-height:38px;border:none;border-radius:9px;background:transparent;padding:0;display:flex;align-items:center;justify-content:center;color:var(--dim)}
   .tabbar button small{display:none}
@@ -550,8 +550,7 @@ svg.eq{display:block;width:100%;height:auto}
   .tool small{display:none}
   .tool:hover{border-color:var(--line2)}
   .chartbox{grid-column:2;grid-row:2}
-  .actions{grid-column:1/-1;grid-row:3;height:56px}
-  .trow{grid-template-columns:52px minmax(200px,340px) 52px 86px;justify-content:start}
+  .chartcol>.rb{grid-column:1/-1;grid-row:3}
   .side{border-left:1px solid var(--line)}
   .shead{padding:10px 40px 0 12px}
   .tabs{padding:10px 0}
@@ -624,11 +623,6 @@ h3{color:var(--dim);font-weight:600;letter-spacing:.6px;font-size:11px}
 .posbar{background:rgba(30,34,45,.96);border-radius:4px}
 .hint{background:var(--p2);border-color:var(--line2);border-radius:4px}
 
-/* transport */
-.actions{background:var(--bg)}
-.actions button,.actions select{border-color:var(--line2)}
-.bnext{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
-.bnext:hover:not(:disabled){background:#1e53e5!important}
 
 /* panes */
 .side{background:var(--bg)}
@@ -690,8 +684,7 @@ th{border-color:var(--line2);color:var(--dim);letter-spacing:.4px}
   .side.tall{border-radius:0}
   .grab span{background:#50535e}
   .shead{border-bottom-color:var(--line)}
-  .actions{height:50px;padding:6px 10px}
-  .trow{grid-template-columns:48px 1fr 48px 68px;gap:8px}
+  .posbar{display:none!important}   /* the position row under the chart says it */
   .tabbar{background:var(--bg);padding:2px 4px var(--sab)}
   .tabbar button{flex-direction:column;gap:2px;min-height:48px;border-radius:4px}
   .tabbar button small{display:block;font-size:10.5px;font-weight:500;letter-spacing:.2px}
@@ -713,20 +706,21 @@ th{border-color:var(--line2);color:var(--dim);letter-spacing:.4px}
 <body>
 <div class="shell" id="shell" data-mode="tf">
 <!--MP:HEAD-->
-<header class="top">
-  <div class="row1">
-    <select class="tksel dd" id="tk" title="Change ticker (loads a new session)" aria-label="Ticker"></select>
-    <span class="px" id="px">—</span>
-    <span class="chg u" id="chg">—</span>
-    <div class="ohlc" id="ohlc"></div>
-    <button class="acctmini" id="acctmini" type="button" title="Your account, under your rules. Tap for the track record."></button>
-    <div class="clk"><span id="clk">9:45</span><span class="clkx"><span id="sub">5m · live</span><span id="sess"></span></span></div>
-    <button class="tbtn prim" id="newTop" type="button" title="Load a different recorded day" aria-label="New day"><svg class="i" viewBox="0 0 24 24" style="display:none"><path d="M4 7h3.5c2 0 3 1 4 2.5l2 3c1 1.5 2 2.5 4 2.5H20M4 17h3.5c1.3 0 2.2-.4 3-1.2M13.5 8.2c.8-.8 1.7-1.2 3-1.2H20"/><path d="M18 4.5L20.5 7 18 9.5M18 14.5l2.5 2.5-2.5 2.5"/></svg><span>New day</span></button>
+<div class="kh" id="hdr">
+  <button class="kh-inst" id="mInst" type="button" title="Choose the ticker and day"></button>
+  <div class="kh-desk kh-grp" id="slotTk"><select class="tksel dd" id="tk" title="Change ticker (loads a new session)" aria-label="Ticker"></select></div>
+  <div class="kh-desk kh-grp" id="slotDay">
+    <select id="sdate" class="ssel dd" title="Which recorded day to practise" aria-label="Which recorded day"></select>
+    <button id="sNew" class="kh-ib" type="button" title="Load a different recorded day"><svg class="i" viewBox="0 0 24 24"><path d="M3.5 7h3.7c2.1 0 3.3.9 4.5 2.7l2.1 3.2c1.2 1.8 2.4 2.6 4.5 2.6h2.2M3.5 17h3.7c2.1 0 3.3-.9 4.5-2.7M17.3 4.3 20.5 7l-3.2 2.4M17.3 12.8l3.2 2.7-3.2 2.4"/></svg><span class="rl">Surprise me: random day</span></button>
   </div>
-  <div class="row2">
-    <button class="acct" id="acct" type="button" title="Your account, under your rules. Tap for the track record."></button>
-  </div>
-</header>
+  <span class="kh-px" id="px">—</span>
+  <span class="kh-chg" id="chg">—</span>
+  <div class="ohlc kh-desk" id="ohlc"></div>
+  <div class="kh-clk"><b id="clk">9:45</b><small><span id="sub">5m · live</span><span id="sess"></span></small></div>
+  <button class="kh-ib wide" id="helpBtn" type="button" title="How this page works"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.4 9.4a2.7 2.7 0 1 1 3.5 2.6c-.6.2-.9.7-.9 1.2v.8"/><circle cx="12" cy="17" r=".6"/></svg><span>How it works</span></button>
+  <button class="kh-ib wide" id="rulesBtn" type="button" title="Your trading rules"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M4 12h4M12 12h8"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/><circle cx="10" cy="12" r="2"/></svg><span>Rules</span></button>
+</div>
+<button class="ka" id="acct" type="button" title="Your account, under your rules. Tap for the track record."></button>
 
 <div class="stage">
   <div class="chartcol">
@@ -763,16 +757,15 @@ th{border-color:var(--line2);color:var(--dim);letter-spacing:.4px}
       <div class="hint" id="hint" role="status" aria-live="polite" hidden></div>
     </div>
 
-    <div class="actions">
-      <div class="trow">
-        <button id="back" title="Rewind one bar (left arrow)">◀</button>
-        <button class="bnext" id="next">Next bar</button>
-        <button id="auto" title="Play / pause (space)">▶</button>
-        <select id="spd" class="dd" title="Playback speed" aria-label="Playback speed">
-          <option value="0.5">0.5x</option><option value="1" selected>1x</option>
-          <option value="2">2x</option><option value="4">4x</option><option value="8">8x</option>
-        </select>
-      </div>
+    <div class="rb" id="actions">
+      <button id="sRestart" class="rb-ic" type="button" title="Start this same day again from the 9:30 open" aria-label="Restart this day"><svg class="i" viewBox="0 0 24 24"><path d="M6 5v14"/><path d="M18 5.5v13L9 12z"/></svg></button>
+      <button id="back" class="rb-ic" type="button" title="Back one bar (left arrow)" aria-label="Back one bar"><svg class="i" viewBox="0 0 24 24"><path d="M15 5.5v13L6 12z"/></svg></button>
+      <button id="auto" class="rb-play" type="button" title="Play / pause (space)"></button>
+      <button id="next" class="rb-next" type="button" title="One bar forward (right arrow)">Next bar</button>
+      <select id="spd" class="rb-speed dd" title="Playback speed" aria-label="Playback speed">
+        <option value="0.5">0.5×</option><option value="1" selected>1×</option>
+        <option value="2">2×</option><option value="4">4×</option><option value="8">8×</option>
+      </select>
     </div>
   </div>
 
@@ -781,12 +774,6 @@ th{border-color:var(--line2);color:var(--dim);letter-spacing:.4px}
       <button id="sideWide" type="button" title="Widen the panel" aria-label="Widen the panel"><svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg></button>
       <div class="grabrow"><span id="paneTitle"></span><div class="grab" id="grab" title="Drag down to close, up for the full height"><span></span></div>
         <button id="sClose" class="sbtn sq" type="button" aria-label="Close">✕</button></div>
-      <div class="sessrow">
-        <!--MP:BACK-->
-        <select id="sdate" class="ssel dd" title="Which recorded day to practise" aria-label="Which recorded day"></select>
-        <button id="sRestart" class="sbtn sq" title="Start this same day again from the 9:30 open" aria-label="Restart this day">↺</button>
-        <button id="sNew" class="sbtn sprim" title="Load a different recorded day">New day</button>
-      </div>
       <!--MP:NOTE-->
       <div class="tabs" id="tabs">
         <button class="tab on" data-p="trade">Trade</button>
@@ -804,7 +791,14 @@ th{border-color:var(--line2);color:var(--dim);letter-spacing:.4px}
   </aside>
 </div>
 
-<nav class="tabbar" id="tabbar" aria-label="Panes">
+<div class="qp" id="qpos"></div>
+<div class="qb" id="qbar">
+  <div class="qb-q"><button id="qbMinus" type="button" aria-label="Smaller size">−</button><span id="qbQty">1</span><button id="qbPlus" type="button" aria-label="Bigger size">+</button></div>
+  <button class="qb-go put" id="qbBear" type="button"><small id="qbBearPx"></small><span id="qbBearL">Buy Put</span></button>
+  <button class="qb-go call" id="qbBull" type="button"><small id="qbBullPx"></small><span id="qbBullL">Buy Call</span></button>
+  <button class="qb-x" id="qbMore" type="button" title="Strike, expiry, size and order type"><span>Ticket</span><span id="qbMoreS"></span></button>
+</div>
+<nav class="tabbar bt" id="tabbar" aria-label="Panes">
   <button type="button" data-l="trade" aria-label="Trade"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h16v14l-2-1.5L16 19l-2-1.5L12 19l-2-1.5L8 19l-2-1.5L4 19z"/><path d="M8 9h8M8 13h5"/></svg><small>Trade</small></button>
   <button type="button" data-l="chain" aria-label="Chain"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="4" cy="6" r=".5"/></svg><small>Chain</small></button>
   <button type="button" data-l="setup" aria-label="Session"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><small>Session</small></button>
@@ -823,6 +817,24 @@ th{border-color:var(--line2);color:var(--dim);letter-spacing:.4px}
 <button class="unzoom" id="unzoom" type="button" hidden>Zoomed in · tap to reset</button>
 </div>
 
+<dialog id="pickDlg" class="kd">
+  <h3>What to replay</h3>
+  <p class="kd-note">Pick a ticker and a real recorded day. It replays from the 9:30 open, one candle at a time.</p>
+  <label class="kd-f">Ticker<span class="kd-col" id="slotTkM"></span></label>
+  <div class="kd-f">Day<span class="kd-col" id="slotDayM"></span></div>
+  <div class="kd-btns"><button class="pri" id="pickDone" type="button">Done</button></div>
+</dialog>
+<dialog id="introDlg" class="kd">
+  <h3>How stock practice works</h3>
+  <p class="kd-note">A real trading day, replayed. Nothing is live and no money is involved.</p>
+  <ol>
+    <li><b>Pick a ticker and a day.</b> <span id="introPick"></span> <b>Blind day</b> hides the date until the closing bell, so you can't look it up.</li>
+    <li><b>Press <span class="k blue">&#9654; Play</span>.</b> The recorded day replays from the open. <b>Next bar</b> beside it moves one candle at a time instead.</li>
+    <li><b>Tap <span class="k green">Call</span> or <span class="k red">Put</span>.</b> A call profits if the stock rises, a put if it falls. The <b>Trade</b> tab sets the strike, expiry and size, or switches to shares.</li>
+    <li><b>Stay inside your rules.</b> Each day has a buying cap, a trade count and a loss limit, shown in the strip under the header. Tap it for your track record.</li>
+  </ol>
+  <div class="kd-btns"><button id="introRules" type="button">See the rules</button><button class="pri" id="introGo" type="button">Start practicing</button></div>
+</dialog>
 <div class="ovl" id="dbf" hidden>
   <div class="ovl-card" role="dialog" aria-modal="true" aria-labelledby="dbfTitle">
     <div class="tour-step">Debrief</div>
@@ -1745,7 +1757,7 @@ function enter(bull,fill){
   }
   if(S.mode==='shares'){
     const dir=bull?'long':'short';
-    const qty=fill?fill.qty:Math.max(1,parseInt(val('qty'))||100);
+    const qty=fill?fill.qty:ticketQty(false);
     if(S.pos&&S.pos.dir!==dir){log('Close the current position before flipping sides.','y');return pane();}
     if(S.pos){const p=S.pos,t=p.qty+qty;noteAdd(p,bull,qty);p.avg=(p.avg*p.qty+u*qty)/t;p.qty=t;p.openQty=(p.openQty||0)+qty;
       log(lbl(HIST,S.cursor)+' — added '+qty+' shares at '+u.toFixed(2)+', avg '+p.avg.toFixed(2)+'.',bull?'g':'r');}
@@ -1755,7 +1767,7 @@ function enter(bull,fill){
         (isNaN(stopU)?', no stop':', stop '+stopU.toFixed(2))+'.',bull?'g':'r');}
   }else{
     const type=bull?'call':'put';
-    const qty=fill?fill.qty:Math.max(1,parseInt(val('qty'))||1);
+    const qty=fill?fill.qty:ticketQty(true);
     const K=S.strike,ex=S.exDays;
     if(S.pos&&(S.pos.optType!==type||S.pos.strike!==K||S.pos.exDays!==ex)){
       log('Close the open contract before opening a different one.','y');return pane();}
@@ -1813,7 +1825,7 @@ function placeOrder(bull){
   }
   const stopU=parseFloat(val('stop')),tgtU=parseFloat(val('tgt'));
   S.orders.push({id:Date.now()+Math.random(),kind:S.oType,bull,px,
-    qty:Math.max(1,parseInt(val('qty'))||(S.mode==='shares'?100:1)),
+    qty:ticketQty(S.mode!=='shares'),
     stopU:isNaN(stopU)?null:stopU,targetU:isNaN(tgtU)?null:tgtU,placedMin:S.cursor});
   log(lbl(HIST,S.cursor)+' — '+S.oType+' '+(bull?'buy':'sell')+' resting at '+px.toFixed(2)+'.','hl');
   renderAll();
@@ -2607,11 +2619,11 @@ function paintPosBar(){
   pb.innerHTML='<span class="pw">'+what+'</span><span class="pv"><b>'+(pp>=0?'+':'−')+Math.abs(pp).toFixed(dp)+'%</b> '+sgn(op)+'</span>';
 }
 function headline(){
-  paintPosBar();paintAcct();
+  paintPosBar();paintAcct();paintQuick();paintInst();
   const b=S.mins[revealed()-1];
   $('px').textContent='$'+b.c.toFixed(2);
   const open=S.mins[todayStart()].o,d=b.c-open,pct=(d>=0?'+':'')+(d/open*100).toFixed(2)+'%';
-  const e=$('chg');e.className='chg '+(d>=0?'u':'d');
+  const e=$('chg');e.className='kh-chg '+(d>=0?'up':'dn');
   // The dollar change is dropped on a phone: it was most of this chip's
   // ~104px, in a header that also needs room for the account pill, and the
   // percentage is the more useful number of the two at a glance anyway.
@@ -2661,7 +2673,11 @@ function pane(){
 /* ================= ticket ================= */
 const usd=n=>(n<0?'-$':'$')+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 function setTxt(id,t){const e=$(id);if(e)e.innerHTML=t;}
-function ticketQty(opt){const n=parseInt(val('qty'));return Math.max(1,isNaN(n)?(opt?1:100):n);}
+function ticketQty(opt){
+  const e=$('qty');
+  const n=e?parseInt(e.value):(S.qbQty&&S.qbMode===S.mode?S.qbQty:NaN);
+  return Math.max(1,isNaN(n)?(opt?1:100):n);
+}
 /**
  * Risk and reward for the plan in the ticket.
  *
@@ -3546,16 +3562,16 @@ function paintAcct(){
   const cd=cooldownLeft();
   // A phone gets the same facts in fewer characters, so Record stays on screen.
   const tight=window.innerWidth<600,d0=n=>'$'+Math.round(n);
-  e.innerHTML='<span>'+(tight?'':'Acct ')+'<b>'+usd(live)+'</b></span>'+
-    '<span class="'+(today>=0?'tup':'tdn')+'">'+(tight?'':'today ')+sgn(today)+'</span>'+
+  e.innerHTML='<span>Balance<b>'+usd(live)+'</b></span>'+
+    '<span class="'+(today>=0?'up':'dn')+'">Today<b>'+sgn(today)+'</b></span>'+
     (RULES.on
-      ?'<span class="'+(use.outlay>=RULES.cap-1e-9?'bad':'')+'">'+(tight?d0(use.outlay)+'/'+d0(RULES.cap):usd(use.outlay)+' / '+usd(RULES.cap)+' bought')+'</span>'+
-       '<span class="'+(use.count>=RULES.maxTrades?'warn':'')+'">'+use.count+(tight?'/':' / ')+RULES.maxTrades+(tight?'':' trades')+'</span>'+
-       '<span class="'+lossCls+'">'+(tight?'lim −'+d0(RULES.maxLoss):'limit '+usd(-RULES.maxLoss))+'</span>'+
-       (cd>0?'<span class="warn">'+(tight?'wait ':'cool-off ')+cd+' min</span>':'')
-      :'<span class="off">rules off</span>')+
-    (S.blind?'<span class="warn">blind</span>':'')+(S.ended?'<span>ended</span>':'')+
-    '<span class="lnk">Record &rsaquo;</span>';
+      ?'<span class="'+(use.outlay>=RULES.cap-1e-9?'bad':'')+'">Bought<b>'+(tight?d0(use.outlay)+' / '+d0(RULES.cap):usd(use.outlay)+' / '+usd(RULES.cap))+'</b></span>'+
+       '<span class="'+(use.count>=RULES.maxTrades?'warn':'')+'">Trades<b>'+use.count+' / '+RULES.maxTrades+'</b></span>'+
+       '<span class="'+lossCls+'">Loss limit<b>'+(tight?'−'+d0(RULES.maxLoss):usd(-RULES.maxLoss))+'</b></span>'+
+       (cd>0?'<span class="warn">Cool-off<b>'+cd+' min</b></span>':'')
+      :'<span class="bad">Rules off</span>')+
+    (S.blind?'<span class="warn">Blind day</span>':'')+(S.ended?'<span>Day ended</span>':'')+
+    '<span class="ka-end ka-link">Record &rsaquo;</span>';
   // The phone's stand-in, in the header row: just the number that moves
   // minute to minute (today's running total), with a dot for anything that
   // needs attention. There turned out to be little room left in that row
@@ -3786,7 +3802,6 @@ let recFilter='all';
 function openRecord(){const r=$('rec');if(!r)return;renderRecord();r.hidden=false;document.body.style.overflow='hidden';r.scrollTop=0;}
 function closeRecord(){const r=$('rec');if(!r)return;r.hidden=true;document.body.style.overflow='';}
 $('acct').onclick=openRecord;
-$('acctmini').onclick=openRecord;
 window.addEventListener('resize',paintAcct);   // the phone form, if the width changes after the paint
 $('recClose').onclick=closeRecord;
 function recTrades(){
@@ -4049,7 +4064,7 @@ function renderTickers(){
   tkSel.innerHTML=list.map(t=>'<option value="'+t+'"'+(t===cur?' selected':'')+'>'+t+'</option>').join('');
 }
 renderTickers();
-tkSel.onchange=()=>{if(!startSession(tkSel.value))tkSel.value=S.ticker;};
+tkSel.onchange=()=>{if(!startSession(tkSel.value))tkSel.value=S.ticker;if(typeof paintInst==='function')paintInst();};
 $('sdate').onchange=e=>{
   const d=e.target.value;
   // A day the page did not embed has to come from its pack.
@@ -4111,13 +4126,17 @@ function stepBar(){
 $('next').onclick=stepBar;
 $('back').onclick=()=>{stopAuto();stepBack();};
 $('spd').onchange=e=>{S.speed=parseFloat(e.target.value);if(S.auto){stopAuto();$('auto').click();}};
-function stopAuto(){if(S.auto){clearInterval(S.auto);S.auto=null;$('auto').textContent='▶';}}
-$('auto').onclick=()=>{if(S.auto)return stopAuto();$('auto').textContent='❚❚';
+const PLAY_HTML='<svg class="i" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M7 4.5v15L19.5 12z"/></svg><span>Play</span>';
+const PAUSE_HTML='<svg class="i" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg><span>Pause</span>';
+$('auto').innerHTML=PLAY_HTML;
+function stopAuto(){if(S.auto){clearInterval(S.auto);S.auto=null;$('auto').innerHTML=PLAY_HTML;$('auto').classList.remove('on');}}
+$('auto').onclick=()=>{if(S.auto)return stopAuto();$('auto').innerHTML=PAUSE_HTML;$('auto').classList.add('on');
   S.auto=setInterval(()=>{if(S.cursor>=MPD)return stopAuto();stepBar();},Math.round(700/(S.speed||1)));};
 document.addEventListener('keydown',e=>{
   if($('rec')&&!$('rec').hidden){if(e.key==='Escape')closeRecord();return;}
   if($('dbf')&&!$('dbf').hidden){if(e.key==='Escape')$('dbf').hidden=true;return;}
   if($('panegrid')&&!$('panegrid').hidden){if(e.key==='Escape')closeGrid();return;}
+  if(document.querySelector('dialog[open]'))return;
   if(/input|select|textarea/i.test(e.target.tagName))return;
   const k=e.key.toLowerCase();
   if(e.key==='ArrowRight'){e.preventDefault();stepBar();}
@@ -4193,7 +4212,6 @@ $('panegrid').addEventListener('click',e=>{
   closeGrid();openSheet(b.dataset.p);
 });
 $('sClose').onclick=closeSheet;
-$('newTop').onclick=()=>$('sNew').click();
 // The grabber: drag down to close (from Peek) or back to Peek (from Full),
 // drag up to Full, double-tap toggles Peek/Full directly -- unchanged from
 // before Phase 2, because it was already exactly a two-stop model (a
@@ -4241,7 +4259,95 @@ window.matchMedia('(min-width:900px)').addEventListener('change',e=>{if(e.matche
     setTimeout(()=>{m.setAttribute('content',c);setTimeout(chk,80);},60);
   };
 })();
+/* ================= the parts shared with the futures page ================= */
+/** The phone's order bar and position row: the ticket's own contract and size, one tap from the chart. */
+function paintQuick(){
+  const bar=$('qbar');if(!bar||!S.mins)return;
+  const opt=S.mode==='options',u=price(),qty=ticketQty(opt),bull=$('qbBull'),bear=$('qbBear');
+  $('qbQty').textContent=qty;
+  const lim=S.oType==='market'?'':' '+(S.oType==='limit'?'limit':'stop');
+  if(opt&&S.strike!=null){
+    const c=quote(S.strike,'call',S.exDays,u),p=quote(S.strike,'put',S.exDays,u);
+    bull.className='qb-go call';bear.className='qb-go put';
+    $('qbBullPx').textContent=c.ask.toFixed(2);$('qbBearPx').textContent=p.ask.toFixed(2);
+    $('qbBullL').textContent=(S.pos&&S.pos.optType==='call'?'Add':'Buy')+' Call'+lim;
+    $('qbBearL').textContent=(S.pos&&S.pos.optType==='put'?'Add':'Buy')+' Put'+lim;
+    $('qbMoreS').textContent=Number(S.strike).toFixed(S.strike%1?2:0)+' · '+exLabel(S.exDays);
+  }else{
+    bull.className='qb-go buy';bear.className='qb-go sell';
+    $('qbBullPx').textContent=u.toFixed(2);$('qbBearPx').textContent=u.toFixed(2);
+    $('qbBullL').textContent=(S.pos&&S.pos.dir==='long'?'Add':'Buy')+lim;
+    $('qbBearL').textContent=(S.pos&&S.pos.dir==='short'?'Add':'Short')+lim;
+    $('qbMoreS').textContent='Shares';
+  }
+  const bb=buyBlock(true),pb=buyBlock(false);
+  // A blocked side stays tappable: the tap opens the ticket and says what is
+  // missing (often a rule like "name the setup first"), instead of a dead button.
+  bull.classList.toggle('blk',!!bb);bear.classList.toggle('blk',!!pb);
+  if(bb)$('qbBullL').textContent=bb.s;
+  if(pb)$('qbBearL').textContent=pb.s;
+  const qp=$('qpos'),ps=S.pos;
+  if(!ps){qp.classList.remove('show');qp.innerHTML='';return;}
+  let what,op,pp;
+  if(ps.kind==='shares'){const per=ps.dir==='long'?u-ps.avg:ps.avg-u;op=per*ps.qty;pp=per/ps.avg*100;
+    what=(ps.dir==='long'?'Long ':'Short ')+ps.qty+' '+S.ticker;}
+  else{const q=quote(ps.strike,ps.optType,ps.exDays,u);op=(q.bid-ps.avgPrem)*100*ps.qty;pp=(q.bid/ps.avgPrem-1)*100;
+    what=ps.qty+'× '+Number(ps.strike).toFixed(2)+' '+(ps.optType==='call'?'Call':'Put')+' · '+exLabel(ps.exDays);}
+  const cl=op>=0?'up':'dn';
+  qp.innerHTML='<b class="'+cl+'">'+what+'</b><b class="'+cl+'">'+sgn(op)+' ('+(pp>=0?'+':'−')+Math.abs(pp).toFixed(1)+'%)</b>'+
+    '<button type="button" data-pane="trade">Manage</button><button type="button" class="qp-x" data-close="1">Close</button>';
+  qp.classList.add('show');
+}
+function quickBuy(bull){
+  const why=buyBlock(bull);
+  if(why){openSheet('trade');hint(why.l);return;}
+  // a limit or stop needs its price, which lives in the ticket
+  if(S.oType!=='market'&&!$('olim')){openSheet('trade');hint('Set the '+S.oType+' price in the ticket, then tap there.');return;}
+  buy(bull);renderAll();
+}
+$('qbBull').onclick=()=>quickBuy(true);
+$('qbBear').onclick=()=>quickBuy(false);
+$('qbMore').onclick=()=>openSheet('trade');
+function stepQuick(d){
+  const opt=S.mode==='options',q=ticketQty(opt),by=opt?1:(q+(d<0?-1:0)>=100?50:10),n=Math.max(1,q+d*by);
+  S.qbQty=n;S.qbMode=S.mode;
+  const e=$('qty');if(e){e.value=n;if(typeof refreshTicket==='function')refreshTicket();}
+  paintQuick();
+}
+$('qbMinus').onclick=()=>stepQuick(-1);
+$('qbPlus').onclick=()=>stepQuick(1);
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='qty'){const n=parseInt(e.target.value);if(n>0){S.qbQty=n;S.qbMode=S.mode;}paintQuick();}});
+$('qpos').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.close){trim(1);renderAll();}else if(b.dataset.pane)openSheet(b.dataset.pane);});
+
+/** Phone: the ticker and day pickers live in a sheet behind the ticker name, as on the futures page. */
+function paintInst(){$('mInst').innerHTML=(S.ticker||'')+'<svg class="i" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>';}
+function placeControls(){
+  const ph=isPhone();
+  const mv=(ids,to)=>{const t=$(to);for(const id of ids){const e=$(id);if(e&&e.parentNode!==t)t.appendChild(e);}};
+  if(ph){mv(['tk'],'slotTkM');mv(['sdate','sNew'],'slotDayM');}
+  else{if($('pickDlg').open)$('pickDlg').close();mv(['tk'],'slotTk');mv(['sdate','sNew'],'slotDay');}
+}
+window.matchMedia('(max-width:899px)').addEventListener('change',placeControls);
+placeControls();
+$('mInst').onclick=()=>{closeSheet();closeGrid();$('pickDlg').showModal();};
+$('pickDone').onclick=()=>$('pickDlg').close();
+/** The guide: once on the first visit, then behind "How it works". */
+function showIntro(){
+  closeSheet();closeGrid();
+  $('introPick').textContent=isPhone()?'Tap the ticker name at the top left to change it.':'Use the ticker and day menus at the top left.';
+  $('introDlg').showModal();
+}
+$('helpBtn').onclick=showIntro;
+$('introDlg').addEventListener('close',()=>{try{localStorage.setItem('mpIntro','1');}catch(e){}});
+$('introGo').onclick=()=>$('introDlg').close();
+$('introRules').onclick=()=>{$('introDlg').close();openSheet('rules');};
+$('rulesBtn').onclick=()=>{closeGrid();openSheet('rules');};
+for(const d of[$('introDlg'),$('pickDlg')])d.addEventListener('click',e=>{if(e.target===d)d.close();});
+
 (function(){const first=randomReplay();init(first?first.symbol:'SPY','random',1,undefined,first);})();
+paintInst();
+try{if(!localStorage.getItem('mpIntro'))showIntro();}catch(e){}
 </script>
 </body>
 </html>
