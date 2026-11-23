@@ -404,7 +404,7 @@ dialog .btns button.on:hover{background:var(--accentH)}
   <span class="vsep"></span>
   <div class="tfbar" id="tfbarM"></div>
   <span class="vsep"></span>
-  <button class="indVwap ind on">VWAP</button><button class="indEma ind">EMA</button>
+  <button class="indVwap ind">VWAP</button><button class="indEma ind">EMA</button>
 </div>
 <main>
   <div id="chartCol">
@@ -740,7 +740,7 @@ let lastLvlStyle=store.get('ppfut.lvlStyle',{color:'#2962ff',width:1,style:0});
 let OID=1;
 let DAY={startBal:ACC.balance};
 let LOCK={day:false,session:false};
-let TF=5;const ind={vwap:true,ema:false};
+let TF=5;const ind={vwap:false,ema:false};   // indicators start off; VWAP and EMA are a tap away
 const FLAG={filled:false};
 const I=()=>INSTR[D?D.sym:'MNQ'];
 let SOUND=store.get('ppfut.sound',true);
