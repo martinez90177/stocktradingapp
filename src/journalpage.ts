@@ -317,6 +317,8 @@ i.opt{display:block;font-style:normal;font-size:10px;color:var(--dim2);font-fami
 #addMsg.ok{color:var(--up)} #addMsg.bad{color:var(--down)}
 .note{font-size:11.5px;color:var(--dim2);margin:12px 0 0;line-height:1.55}
 .note code{font-family:var(--mono);color:var(--dim)}
+.panel.intro{margin-top:22px;font-size:13.5px;line-height:1.6;color:var(--dim)}
+.panel.intro b{color:var(--text)}
 footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:var(--dim2);font-size:11.5px;line-height:1.6}
 /* TradingView's dark look, same tokens as the practice and futures pages. */
 body{-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
@@ -333,6 +335,11 @@ ${siteNav("journal", { prep: reportHref })}
 </div></header>
 
 <main class="wrap">
+  ${j.trades.length === 0 ? `<div class="panel intro">
+    <b>Nothing recorded here yet.</b> The journal keeps real trades, so the copy on the public site is always empty:
+    your trade history stays on your own computer. Run the app there and import a thinkorswim statement, or add a
+    trade by hand, and these sections fill in. To practise in the meantime, open <b>Stocks</b> or <b>Futures</b> above.
+  </div>` : ""}
   <h2 class="sec">Performance <i>&mdash; real trades only, practice excluded</i></h2>
   ${tiles(stats)}
 

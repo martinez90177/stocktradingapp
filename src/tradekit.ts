@@ -65,6 +65,12 @@ export const TRADE_KIT_CSS = `
 .ka .ka-chip{display:inline-block;padding:2px 7px;border-radius:3px;font-size:11px;font-weight:600;letter-spacing:.3px;background:#142852;color:#82a5ff}
 .ka .ka-chip.bad{background:#3d1a1f;color:#f7525f}.ka .ka-chip.good{background:#0d3029;color:#22ab94}
 .ka .ka-link{color:#5b8cff;font-weight:500}
+/* On a phone one line ran the loss limit and drawdown off the right edge, in a
+   strip with no sign that it scrolls. It wraps instead. */
+@media (max-width:899px){
+  .ka{height:auto;min-height:30px;flex-wrap:wrap;row-gap:3px;column-gap:14px;padding:5px 12px;overflow:visible}
+  .ka .ka-end{margin-left:0}
+}
 button.ka{cursor:pointer}
 button.ka:hover{background:#1e222d}
 

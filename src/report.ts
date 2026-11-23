@@ -1413,7 +1413,7 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
   .navchip{padding:7px 10px}
   .dnav{flex-wrap:wrap;row-gap:10px}
   .dnav button{padding:8px 13px}
-  .czbar button{padding:7px 12px}
+  .czbar button{padding:10px 14px}
   section.ticker{padding:12px;border-radius:4px}
   .panels{grid-template-columns:minmax(0,1fr)}
   .fibcols{grid-template-columns:minmax(0,1fr)}

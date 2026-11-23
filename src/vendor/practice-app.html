@@ -2646,7 +2646,9 @@ function btns(){
   $('next').disabled=over;
   $('back').disabled=!S.hist.length||!RULES.rewind;
   const t=tfMin();
-  $('next').textContent=over?'Session over':'Next '+(t==='D'?'day':t+'m');
+  // "Next bar", as on the futures page and in the guide; the step is in the title.
+  $('next').textContent=over?'Session over':'Next bar';
+  $('next').title='One '+(t==='D'?'day':t+'-minute bar')+' forward (right arrow)';
 }
 
 function pane(){
@@ -3296,8 +3298,10 @@ function wireSetup(){
  * session -- never the moment they close, because a rewind must be able to
  * unmake a trade and a record cannot be unmade.
  */
+// A named setup and a stop are opt-in (Rules tab): required by default they
+// greyed out Call and Put for anyone new, while the guide said to tap them.
 const RULE_DEF={on:1,start:1000,cap:200,maxLoss:60,maxTrades:3,maxRisk:60,minRR:1.5,fee:.65,
-  needStop:1,needSetup:1,lockLoss:1,cooldown:10,noLate0:1,cash:1,rewind:1,blind:1,v:2};
+  needStop:0,needSetup:0,lockLoss:1,cooldown:10,noLate0:1,cash:1,rewind:1,blind:1,v:2};
 function loadJSON(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v&&typeof v==='object'?v:d;}catch(e){return d;}}
 function saveJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 const SAVED_RULES=loadJSON('mpRules',{});
@@ -3423,6 +3427,9 @@ function ruleBlock(bull,qty){
     const ask=quote(S.strike,bull?'call':'put',S.exDays,u).ask,each=ask*100+RULES.fee,cost=each*qty;
     if(use.outlay+cost>RULES.cap+1e-9){
       const fit=Math.floor(Math.max(0,RULES.cap-use.outlay)/each+1e-9);
+      if(fit===0&&use.outlay<=0)
+        return {s:'Over your '+usd(RULES.cap)+' cap',
+          l:'One contract is '+usd(each)+', more than your '+usd(RULES.cap)+' daily cap on options. A strike further out of the money costs less, 1DTE or shares are other ways in, and the cap can be raised in Rules.'};
       return {s:fit>0?'Over the daily cap · '+fit+' fits':'Daily cap used up',
         l:usd(cost)+' would take today past your '+usd(RULES.cap)+' of options ('+usd(use.outlay)+' bought so far). '+(fit>0?'Size '+fit+' still fits.':'Nothing more fits today.')};
     }
