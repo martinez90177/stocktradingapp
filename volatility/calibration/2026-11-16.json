@@ -1,120 +1,150 @@
 {
   "date": "2026-11-16",
-  "measuredAt": "2026-11-16T18:10:55.485Z",
+  "measuredAt": "2026-11-17T14:20:12.493Z",
   "index": {
-    "VXN": 32.13,
-    "VIX": 21.84
+    "VXN": 32.9,
+    "VIX": 22.86
   },
   "symbols": {
     "AAPL": {
       "index": "VXN",
-      "atm": 0.2152,
-      "ratio": 0.67,
-      "skew": -1.004,
-      "skewT": 2.44,
-      "prints": 12,
-      "spot": 353.535,
+      "atm": 0.2365,
+      "ratio": 0.719,
+      "skew": -1.373,
+      "skewT": 2,
+      "prints": 11,
+      "spot": 352.78,
       "expiry": "2026-11-18"
     },
     "AMD": {
       "index": "VXN",
-      "atm": 0.4009,
-      "ratio": 1.248,
-      "skew": 3.894,
-      "skewT": 0.44,
+      "atm": 0.9043,
+      "ratio": 2.749,
+      "skew": -2.838,
+      "skewT": 2,
       "prints": 16,
-      "spot": 506.2201,
-      "expiry": "2026-11-16"
+      "spot": 504.28,
+      "expiry": "2026-11-18"
     },
     "AMZN": {
       "index": "VXN",
-      "atm": 0.2035,
-      "ratio": 0.633,
-      "skew": -0.296,
-      "skewT": 0.44,
-      "prints": 4,
-      "spot": 258.67,
-      "expiry": "2026-11-16"
+      "atm": 0.3736,
+      "ratio": 1.136,
+      "skew": -0.589,
+      "skewT": 2,
+      "prints": 8,
+      "spot": 257.75,
+      "expiry": "2026-11-18"
+    },
+    "CRWD": {
+      "index": "VXN",
+      "atm": 0.7845,
+      "ratio": 2.384,
+      "skew": -1.109,
+      "skewT": 4,
+      "prints": 7,
+      "spot": 223.21,
+      "expiry": "2026-11-20"
+    },
+    "DELL": {
+      "index": "VXN",
+      "atm": 1.0136,
+      "ratio": 3.081,
+      "skew": -1.275,
+      "skewT": 4,
+      "prints": 9,
+      "spot": 320.55,
+      "expiry": "2026-11-20"
     },
     "GOOGL": {
       "index": "VXN",
-      "atm": 0.346,
-      "ratio": 1.077,
-      "skew": -0.732,
-      "skewT": 2.44,
-      "prints": 8,
-      "spot": 287.1,
+      "atm": 0.3788,
+      "ratio": 1.151,
+      "skew": -1.319,
+      "skewT": 2,
+      "prints": 9,
+      "spot": 283.72,
       "expiry": "2026-11-18"
     },
     "IWM": {
       "index": "VIX",
-      "atm": 0.1188,
-      "ratio": 0.544,
-      "skew": 2.62,
-      "skewT": 0.44,
-      "prints": 5,
-      "spot": 273.522,
-      "expiry": "2026-11-16"
+      "atm": 0.2145,
+      "ratio": 0.938,
+      "skew": -2.112,
+      "skewT": 1,
+      "prints": 19,
+      "spot": 272.94,
+      "expiry": "2026-11-17"
     },
     "META": {
       "index": "VXN",
-      "atm": 0.2118,
-      "ratio": 0.659,
-      "skew": 1.442,
-      "skewT": 0.44,
-      "prints": 12,
-      "spot": 625.78,
-      "expiry": "2026-11-16"
+      "atm": 0.4373,
+      "ratio": 1.329,
+      "skew": -0.875,
+      "skewT": 2,
+      "prints": 20,
+      "spot": 626.41,
+      "expiry": "2026-11-18"
     },
     "MSFT": {
       "index": "VXN",
-      "atm": 0.1924,
-      "ratio": 0.599,
-      "skew": 0.005,
-      "skewT": 0.44,
-      "prints": 9,
-      "spot": 521.386,
-      "expiry": "2026-11-16"
+      "atm": 0.3629,
+      "ratio": 1.103,
+      "skew": -1.512,
+      "skewT": 2,
+      "prints": 16,
+      "spot": 517.99,
+      "expiry": "2026-11-18"
     },
     "MU": {
       "index": "VXN",
-      "atm": 0.4603,
-      "ratio": 1.432,
-      "skew": 7.174,
-      "skewT": 0.44,
-      "prints": 21,
-      "spot": 724.64,
-      "expiry": "2026-11-16"
+      "atm": 0.9469,
+      "ratio": 2.878,
+      "skew": -1.469,
+      "skewT": 2,
+      "prints": 23,
+      "spot": 719.02,
+      "expiry": "2026-11-18"
     },
     "QQQ": {
       "index": "VXN",
-      "atm": 0.1593,
-      "ratio": 0.496,
-      "skew": 1.057,
-      "skewT": 0.44,
-      "prints": 23,
-      "spot": 664.1,
-      "expiry": "2026-11-16"
+      "atm": 0.3285,
+      "ratio": 0.998,
+      "skew": -1.423,
+      "skewT": 1,
+      "prints": 53,
+      "spot": 661.75,
+      "expiry": "2026-11-17"
+    },
+    "SNOW": {
+      "index": "VXN",
+      "atm": 0.6358,
+      "ratio": 1.932,
+      "skew": 0.537,
+      "skewT": 4,
+      "prints": 6,
+      "spot": 280.54,
+      "expiry": "2026-11-20"
     },
     "SPY": {
       "index": "VIX",
-      "atm": 0.1138,
-      "ratio": 0.521,
-      "skew": 1.64,
-      "skewT": 0.44,
-      "prints": 17,
-      "spot": 742.21,
-      "expiry": "2026-11-16"
+      "atm": 0.2043,
+      "ratio": 0.894,
+      "skew": -1.22,
+      "skewT": 1,
+      "prints": 53,
+      "spot": 739.95,
+      "expiry": "2026-11-17"
     },
     "TSLA": {
       "index": "VXN",
-      "atm": 0.2466,
-      "ratio": 0.767,
-      "skew": -0.078,
-      "skewT": 0.44,
-      "prints": 8,
-      "spot": 379.19,
-      "expiry": "2026-11-16"
+      "atm": 0.5063,
+      "ratio": 1.539,
+      "skew": -1.212,
+      "skewT": 2,
+      "prints": 13,
+      "spot": 379.74,
+      "expiry": "2026-11-18"
     }
   }
 }
