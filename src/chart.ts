@@ -73,9 +73,14 @@ export interface ChartOptions {
   fib?: FibSet | null;
   patterns?: Pattern[];
   /** Series aligned to `bars`; nulls are gaps. */
-  overlays?: { label: string; color: string; values: (number | null)[]; dashed?: boolean }[];
+  /**
+   * `toggle` names an indicator the page switches on and off (see the report's
+   * .ind-* rules): drawn in its own group, hidden until switched on, and left out
+   * of the price range so a hidden line cannot squash the candles.
+   */
+  overlays?: { label: string; color: string; values: (number | null)[]; dashed?: boolean; toggle?: string }[];
   /** Horizontal reference lines drawn without a full level treatment. */
-  hlines?: { price: number; color: string; label: string; dashed?: boolean }[];
+  hlines?: { price: number; color: string; label: string; dashed?: boolean; toggle?: string }[];
   price: number;
   /** Bar index the visible window starts at, for aligning pattern annotations. */
   indexOffset?: number;
@@ -133,8 +138,8 @@ export function renderChart(o: ChartOptions): string {
     if (p < lo && p >= baseLo - allow) lo = p;
   };
   for (const l of o.levels ?? []) consider(l.price);
-  for (const h of o.hlines ?? []) consider(h.price);
-  for (const ov of o.overlays ?? []) for (const v of ov.values) consider(v);
+  for (const h of o.hlines ?? []) if (!h.toggle) consider(h.price);
+  for (const ov of o.overlays ?? []) if (!ov.toggle) for (const v of ov.values) consider(v);
   consider(o.price);
 
   const span = hi - lo || hi * 0.02 || 1;
@@ -296,9 +301,11 @@ export function renderChart(o: ChartOptions): string {
       cur.push(`${x(i).toFixed(1)},${y(v).toFixed(1)}`);
     }
     if (cur.length > 1) segments.push(cur.join(" "));
+    if (ov.toggle) out.push(`<g class="ind-${esc(ov.toggle)}">`);
     for (const pts of segments) {
       out.push(`<polyline points="${pts}" fill="none" stroke="${ov.color}" stroke-width="1.4" opacity="0.92"${ov.dashed ? ' stroke-dasharray="5 4"' : ""} stroke-linejoin="round"/>`);
     }
+    if (ov.toggle) out.push("</g>");
   }
 
   if ((o.overlays ?? []).length > 0) out.push("</g>");
@@ -350,8 +357,10 @@ export function renderChart(o: ChartOptions): string {
   for (const h of o.hlines ?? []) {
     const yy = y(h.price);
     if (!inPane(yy)) continue;
+    if (h.toggle) out.push(`<g class="ind-${esc(h.toggle)}">`);
     out.push(`<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${padL + plotW}" y2="${yy.toFixed(1)}" stroke="${h.color}" stroke-width="1.1" opacity="0.75"${h.dashed !== false ? ' stroke-dasharray="5 4"' : ""}/>`);
     out.push(`<text x="${padL + 5}" y="${(yy - 3).toFixed(1)}" fill="${h.color}" font-size="${fs(9.5)}" opacity="0.95" font-family="'IBM Plex Mono',ui-monospace,Menlo,monospace">${esc(h.label)} ${fmtPrice(h.price)}</text>`);
+    if (h.toggle) out.push("</g>");
   }
 
   for (const t of decollide(lineLabels, 15 * tk, padT + 8, padT + plotH - 4)) {

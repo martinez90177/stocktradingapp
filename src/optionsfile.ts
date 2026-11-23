@@ -176,3 +176,50 @@ export function quoteAt(
   }
   return null;
 }
+
+/**
+ * Feeds whose option quotes trail their own stock price, in minutes.
+ *
+ * Yahoo's chain is delayed about a quarter of an hour while the underlying it
+ * reports beside it is live, and its timestamps do not say so (`lag` reads a
+ * second or two). Measured against the recorded 1-minute bars by put-call
+ * parity, 266 of 279 Yahoo-recorded days line up best 16 minutes back, at an
+ * error of 2.4bp against 18bp as recorded -- Schwab's own rows line up at once.
+ * Replayed as recorded, a Yahoo day priced every contract against the market
+ * of 16 minutes earlier: an at-the-money QQQ put quoted $8 with QQQ where a $3
+ * put belonged.
+ */
+export const FEED_DELAY: Record<string, number> = { yahoo: 16 };
+
+/**
+ * The day with each delayed feed's rows moved back to the minute they describe.
+ * A minute that ends up with rows from both kinds of feed keeps the prompt one.
+ * The spot on a moved row becomes the underlying recorded at its new minute,
+ * where there is one. The file on disk is left as recorded; this is applied
+ * where the day is read for replay.
+ */
+export function retimeDelayed(day: OptionDay): OptionDay {
+  const srcOf = (i: number) => (day.sources && day.src ? day.sources[day.src[i]] : undefined) ?? "";
+  if (!day.minutes.some((_, i) => FEED_DELAY[srcOf(i)])) return day;
+  const spotAt = new Map(day.minutes.map((m, i) => [m, day.spot[i]] as const));
+  const pick = new Map<number, number>();   // new minute -> original row
+  day.minutes.forEach((m, i) => {
+    const d = FEED_DELAY[srcOf(i)] ?? 0;
+    const at = m - d;
+    if (at < 0) return;
+    const prev = pick.get(at);
+    // A prompt row beats a delayed one; between equals, the later write stands.
+    if (prev != null && !FEED_DELAY[srcOf(prev)] && d) return;
+    pick.set(at, i);
+  });
+  const order = [...pick.keys()].sort((a, b) => a - b);
+  const rows = order.map((m) => pick.get(m)!);
+  return {
+    ...day,
+    minutes: order,
+    spot: order.map((m, j) => spotAt.get(m) ?? day.spot[rows[j]]),
+    ...(day.src ? { src: rows.map((i) => day.src![i]) } : {}),
+    ...(day.lag ? { lag: rows.map((i) => day.lag![i]) } : {}),
+    expiries: day.expiries.map((e) => ({ ...e, call: rows.map((i) => e.call[i] ?? null), put: rows.map((i) => e.put[i] ?? null) })),
+  };
+}

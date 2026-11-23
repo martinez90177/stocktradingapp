@@ -322,7 +322,8 @@ limit; tap it for the record. The **Rules** tab holds the numbers, and beneath
 them the whole of Alex's Rules from `rules.json`, so each rule and the number
 that enforces it sit together.
 
-The defaults: a **$1,000** account, at most **$200 of options bought a day**,
+The defaults: a **$1,000** account, at most **$500 of options bought a day** (enough for one at-the-money 0DTE
+contract on anything on the watchlist; set it to match your own account),
 a **$60 daily loss limit**, **three trades a day**, at most **$60 at risk to
 the stop** on any one trade, a **$0.65 fee a contract each way**, and **ten
 minutes off after two straight losses**. All of it is editable and saved in
@@ -332,14 +333,14 @@ record and never set its own starting balance keeps $500, written into its
 saved rules, so the new default cannot move an existing balance.
 
 With the rules on, a card **refuses** anything outside them and says which
-rule, on the card: *Name the setup first*, *Set a stop first*, *Daily cap used
-up*, *Over the daily cap · 1 fits*, *Risks $76.00 · max $60.00*, *Trade limit
+rule, on the card: *Name the setup first* and *Set a stop first* (both
+opt-in), *Over your $500.00 cap*, *Daily cap used up*, *Over the daily cap · 1 fits*, *Risks $76.00 · max $60.00*, *Trade limit
 reached*, *Daily loss limit hit*, *Cooling off · 8 min*, *Never add to a
 loser*, *Too late for a 0DTE* (after 3:30), *No shorting in a cash account*. A
 stop on an open position may move closer but never further: type a wider one
 and the box is put back, with the rule on the tape. The refusals are re-checked
 every bar, so a cool-off that ends re-enables the card by itself. A line under
-the cards says what fits right now -- *$82.00 of $200.00 left to buy today · 1
+the cards says what fits right now -- *$82.00 of $500.00 left to buy today · 1
 call or 2 puts fit here* -- and warns, without refusing, on a planned reward
 under 1.5x the risk, an entry within three minutes of a loss, and a green day
 worth protecting.
@@ -508,6 +509,13 @@ wired in, and none of them is taken at its word:
 | `polygon` | `POLYGON_KEY` | on a paid options plan |
 | `alpaca` | `ALPACA_KEY`, `ALPACA_SECRET` | with `ALPACA_OPTIONS_FEED=opra`; the free indicative feed is delayed |
 | `yahoo` | nothing | no, and it will not admit it |
+
+Measured against the recorded 1-minute bars by put-call parity, Yahoo's quotes
+line up with the stock **16 minutes** earlier (266 of 279 recorded days), while
+its own stock price is live. The files keep what was recorded; when the site is
+built, `FEED_DELAY` in `src/optionsfile.ts` moves each Yahoo row back to the
+minute it describes, so the replay prices a contract against the market it was
+quoted in. The last 16 minutes of a Yahoo-only day are modelled, and marked.
 
 **Schwab is the one to use**, because thinkorswim is built on it: the data is
 the same data the platform shows, it is real-time for account holders, and

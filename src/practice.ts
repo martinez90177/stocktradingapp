@@ -1,6 +1,7 @@
 import { siteNav } from "./sitenav.ts";
 import { TRADE_KIT_CSS } from "./tradekit.ts";
-import { readFile, writeFile, mkdir, readdir, copyFile } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
+import { retimeDelayed, type OptionDay } from "./optionsfile.ts";
 import { join } from "node:path";
 import { loadForEmbed } from "./replay.ts";
 
@@ -204,7 +205,9 @@ export async function writeOptionPacks(optionsDir: string, outDir: string): Prom
     if (!files.length) continue;
     await mkdir(join(outDir, symbol), { recursive: true });
     for (const f of files) {
-      await copyFile(join(optionsDir, symbol, f), join(outDir, symbol, f));
+      // Quotes from a delayed feed go back to the minute they describe (FEED_DELAY).
+      const day = JSON.parse(await readFile(join(optionsDir, symbol, f), "utf8")) as OptionDay;
+      await writeFile(join(outDir, symbol, f), JSON.stringify(retimeDelayed(day)));
       days++;
     }
     n++;

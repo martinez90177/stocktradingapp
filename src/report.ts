@@ -627,7 +627,8 @@ function tickerSection(a: Analysis, lookbackDays: number, intradayDays: number):
     { label: "200 SMA", color: C.ma200, values: slice(sma(closes, 200)) },
   ];
   const avwap = a.anchoredVwaps[0];
-  if (avwap) overlays.push({ label: avwap.label, color: C.vwap, values: slice(avwap.series), dashed: true } as any);
+  // VWAP is an indicator you switch on (the VWAP button under the chart), not part of the default chart.
+  if (avwap) overlays.push({ label: avwap.label, color: C.vwap, values: slice(avwap.series), dashed: true, toggle: "vwap" } as any);
 
   const dailyBase = {
     mode: "daily" as const,
@@ -670,7 +671,7 @@ function tickerSection(a: Analysis, lookbackDays: number, intradayDays: number):
       hlines.push({ price: ic.premarket.low, color: C.ma20, label: "PML" });
     }
     if (ic.floorPivots) hlines.push({ price: ic.floorPivots.pp, color: C.vwap, label: "Pivot" });
-    if (ic.sessionVwap != null) hlines.push({ price: ic.sessionVwap, color: C.ma50, label: "VWAP" });
+    if (ic.sessionVwap != null) hlines.push({ price: ic.sessionVwap, color: C.ma50, label: "VWAP", toggle: "vwap" });
 
     const intraBase = { mode: "intraday" as const, hlines, price: a.price, title: `${a.symbol} intraday` };
     const deskBars = resample(use, 15);
@@ -726,7 +727,7 @@ function tickerSection(a: Analysis, lookbackDays: number, intradayDays: number):
       <span><i style="background:${C.ma20}"></i>20 SMA</span>
       <span><i style="background:${C.ma50}"></i>50 SMA</span>
       <span><i style="background:${C.ma200}"></i>200 SMA</span>
-      <span><i style="background:${C.vwap}"></i>Anchored VWAP</span>
+      <button type="button" class="indtg" data-ind="vwap" aria-pressed="false" title="Show or hide VWAP on these charts: anchored on the daily, the session's on the intraday"><i style="background:${C.vwap}"></i>VWAP</button>
       <span><i style="background:${C.golden}"></i>Golden pocket</span>
       <span><i style="background:${C.support}"></i>Support</span>
       <span><i style="background:${C.resistance}"></i>Resistance</span>
@@ -1252,6 +1253,15 @@ span.c-desk{display:inline}
 .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--dim);margin:0 0 14px;padding:0 2px}
 .legend span{display:flex;align-items:center;gap:5px}
 .legend i{width:11px;height:2.5px;border-radius:2px;display:inline-block}
+/* Indicators that start off: the chart draws them in a hidden group and the
+   button in the legend switches them on, for every chart on the page. */
+.ind-vwap{display:none}
+body.show-vwap .ind-vwap{display:inline}
+.indtg{display:flex;align-items:center;gap:5px;font:inherit;color:var(--dim);background:transparent;border:1px solid var(--line2);
+  border-radius:4px;padding:3px 9px;cursor:pointer}
+.indtg:hover{color:var(--text);border-color:var(--accent)}
+.indtg[aria-pressed="true"]{color:var(--text);border-color:var(--accent);background:var(--accent-soft)}
+.indtg[aria-pressed="false"] i{opacity:.45}
 
 .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-bottom:14px}
 .stat{background:var(--panel2);padding:8px 10px;display:flex;flex-direction:column;gap:2px}
@@ -1421,6 +1431,7 @@ footer{border-top:1px solid var(--line);margin-top:34px;padding:18px 0 0;color:v
      "what agrees" room to read as a line rather than a word per row. */
   th.atrcol,td.atrcol{display:none}
   td .sub.atrsub{display:block;white-space:nowrap}
+  .indtg{padding:8px 12px}
   th.confh{min-width:0}
   /* Six columns squeezed to a phone wrap every figure onto three lines and
      push Liquidity out of sight. Kept at full width it scrolls sideways
@@ -1508,6 +1519,23 @@ ${siteNav("prep", { prep: "#top" })}
 </footer>
 ${rulesDialog(input.rules ?? null)}
 <script>
+/* Indicator buttons under the charts. Off by default; the choice is kept in
+   this browser and applies to every chart on the page. */
+(function () {
+  var btns = document.querySelectorAll(".indtg");
+  function set(ind, on) {
+    document.body.classList.toggle("show-" + ind, on);
+    btns.forEach(function (b) { if (b.dataset.ind === ind) b.setAttribute("aria-pressed", on ? "true" : "false"); });
+    try { localStorage.setItem("mpInd-" + ind, on ? "1" : "0"); } catch (e) {}
+  }
+  var seen = {};
+  btns.forEach(function (b) {
+    var ind = b.dataset.ind;
+    b.addEventListener("click", function () { set(ind, !document.body.classList.contains("show-" + ind)); });
+    if (!seen[ind]) { seen[ind] = 1; var v = null; try { v = localStorage.getItem("mpInd-" + ind); } catch (e) {} set(ind, v === "1"); }
+  });
+})();
+
 /* Rules popup. Opens from the button, from "r", and from a #rules link so it
    can be bookmarked straight to the rules. */
 (function () {

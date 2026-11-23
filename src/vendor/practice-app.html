@@ -3300,7 +3300,7 @@ function wireSetup(){
  */
 // A named setup and a stop are opt-in (Rules tab): required by default they
 // greyed out Call and Put for anyone new, while the guide said to tap them.
-const RULE_DEF={on:1,start:1000,cap:200,maxLoss:60,maxTrades:3,maxRisk:60,minRR:1.5,fee:.65,
+const RULE_DEF={on:1,start:1000,cap:500,maxLoss:60,maxTrades:3,maxRisk:60,minRR:1.5,fee:.65,
   needStop:0,needSetup:0,lockLoss:1,cooldown:10,noLate0:1,cash:1,rewind:1,blind:1,v:2};
 function loadJSON(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v&&typeof v==='object'?v:d;}catch(e){return d;}}
 function saveJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
