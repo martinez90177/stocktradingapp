@@ -2334,6 +2334,9 @@ function frame(ts){
   const syms=Object.keys(MAN.symbols).filter(s=>MAN.symbols[s].dates.length);
   syms.sort((a,b)=>SYM_ORDER.indexOf(a)-SYM_ORDER.indexOf(b));
   $('selSym').innerHTML=syms.filter(s=>INSTR[s]).map(s=>`<option value="${s}" title="${INSTR[s].name} · $${INSTR[s].tv.toFixed(2)} per tick">${s}  ·  ${INSTR[s].mini?'E-mini':'Micro'}</option>`).join('');
+  // futures.html#sym=MES opens on that contract (the Game Plan page links here with its levels)
+  const want=new URLSearchParams(location.hash.slice(1)).get('sym');
+  if(want&&syms.includes(want)&&INSTR[want])$('selSym').value=want;
   fillDates();
   if(!$('selDate').options.length){$('loading').textContent='No practice-ready days recorded yet. Run node tools/record-futures.mjs.';return}
   await reload();

@@ -16,6 +16,7 @@ import { loadVolForEmbed, loadCalibrations, loadEvents, loadIntraday, loadChainF
 import { loadJournal } from "./src/journal.ts";
 import { loadRules } from "./src/rules.ts";
 import { renderJournal } from "./src/journalpage.ts";
+import { renderPlan, loadPlanData } from "./src/planpage.ts";
 import { injectSiteNav } from "./src/sitenav.ts";
 import { injectTradeKit } from "./src/tradekit.ts";
 
@@ -81,6 +82,9 @@ if (hasFutures) {
 } else {
   console.log("site/futures/       none recorded yet (tools/record-futures.mjs)");
 }
+
+// Game Plan: posted levels -> stop, size and a yes/no for a funded account.
+await writeFile(join(SITE, "plan.html"), renderPlan(await loadPlanData(HERE), "index.html"), "utf8");
 
 await writeFile(
   join(SITE, "journal.html"),

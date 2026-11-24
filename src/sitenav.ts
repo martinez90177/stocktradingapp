@@ -1,24 +1,25 @@
 /**
  * The one navigation bar every page carries, in the same place and the same
- * order: Prep, Stocks, Futures, Journal. Before it, each page had its own
+ * order: Prep, Stocks, Futures, Plan, Journal. Before it, each page had its own
  * set of link buttons in its own spot (and the futures page hid its links on
  * anything narrower than 1280px), so on a phone there was no way to tell how
  * to get from one page to another.
  *
  * Desktop: a slim bar across the top, brand on the left, tabs beside it.
- * Phone:   the same four tabs, full width, icon and label, still at the top,
+ * Phone:   the same five tabs, full width, icon and label, still at the top,
  *          so it never collides with the trading controls the practice and
  *          futures pages keep at the bottom of the screen.
  *
  * Everything is prefixed `snav` so it can't collide with the pages' own CSS.
  */
 
-export type NavPage = "prep" | "stocks" | "futures" | "journal";
+export type NavPage = "prep" | "stocks" | "futures" | "plan" | "journal";
 
 export interface NavHrefs {
   prep: string;
   stocks: string;
   futures: string;
+  plan: string;
   journal: string;
 }
 
@@ -26,6 +27,7 @@ export const DEFAULT_HREFS: NavHrefs = {
   prep: "index.html",
   stocks: "practice.html",
   futures: "futures.html",
+  plan: "plan.html",
   journal: "journal.html",
 };
 
@@ -36,6 +38,8 @@ const ICONS: Record<NavPage, string> = {
   stocks: `<path d="M7 3v3M7 14v3M17 7v3M17 18v3"/><rect x="5" y="6" width="4" height="8" rx=".8"/><rect x="15" y="10" width="4" height="8" rx=".8"/>`,
   // a rising line with a marker: futures
   futures: `<path d="M3 19h18"/><path d="M4 15l4.5-4.5 3.5 3 7-7"/><path d="M15 6.5h4v4"/>`,
+  // a shield with a check: the funded-account game plan
+  plan: `<path d="M12 3.2l7 2.6v5.6c0 4.3-2.9 7.6-7 9.4-4.1-1.8-7-5.1-7-9.4V5.8z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/>`,
   // a notebook: the journal
   journal: `<path d="M6 3.5h11.5a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 6 3.5z"/><path d="M8.5 3.5v17M11.5 8h4.5M11.5 11.5h4.5"/>`,
 };
@@ -44,6 +48,7 @@ const ITEMS: { id: NavPage; label: string; long: string; hint: string }[] = [
   { id: "prep", label: "Prep", long: "Today's Prep", hint: "Watchlist, levels and setups for today" },
   { id: "stocks", label: "Stocks", long: "Stock Practice", hint: "Replay a real stock day and trade it" },
   { id: "futures", label: "Futures", long: "Futures Practice", hint: "Replay NQ / ES futures on a funded-account ruleset" },
+  { id: "plan", label: "Plan", long: "Game Plan", hint: "Turn posted levels into a stop, a size and a checklist for your funded account" },
   { id: "journal", label: "Journal", long: "Journal", hint: "Your trades and stats" },
 ];
 
@@ -111,8 +116,12 @@ export function siteNav(active: NavPage, hrefs: Partial<NavHrefs> = {}, right = 
  * already carries the bar is left alone, so running this twice is harmless.
  */
 export function injectSiteNav(html: string, active: NavPage, hrefs: Partial<NavHrefs> = {}): string {
-  if (html.includes(`class="snav"`)) return html;
   const nav = siteNav(active, hrefs);
+  // A page built with an older bar (a report from before a tab was added) gets
+  // the current one, so every page always shows the same tabs.
+  const old = /<style>[^<]*?\.snav\{[\s\S]*?<\/style><nav class="snav"[\s\S]*?<\/nav>/;
+  if (old.test(html)) return html.replace(old, () => nav);
+  if (html.includes(`class="snav"`)) return html;
   if (html.includes("<!--SITE:NAV-->")) return html.replace("<!--SITE:NAV-->", nav);
   return html.replace(/<body[^>]*>/i, (m) => m + nav);
 }

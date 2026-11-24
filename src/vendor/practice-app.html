@@ -123,6 +123,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 canvas{position:absolute;inset:0;display:block;touch-action:none}
 .chips-tr{position:absolute;top:8px;right:calc(var(--axisw,60px) + 8px);display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:5;pointer-events:none}
 .chips-tr>*{pointer-events:auto}
+.chips-br{position:absolute;right:calc(var(--axisw,60px) + 8px);bottom:calc(var(--xaxish,26px) + 8px);z-index:5}
 .fitbtn{font-family:var(--sans);font-size:11.5px;font-weight:600;padding:5px 10px;min-height:0;border-radius:7px;
   background:rgba(13,18,32,.92);border:1px solid var(--acc);color:var(--text);display:none}
 .fitbtn.show{display:block}
@@ -751,8 +752,12 @@ th{border-color:var(--line2);color:var(--dim);letter-spacing:.4px}
     <div class="chartbox">
       <canvas id="cv"></canvas>
       <div class="chips-tr">
-        <button class="fitbtn" id="fit" type="button" title="Back to the newest bars and the automatic price scale">Reset view</button>
         <div class="posbar" id="posbar" hidden></div>
+      </div>
+      <!-- bottom right, just above the time labels (where TradingView keeps its jump-back button),
+           so it never covers the price scale or the recent highs at the top of the chart -->
+      <div class="chips-br">
+        <button class="fitbtn" id="fit" type="button" title="Back to the newest bars and the automatic price scale">Reset view</button>
       </div>
       <div class="hint" id="hint" role="status" aria-live="polite" hidden></div>
     </div>
@@ -1528,7 +1533,9 @@ function init(ticker,regime,vm,seed,replayPick){
     tool:'cursor',tab:'trade',auto:null,
     // Fewer bars on screen means wider candles and a tighter price range, so
     // bodies read at a glance instead of as a hairline. Zoom out for context.
-    view:{right:null,count:window.innerWidth<600?32:54},yMan:null,
+    // right: null = pinned to the newest bar; blank: empty bar slots kept after it (dragged
+    // into, as on TradingView and thinkorswim), held as new bars print.
+    view:{right:null,blank:0,count:window.innerWidth<600?32:54},yMan:null,
     hover:null,cache:{}};
   if(keep)Object.assign(S,keep);
   S.or=null;S.fib=null;
@@ -2031,9 +2038,13 @@ function scale(){
   const volH=0;   // volume is drawn inside the price pane now, not in a band under it
   const rsiH=S.ind.rsi?Math.round(G.h*.17):0;
   const ph=G.h-padT-padB-volH-(volH?5:0)-rsiH-(rsiH?5:0);
-  let right=S.view.right==null?B.length-1:Math.min(S.view.right,B.length-1);
   const count=Math.max(10,Math.min(S.view.count,B.length));
-  const left=Math.max(0,right-count+1);
+  // R is the bar slot at the right edge; past the newest bar it is empty space, which
+  // can fill up to 80% of the chart so some candles always stay on screen.
+  const blank=S.view.right==null?Math.max(0,Math.min(S.view.blank||0,Math.floor(count*.8))):0;
+  const R=S.view.right==null?B.length-1+blank:Math.min(S.view.right,B.length-1);
+  const right=Math.min(R,B.length-1);
+  const left=Math.max(0,R-count+1);
   const vis=B.slice(left,right+1);if(!vis.length)return null;
   // The auto-fit range for whatever is visible right now, computed whether
   // or not a manual stretch is active: it is what a manual range is checked
@@ -2065,7 +2076,8 @@ function scale(){
   cx.font=cfont(F-1,600);
   const RGAP=S.ind.fib?Math.ceil(cx.measureText('161.8%').width)+18:16;
   const cw=(G.w-padL-padR-RGAP)/count;
-  G={...G,padL,padR,padT,padB,volH,rsiH,ph,lo,hi,cw,left,right,count,B,RGAP,
+  cv.parentElement.style.setProperty('--xaxish',padB+'px');
+  G={...G,padL,padR,padT,padB,volH,rsiH,ph,lo,hi,cw,left,right,R,count,B,RGAP,
     x:i=>padL+(i-left+.5)*cw,
     y:p=>padT+ph*(1-(p-lo)/(hi-lo)),
     ix:x=>left+(x-padL)/cw-.5,
@@ -2389,7 +2401,7 @@ function draw(){
         .forEach(([k,v])=>{put(k+' ','#787b86');put(v+'  ',vc);});
       cx.restore();}
   }
-  $('fit').classList.toggle('show',!!S.yMan||S.view.right!=null);
+  $('fit').classList.toggle('show',!!S.yMan||S.view.right!=null||S.view.blank>0);
 }
 function shape(d,prev,k){
   const a=cx.globalAlpha;if(prev)cx.globalAlpha=.7;
@@ -2504,7 +2516,7 @@ cv.addEventListener('pointerdown',e=>{
     const now2=Date.now();
     if(now2-lastTapBody<320&&lastTapPos&&Math.hypot(mx-lastTapPos.mx,my-lastTapPos.my)<24){
       lastTapBody=0;S.yMan=null;hint('Price scale fit to what is on screen.');draw();return;}
-    drag={mode:'pan',mx,my,right:G.right,lo:G.lo,hi:G.hi,moved:false};S.hover={mx,my,in:1};draw();return;}
+    drag={mode:'pan',mx,my,right:G.R,lo:G.lo,hi:G.hi,moved:false};S.hover={mx,my,in:1};draw();return;}
   if(S.tool==='erase'){erase(mx,my);draw();return;}
   const m=minAt(mx),p=snap(my,mx);
   if(S.tool==='hline'){S.draw.push({t:'hline',m1:m,p1:p});S.sel=S.draw.length-1;setTool('cursor',true);hint('Level placed. Drag it to move it; Delete removes it.');draw();return;}
@@ -2556,8 +2568,10 @@ cv.addEventListener('pointermove',e=>{
     }else{
       const B=bars();
       const dxb=Math.round((drag.mx-mx)/G.cw);
-      S.view.right=Math.max(G.count-1,Math.min(B.length-1,drag.right+dxb));
-      if(S.view.right>=B.length-1)S.view.right=null;
+      // Dragging left past the newest bar opens empty space after it, as on TradingView.
+      const R=Math.max(G.count-1,Math.min(B.length-1+Math.floor(G.count*.8),drag.right+dxb));
+      if(R>=B.length-1){S.view.right=null;S.view.blank=R-(B.length-1);}
+      else{S.view.right=R;S.view.blank=0;}
       // Up and down moves the prices too, as on TradingView. A clear vertical
       // pull (not the drift of a sideways swipe) switches off the auto-fit;
       // a double-tap or Reset view turns it back on.
@@ -2593,7 +2607,7 @@ cv.addEventListener('wheel',e=>{e.preventDefault();
     S.yMan={lo:mid-r/2,hi:mid+r/2};}
   else{let c=Math.round(S.view.count*f);if(c===S.view.count&&f!==1)c+=f>1?1:-1;S.view.count=Math.max(12,Math.min(400,c));}
   draw();},{passive:false});
-$('fit').onclick=()=>{S.yMan=null;S.view.right=null;draw();};
+$('fit').onclick=()=>{S.yMan=null;S.view.right=null;S.view.blank=0;draw();};
 
 function erase(mx,my){let bi=-1,bd=12;
   S.draw.forEach((d,k)=>{const x1=G.x(barIdxForMin(d.m1)),y1=G.y(d.p1);let dist;
@@ -4092,7 +4106,7 @@ $('sNew').onclick=()=>{
 const tfbar=$('tfbar');
 TFS.forEach(t=>{const b=document.createElement('button');b.className='tf'+(t.k==='5m'?' on':'');b.textContent=t.k;
   b.onclick=()=>{document.querySelectorAll('.tf').forEach(x=>x.classList.remove('on'));b.classList.add('on');
-    S.tf=t.k;S.cache={};S.view.right=null;S.yMan=null;
+    S.tf=t.k;S.cache={};S.view.right=null;S.view.blank=0;S.yMan=null;
     S.view.count=window.innerWidth<600?46:80;renderAll();};
   tfbar.appendChild(b);});
 const INDS=[

@@ -1,0 +1,19 @@
+//@version=6
+// Draws Mamba's posted MNQ levels (typed in by hand below). Nothing is fetched or checked automatically.
+// Each post: thick line from post time to the end of its window, faint dotted line 2 days back for context.
+indicator("Mamba posts", overlay=true, max_lines_count=500, max_labels_count=500)
+D = 86400000
+drawSet(int t0, int t1, array<float> lv, color c, string tag) =>
+    for v in lv
+        line.new(t0 - 2 * D, v, t0, v, xloc.bar_time, extend.none, color.new(c, 55), line.style_dotted, 1)
+        line.new(t0, v, t1, v, xloc.bar_time, extend.none, c, line.style_solid, 2)
+        label.new(t1, v, tag + " " + str.tostring(v), xloc.bar_time, yloc.price, color(na), label.style_label_left, c, size.small)
+if barstate.islastconfirmedhistory
+    drawSet(timestamp("UTC", 2026, 11, 11, 23, 14), timestamp("UTC", 2026, 11, 12, 14, 30), array.from(28117.25, 28160, 28208, 28253.5, 28270.5, 28321.5), color.blue, "PM11")
+    drawSet(timestamp("UTC", 2026, 11, 12, 22, 48), timestamp("UTC", 2026, 11, 13, 14, 30), array.from(28208.0, 28270.5, 28321.5, 28390, 28430, 28450, 28469.5, 28535, 28600), color.purple, "PM12")
+    drawSet(timestamp("UTC", 2026, 11, 16, 22, 54), timestamp("UTC", 2026, 11, 17, 14, 30), array.from(27100.0, 27186.25, 27233.75, 27262, 27306.25, 27350, 27430), color.blue, "PM16")
+    drawSet(timestamp("UTC", 2026, 11, 18, 0, 7), timestamp("UTC", 2026, 11, 18, 14, 30), array.from(27233.75, 27262, 27350, 27380.5, 27500, 27563.5), color.purple, "PM17")
+    drawSet(timestamp("UTC", 2026, 11, 18, 22, 56), timestamp("UTC", 2026, 11, 19, 14, 30), array.from(26931.0, 27000, 27047.5, 27110.75, 27186.25, 27233.75, 27295, 27350), color.blue, "PM18")
+    drawSet(timestamp("UTC", 2026, 11, 23, 14, 26), timestamp("UTC", 2026, 11, 23, 21, 0), array.from(26931.0, 27000, 27041.5, 26800, 26747.25, 26600), color.orange, "AM23")
+    drawSet(timestamp("UTC", 2026, 11, 23, 22, 59), timestamp("UTC", 2026, 11, 24, 14, 30), array.from(26682.5, 26747.25, 26931, 27000, 27047.5, 27186.25), color.purple, "PM23")
+    drawSet(timestamp("UTC", 2026, 11, 24, 14, 30), timestamp("UTC", 2026, 11, 24, 21, 0), array.from(26387.0, 26444, 26500, 26264.5, 26194, 26142), color.orange, "AM24")

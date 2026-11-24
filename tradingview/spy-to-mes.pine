@@ -1,0 +1,159 @@
+//@version=6
+// Paste Mamba's morning SPY post into the settings. Draws his levels on the MES (or ES) chart, played safe:
+//  - An entry only counts once SPY ITSELF closes past his SPY number (MES getting near the line isn't enough).
+//  - Entries are pushed a few MES points further out; targets are pulled a few points in (take profit a bit early).
+//  - Fires an alert when SPY confirms an entry or reaches a target (create an alert on "Any alert() function call").
+// Conversion: MES level = SPY level x (MES price / SPY price). The ratio is LOCKED once a day, from the
+// opens of the first candle at or after the lock time (opens never change once a candle starts), so the
+// lines stay still. Before the lock time it uses yesterday's locked ratio. The ratio drifts ~1 MES point a day.
+indicator("SPY levels -> MES (safe)", overlay=true, max_lines_count=100, max_labels_count=200)
+
+postTxt = input.text_area("Over 715.77 --> 716.41 --> 717.52\nUnder 713.5 --> 712.4 --> 710.71", "Paste Mamba's SPY post")
+buf     = input.float(2.0, "Safety buffer (MES points)", minval=0, step=0.25, tooltip="Entries are moved this far past the converted level; targets are moved this far in.")
+needSpy = input.bool(true, "Entry only valid after SPY closes past his level")
+startHM = input.int(930, "Levels active from (ET, HHMM)", tooltip="SPY crosses before this time are ignored.")
+lockHM  = input.int(935, "Lock the conversion at (ET, HHMM)", tooltip="The SPY-to-MES ratio is fixed once a day from the opens of the first candle at or after this time. 9:35 avoids the noisy 9:30 opening print.")
+spySym  = input.symbol("AMEX:SPY", "SPY symbol")
+upCol   = input.color(color.teal, "Over side")
+dnCol   = input.color(color.red, "Under side")
+
+TZ = "America/New_York"
+
+// SPY with pre/after-market so its candles line up with the futures candles
+spyExt = ticker.modify(spySym, session.extended)
+[spyO, spyC, spyH, spyL, spyT] = request.security(spyExt, timeframe.period, [open, close, high, low, time])
+fresh = spyT == time and spyC > 0   // SPY has a bar at the same time as the chart
+
+hmNow  = hour(time, TZ) * 100 + minute(time, TZ)
+dayKey = year(time, TZ) * 10000 + month(time, TZ) * 100 + dayofmonth(time, TZ)
+var float ratio = na
+var int lockedDay = 0
+var int lockedAt = 0
+// Lock once a day from candle OPENS: fixed the moment the candle starts, so the lines never follow the price.
+if fresh and spyO > 0 and hmNow >= lockHM and hmNow < 1600 and dayKey != lockedDay
+    ratio := open / spyO
+    lockedDay := dayKey
+    lockedAt := time
+// Only if the chart has no lock candle at all yet (very short history): one fixed value from a finished candle.
+if na(ratio) and fresh and barstate.isconfirmed
+    ratio := close / spyC
+    lockedAt := time
+
+// Reads numbers from the post; numbers after "Over" go up, after "Under" go down
+parse(string txt) =>
+    t = str.replace_all(txt, "\n", " ")
+    t := str.replace_all(t, "-->", " ")
+    t := str.replace_all(t, "->", " ")
+    t := str.replace_all(t, ",", " ")
+    toks = str.split(t, " ")
+    u = array.new_float()
+    d = array.new_float()
+    side = 1
+    for tok in toks
+        lt = str.lower(tok)
+        if str.contains(lt, "over")
+            side := 1
+        else if str.contains(lt, "under")
+            side := -1
+        else
+            v = str.tonumber(tok)
+            if not na(v) and v > 0
+                if side == 1
+                    array.push(u, v)
+                else
+                    array.push(d, v)
+    [u, d]
+
+var array<float> ups = array.new_float()
+var array<float> dns = array.new_float()
+var array<bool> upHit = array.new_bool()
+var array<bool> dnHit = array.new_bool()
+if barstate.isfirst
+    [u, d] = parse(postTxt)
+    ups := u
+    dns := d
+    upHit := array.new_bool(array.size(u), false)
+    dnHit := array.new_bool(array.size(d), false)
+
+// Only today's bars from the start time count
+sameDay = year(time, TZ) == year(timenow, TZ) and month(time, TZ) == month(timenow, TZ) and dayofmonth(time, TZ) == dayofmonth(timenow, TZ)
+hm = hour(time, TZ) * 100 + minute(time, TZ)
+active = sameDay and hm >= startHM and fresh
+
+// Watch SPY itself: entry = SPY CLOSES past the level; target = SPY touches it
+checkSide(array<float> lv, array<bool> hits, bool isUp, color c) =>
+    n = array.size(lv)
+    if n > 0
+        for i = 0 to n - 1
+            if not array.get(hits, i) and (i == 0 or array.get(hits, 0))
+                L = array.get(lv, i)
+                hit = i == 0 ? (isUp ? spyC >= L : spyC <= L) : (isUp ? spyH >= L : spyL <= L)
+                if hit
+                    array.set(hits, i, true)
+                    txt = i == 0 ? "SPY closed " + (isUp ? "over " : "under ") + str.tostring(L) : "SPY hit PT" + str.tostring(i) + " " + str.tostring(L)
+                    label.new(bar_index, isUp ? high : low, txt, style=isUp ? label.style_label_down : label.style_label_up, color=c, textcolor=color.white, size=size.tiny)
+                    alert(txt + "  (MES " + str.tostring(close, format.mintick) + ")", alert.freq_once_per_bar)
+
+if active
+    checkSide(ups, upHit, true, upCol)
+    checkSide(dns, dnHit, false, dnCol)
+
+tick = syminfo.mintick
+roundUp(float x) => math.ceil(x / tick) * tick
+roundDn(float x) => math.floor(x / tick) * tick
+
+// Slot i on one side, in chart prices: entry pushed out by the buffer, targets pulled in.
+lvlOf(array<float> lv, int i, bool isUp) =>
+    float out = na
+    if array.size(lv) > i and not na(ratio)
+        conv = array.get(lv, i) * ratio
+        out := i == 0 ? (isUp ? roundUp(conv + buf) : roundDn(conv - buf)) : (isUp ? roundDn(conv - buf) : roundUp(conv + buf))
+    out
+hitOf(array<bool> h, int i) => array.size(h) > i ? array.get(h, i) : false
+
+// Shown on today's chart only, 9:00 AM to 5:00 PM ET. Drawn as plots, so they sit in one place
+// (nothing slides as new candles print) and their values show on the price scale.
+showWin = sameDay and hm >= 900 and hm < 1700
+var int t0 = 0
+var int t0Day = 0
+if showWin and t0Day != dayKey
+    t0 := time
+    t0Day := dayKey
+
+entryCol(color c, array<bool> h) => needSpy and not hitOf(h, 0) ? color.new(c, 60) : c
+
+u0 = showWin ? lvlOf(ups, 0, true) : na
+u1 = showWin ? lvlOf(ups, 1, true) : na
+u2 = showWin ? lvlOf(ups, 2, true) : na
+d0 = showWin ? lvlOf(dns, 0, false) : na
+d1 = showWin ? lvlOf(dns, 1, false) : na
+d2 = showWin ? lvlOf(dns, 2, false) : na
+plot(u0, "OVER", entryCol(upCol, upHit), 2, plot.style_linebr)
+plot(u1, "Long PT1", color.new(upCol, 25), 1, plot.style_linebr)
+plot(u2, "Long PT2", color.new(upCol, 25), 1, plot.style_linebr)
+plot(d0, "UNDER", entryCol(dnCol, dnHit), 2, plot.style_linebr)
+plot(d1, "Short PT1", color.new(dnCol, 25), 1, plot.style_linebr)
+plot(d2, "Short PT2", color.new(dnCol, 25), 1, plot.style_linebr)
+
+// Names pinned at the left end of today's lines (a fixed time), so they don't ride along with price either.
+labelSide(array<float> lv, array<bool> hits, bool isUp, color c, array<label> lbs) =>
+    n = math.min(array.size(lv), 3)
+    if n > 0
+        for i = 0 to n - 1
+            p = lvlOf(lv, i, isUp)
+            done = hitOf(hits, i)
+            waiting = i == 0 and needSpy and not done
+            name = i == 0 ? (isUp ? "OVER" : "UNDER") + (done ? " - SPY confirmed" : waiting ? " - wait for SPY" : "") : (isUp ? "Long PT" : "Short PT") + str.tostring(i) + (done ? " - hit" : "")
+            array.push(lbs, label.new(t0, p, name + "  " + str.tostring(p, format.mintick) + "  (SPY " + str.tostring(array.get(lv, i)) + ")", xloc=xloc.bar_time, style=label.style_label_lower_left, color=color(na), textcolor=waiting ? color.new(c, 40) : c, size=size.small))
+
+var array<label> lbs = array.new<label>()
+var table info = table.new(position.top_right, 1, 1)
+
+if barstate.islast
+    for b in lbs
+        label.delete(b)
+    array.clear(lbs)
+    if not na(ratio) and t0Day == dayKey and sameDay
+        labelSide(ups, upHit, true, upCol, lbs)
+        labelSide(dns, dnHit, false, dnCol, lbs)
+    table.cell(info, 0, 0, "SPY -> " + syminfo.ticker + "  ratio " + str.tostring(ratio, "#.####") + " locked " + str.format_time(lockedAt, "MMM d HH:mm", TZ) + " ET  ·  buffer " + str.tostring(buf) + " pts", text_color=color.gray, text_size=size.small)
