@@ -10,6 +10,7 @@
 indicator("SPY levels -> MES (safe)", overlay=true, max_labels_count=200)
 
 postTxt   = input.text_area("Over 715.77 --> 716.41 --> 717.52\nUnder 713.5 --> 712.4 --> 710.71", "Paste Mamba's SPY post")
+underTxt  = input.string("", "Under line (if it didn't come through above)", tooltip="Phones often paste only the first line of his post. If the UNDER levels are missing, paste or type his Under line here, e.g. 713.5 --> 712.4 --> 710.71")
 buf       = input.float(2.0, "Safety buffer (MES points)", minval=0, step=0.25, tooltip="Entries are moved this far past the converted level; targets are moved this far in.")
 needSpy   = input.bool(true, "Entry only valid after a SPY candle closes past his level")
 startHM   = input.int(930, "Levels active from (ET, HHMM)", tooltip="SPY crosses before this time are ignored.")
@@ -48,9 +49,12 @@ if na(ratio) and fresh and barstate.isconfirmed
 // Reads numbers from the post; numbers after "Over" go up, after "Under" go down
 parse(string txt) =>
     t = str.replace_all(txt, "\n", " ")
+    t := str.replace_all(t, "\r", " ")
     t := str.replace_all(t, "-->", " ")
     t := str.replace_all(t, "->", " ")
-    t := str.replace_all(t, ",", " ")
+    // phones turn "--" into a dash: "—>", "–>", "→"
+    for s in array.from("—", "–", "→", ">", ",", "/", "|")
+        t := str.replace_all(t, s, " ")
     toks = str.split(t, " ")
     u = array.new_float()
     d = array.new_float()
@@ -75,7 +79,18 @@ var array<float> dns = array.new_float()
 var array<bool> upHit = array.new_bool()
 var array<bool> dnHit = array.new_bool()
 if barstate.isfirst
-    [u, d] = parse(postTxt)
+    [pu, pd] = parse(postTxt)
+    array<float> u = pu
+    array<float> d = pd
+    // The separate Under box wins if it has numbers
+    if str.length(str.trim(underTxt)) > 0
+        [u2, d2] = parse("under " + underTxt)
+        if array.size(d2) > 0
+            d := d2
+    // "Under" got lost but all 6 numbers came through as one run: he always posts 3 + 3
+    if array.size(d) == 0 and array.size(u) >= 4
+        d := array.copy(array.slice(u, 3, array.size(u)))
+        u := array.copy(array.slice(u, 0, 3))
     ups := u
     dns := d
     upHit := array.new_bool(array.size(u), false)
@@ -205,7 +220,10 @@ if barstate.islast
     if showPanel
         string status = ""
         color sc = color.gray
-        if na(ratio)
+        if array.size(dns) == 0 or array.size(ups) == 0
+            status := "No " + (array.size(dns) == 0 ? "UNDER" : "OVER") + " numbers read from your paste" + (array.size(dns) == 0 ? ": put his Under line in the 'Under line' box" : "")
+            sc := color.orange
+        else if na(ratio)
             status := "Waiting for SPY data"
         else if not sameDay or hm < startHM
             status := "Levels go live at " + str.tostring(math.floor(startHM / 100)) + ":" + str.format("{0,number,00}", startHM % 100) + " ET"
