@@ -21,7 +21,7 @@ lblPos    = input.string("End of lines", "Line names", options=["End of lines", 
 showSpy   = input.bool(false, "Add his SPY number to each name", group="Display")
 showZone  = input.bool(true, "Shade the no-trade zone between OVER and UNDER", group="Display")
 showPanel = input.bool(true, "Status panel", group="Display")
-panelPos  = input.string("Top right", "Panel position", options=["Top right", "Bottom right", "Top left", "Bottom left"], group="Display")
+panelPos  = input.string("Top right", "Panel position", options=["Top right", "Middle right", "Bottom right", "Top left", "Bottom left"], tooltip="On a phone the chart name covers the top; Middle right keeps the panel clear of it.", group="Display")
 upCol     = input.color(color.teal, "Over side", group="Display")
 dnCol     = input.color(color.red, "Under side", group="Display")
 
@@ -105,6 +105,11 @@ active  = sameDay and hm >= startHM and fresh
 // doesn't count, it can still snap back). Target = SPY touched it, after the entry.
 checkSide(array<float> lv, array<bool> hits, bool isUp, color c) =>
     n = array.size(lv)
+    // Everything that happens on one candle goes into ONE marker ("SHORT · PT1 · PT2"), so markers never pile up
+    // on top of each other (common on 5m+ charts, where the entry and a target land in the same candle).
+    string tags = ""
+    string tips = ""
+    bool gotEntry = false
     if n > 0
         for i = 0 to n - 1
             if not array.get(hits, i) and (i == 0 or array.get(hits, 0))
@@ -114,8 +119,12 @@ checkSide(array<float> lv, array<bool> hits, bool isUp, color c) =>
                     array.set(hits, i, true)
                     txt = i == 0 ? "SPY closed " + (isUp ? "over " : "under ") + str.tostring(L) : "SPY hit PT" + str.tostring(i) + " " + str.tostring(L)
                     tag = i == 0 ? (isUp ? "LONG" : "SHORT") : "PT" + str.tostring(i)
-                    label.new(bar_index, isUp ? high : low, tag, style=isUp ? label.style_label_down : label.style_label_up, color=color.new(c, i == 0 ? 0 : 35), textcolor=color.white, size=size.tiny, tooltip=txt + " at " + str.format_time(time, "HH:mm", TZ) + " ET")
+                    gotEntry := gotEntry or i == 0
+                    tags := tags == "" ? tag : tags + " · " + tag
+                    tips := tips == "" ? txt : tips + "\n" + txt
                     alert(txt + "  (MES " + str.tostring(close, format.mintick) + ")", alert.freq_once_per_bar)
+    if tags != ""
+        label.new(bar_index, isUp ? high : low, tags, style=isUp ? label.style_label_down : label.style_label_up, color=color.new(c, gotEntry ? 0 : 35), textcolor=color.white, size=size.tiny, tooltip=tips + "\nat " + str.format_time(time, "HH:mm", TZ) + " ET")
 
 if active
     checkSide(ups, upHit, true, upCol)
@@ -202,7 +211,7 @@ labelSide(array<float> lv, array<bool> hits, bool isUp, array<label> lbs) =>
                 array.push(lbs, label.new(t0, p, txt, xloc=xloc.bar_time, style=label.style_label_lower_left, color=color(na), textcolor=col, size=size.small))
 
 var array<label> lbs = array.new<label>()
-pos = panelPos == "Bottom right" ? position.bottom_right : panelPos == "Bottom left" ? position.bottom_left : panelPos == "Top left" ? position.top_left : position.top_right
+pos = panelPos == "Middle right" ? position.middle_right : panelPos == "Bottom right" ? position.bottom_right : panelPos == "Bottom left" ? position.bottom_left : panelPos == "Top left" ? position.top_left : position.top_right
 var table info = table.new(pos, 1, 4, bgcolor=chart.bg_color, frame_color=color.new(color.gray, 60), frame_width=1, border_width=2)
 
 spyLv(array<float> lv) => array.size(lv) > 0 ? str.tostring(array.get(lv, 0)) : "-"
