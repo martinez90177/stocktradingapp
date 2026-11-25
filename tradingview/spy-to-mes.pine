@@ -2,7 +2,8 @@
 // Paste Mamba's morning SPY post into the settings. Draws his levels on the MES (or ES) chart, played safe:
 //  - An entry only counts once a SPY candle FINISHES past his SPY number (a touch, or MES getting near, isn't enough).
 //  - Entries are pushed a few MES points further out; targets are pulled a few points in (take profit a bit early).
-//  - Once one side confirms, the other side's entry line becomes your STOP and its targets fade out.
+//  - Both sides are watched all day, each on its own: a short in the morning doesn't stop the long side from
+//    confirming later. The panel shows one row per side.
 //  - Fires an alert when SPY confirms an entry or reaches a target (create an alert on "Any alert() function call").
 // Conversion: MES level = SPY level x (MES price / SPY price). The ratio is LOCKED once a day, from the
 // opens of the first candle at or after the lock time (opens never change once a candle starts), so the
@@ -122,15 +123,14 @@ if active
 
 hitOf(array<bool> h, int i) => array.size(h) > i ? array.get(h, i) : false
 
-// When each side confirmed (0 = not yet). The side that confirmed last is the one you're in.
+// When each side confirmed (0 = not yet).
 var int upAt = 0
 var int dnAt = 0
 if upAt == 0 and hitOf(upHit, 0)
     upAt := time
 if dnAt == 0 and hitOf(dnHit, 0)
     dnAt := time
-inSide = upAt > 0 and upAt >= dnAt ? 1 : dnAt > 0 ? -1 : 0
-both   = upAt > 0 and dnAt > 0
+inSide = upAt > 0 or dnAt > 0 ? 1 : 0   // 0 = neither side confirmed yet (used for the grey zone)
 
 tick = syminfo.mintick
 roundUp(float x) => math.ceil(x / tick) * tick
@@ -144,17 +144,16 @@ lvlOf(array<float> lv, int i, bool isUp) =>
         out := i == 0 ? (isUp ? roundUp(conv + buf) : roundDn(conv - buf)) : (isUp ? roundDn(conv - buf) : roundUp(conv + buf))
     out
 
-// Colours: waiting entries are faint; the side you're in is solid; the other side's targets fade
-// away and its entry stays solid because it is now your stop.
+// Colours, each side on its own: until SPY confirms that side, its entry is a bit faint and its targets
+// lighter; once it confirms, the whole side goes solid. The other side is never faded.
 colOf(bool isUp, int i) =>
     c = isUp ? upCol : dnCol
-    mine = isUp ? 1 : -1
     entryDone = hitOf(isUp ? upHit : dnHit, 0)
     color out = c
     if i == 0
-        out := needSpy and not entryDone and inSide != -mine ? color.new(c, 55) : c
+        out := needSpy and not entryDone ? color.new(c, 40) : c
     else
-        out := inSide == -mine ? color.new(c, 70) : inSide == mine ? color.new(c, 15) : color.new(c, 45)
+        out := entryDone ? color.new(c, 10) : color.new(c, 40)
     out
 
 // Shown on today's chart only, 9:00 AM to 5:00 PM ET. Drawn as plots, so they sit in one place
@@ -184,11 +183,10 @@ plot(d2, "Short PT2", colOf(false, 2), 1, plot.style_linebr)
 // Grey band between the two entries = no-trade zone, shown only while neither side has confirmed.
 fill(pU, pD, showZone and inSide == 0 ? color.new(color.gray, 92) : na, "No-trade zone")
 
-// Short names: "OVER 6740.25", "▲ PT1 6744  ✓", "STOP 6728.5", written just past the right end of the lines.
+// Short names: "OVER 6740.25", "▲ PT1 6744  ✓", "UNDER 6728.5", written just past the right end of the lines.
 nameOf(array<float> lv, array<bool> hits, bool isUp, int i, float p) =>
-    mine = isUp ? 1 : -1
     done = hitOf(hits, i)
-    base = i == 0 ? (inSide == -mine and not both ? "STOP" : isUp ? "OVER" : "UNDER") : (isUp ? "▲ PT" : "▼ PT") + str.tostring(i)
+    base = i == 0 ? (isUp ? "OVER" : "UNDER") : (isUp ? "▲ PT" : "▼ PT") + str.tostring(i)
     base + "  " + str.tostring(p, format.mintick) + (done ? "  ✓" : "") + (showSpy ? "   SPY " + str.tostring(array.get(lv, i)) : "")
 
 labelSide(array<float> lv, array<bool> hits, bool isUp, array<label> lbs) =>
@@ -205,10 +203,24 @@ labelSide(array<float> lv, array<bool> hits, bool isUp, array<label> lbs) =>
 
 var array<label> lbs = array.new<label>()
 pos = panelPos == "Bottom right" ? position.bottom_right : panelPos == "Bottom left" ? position.bottom_left : panelPos == "Top left" ? position.top_left : position.top_right
-var table info = table.new(pos, 1, 2, bgcolor=chart.bg_color, frame_color=color.new(color.gray, 60), frame_width=1, border_width=2)
+var table info = table.new(pos, 1, 4, bgcolor=chart.bg_color, frame_color=color.new(color.gray, 60), frame_width=1, border_width=2)
 
 spyLv(array<float> lv) => array.size(lv) > 0 ? str.tostring(array.get(lv, 0)) : "-"
 hhmm(int t) => str.format_time(t, "HH:mm", TZ)
+
+// "LONG   waiting: SPY close over 705"  or  "LONG   ✓ 10:05   PT1 ✓   PT2 –"
+sideTxt(array<float> lv, array<bool> h, bool isUp, int at) =>
+    nm = isUp ? "LONG " : "SHORT"
+    string s = ""
+    if at == 0
+        s := nm + "   waiting: SPY close " + (isUp ? "over " : "under ") + spyLv(lv) + "  (MES " + str.tostring(lvlOf(lv, 0, isUp), format.mintick) + ")"
+    else
+        s := nm + "   ✓ " + hhmm(at)
+        n = math.min(array.size(lv), 3)
+        if n > 1
+            for i = 1 to n - 1
+                s += "   PT" + str.tostring(i) + (hitOf(h, i) ? " ✓" : " –")
+    s
 
 if barstate.islast
     for b in lbs
@@ -218,25 +230,21 @@ if barstate.islast
         labelSide(ups, upHit, true, lbs)
         labelSide(dns, dnHit, false, lbs)
     if showPanel
-        string status = ""
-        color sc = color.gray
+        table.clear(info, 0, 0, 0, 3)
+        int r = 0
         if array.size(dns) == 0 or array.size(ups) == 0
-            status := "No " + (array.size(dns) == 0 ? "UNDER" : "OVER") + " numbers read from your paste" + (array.size(dns) == 0 ? ": put his Under line in the 'Under line' box" : "")
-            sc := color.orange
+            table.cell(info, 0, r, "No " + (array.size(dns) == 0 ? "UNDER" : "OVER") + " numbers read from your paste" + (array.size(dns) == 0 ? ": put his Under line in the 'Under line' box" : ""), text_color=color.orange, text_size=size.normal, text_halign=text.align_left)
+            r += 1
         else if na(ratio)
-            status := "Waiting for SPY data"
-        else if not sameDay or hm < startHM
-            status := "Levels go live at " + str.tostring(math.floor(startHM / 100)) + ":" + str.format("{0,number,00}", startHM % 100) + " ET"
-        else if both
-            status := "Both sides triggered: choppy, stand aside"
-            sc := color.orange
-        else if inSide == 1
-            status := "LONG confirmed " + hhmm(upAt) + "   stop " + str.tostring(lvlOf(dns, 0, false), format.mintick)
-            sc := upCol
-        else if inSide == -1
-            status := "SHORT confirmed " + hhmm(dnAt) + "   stop " + str.tostring(lvlOf(ups, 0, true), format.mintick)
-            sc := dnCol
+            table.cell(info, 0, r, "Waiting for SPY data", text_color=color.gray, text_size=size.normal, text_halign=text.align_left)
+            r += 1
         else
-            status := "Waiting: SPY must close over " + spyLv(ups) + " or under " + spyLv(dns)
-        table.cell(info, 0, 0, status, text_color=sc, text_size=size.normal, text_halign=text.align_left)
-        table.cell(info, 0, 1, "SPY→" + syminfo.ticker + " x" + str.tostring(ratio, "#.###") + "  locked " + str.format_time(lockedAt, "MMM d HH:mm", TZ) + "  buffer " + str.tostring(buf), text_color=color.gray, text_size=size.small, text_halign=text.align_left)
+            if not sameDay or hm < startHM
+                table.cell(info, 0, r, "Levels go live at " + str.tostring(math.floor(startHM / 100)) + ":" + str.format("{0,number,00}", startHM % 100) + " ET", text_color=color.gray, text_size=size.small, text_halign=text.align_left)
+                r += 1
+            // one row per side, each on its own
+            table.cell(info, 0, r, sideTxt(ups, upHit, true, upAt), text_color=upAt > 0 ? upCol : color.new(upCol, 35), text_size=size.normal, text_halign=text.align_left)
+            table.cell(info, 0, r + 1, sideTxt(dns, dnHit, false, dnAt), text_color=dnAt > 0 ? dnCol : color.new(dnCol, 35), text_size=size.normal, text_halign=text.align_left)
+            r += 2
+        if r < 4
+            table.cell(info, 0, r, "SPY→" + syminfo.ticker + " x" + str.tostring(ratio, "#.###") + "  locked " + str.format_time(lockedAt, "MMM d HH:mm", TZ) + "  buffer " + str.tostring(buf), text_color=color.gray, text_size=size.small, text_halign=text.align_left)
